@@ -1,8 +1,7 @@
 # NMI Payment - Shopware 6 Plugin - Coming Soon
 
 ## ✨ Coming Soon - Shopware 6 Plugin
-
-This plugin is still in development and will be released on **May 1, 2025**. Stay tuned!
+Integrate NMI Payment into Shopware 6 for secure transactions, multiple payment methods, customer vaults, and subscription management. Designed for compliance with PSD2, SCA, and 3D Secure (3DS), this plugin enhances your checkout experience.
 
 ## 🚀 What to Expect  
 - **Secure Transactions**: End-to-end encryption and fraud protection.  
