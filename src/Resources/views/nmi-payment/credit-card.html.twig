@@ -1,0 +1,142 @@
+<template nmi-payment-credit-card-plugin></template>
+<div id="nmi-credit-card" data-nmi-credit-card="true"
+     data-vaulted-customer-id="{{ page.extensions.nmi_payment.vaultedId }}"
+     data-saved-card="{{ page.extensions.nmi_payment.saveCardBackend }}"
+     data-test="{{ page.extensions.nmi_payment.test }}"
+     data-shop-currency="{{ page.extensions.nmi_payment.currency }}"
+     data-amount="{{ page.extensions.nmi_payment.amount }}"
+     data-guest="{{ page.extensions.nmi_payment.isGuest }}"
+     data-threeDSConfig="{{ page.extensions.nmi_payment.threeDS }}"
+     data-billing-customer-id="{{ page.extensions.nmi_payment.billingId }}"
+     data-dropdown-cards="{{ page.extensions.nmi_payment.cardsDropdown }}"
+>
+
+    {% if page.extensions.nmi_payment.saveCardBackend %}
+
+    <div class="alert alert-danger d-none m-3"  id="error-message" role="alert">
+        <div class="error-alert">
+            <p></p>
+        </div>
+    </div>
+
+
+    <div class="form-container">
+        <span class="nmiLoader" id="nmiLoader"></span>
+        <form class="d-none">
+            <div class="form-details d-flex align-items-center justify-content-between">
+                <div class="form-details-card-info d-flex align-items-center justify-content-start">
+                    <div class="form-details-card-input">
+                    </div>
+                   <div class="form-details-card-name">
+                       <div class="d-flex align-items-center gap-1">
+                           <p id="vaulted-first-name"> </p>
+                           <p id="vaulted-last-name"> </p>
+                       </div>
+                       <div>
+                           <p id="vaulted-last-four-digits"></p>
+                       </div>
+                   </div>
+                </div>
+                <div class="form-details-card-type">
+                    <p id="vaulted-card-type"></p>
+                </div>
+            </div>
+
+
+            <div class="form-group mt-3">
+                <div class="form-group mt-3">
+                    <label for="cardSelect">Select a Saved Card</label>
+                    <select id="cardSelect" name="selectedCard" class="form-control">
+                    </select>
+                </div>
+
+            </div>
+
+
+
+            <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
+                   class="btn btn-primary btn-block w-100">
+            <button type="button" class="btn btn-info btn-block w-100 mt-3" id="add-another-vaulted-card">Add Card</button
+
+
+
+{#            <button type="button" class="btn btn-danger btn-block w-100 mt-3" id="delete-vaulted-customer-data">Delete this Card</button>#}
+{#            <button type="button" class="btn btn-info btn-block w-100 mt-3" id="add-another-vaulted-card">Add Card</button>#}
+
+        </form>
+    </div>
+
+    {% else %}
+
+    <form class="checkout-form-nmi" id="checkout-form-nmi" action="#">
+        <div class="formInner">
+
+            <h3>Payment information Data</h3>
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="First Name" name="fname"
+                       value="{{ context.customer.firstName }}">
+            </div>
+
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="Last Name" name="lname"
+                       value="{{ context.customer.lastName }}">
+            </div>
+
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="Street Address" name="address1"
+                       value="{{ context.customer.defaultBillingAddress.street }}">
+            </div>
+
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="City" name="city"
+                       value="{{ context.customer.defaultBillingAddress.city }}">
+            </div>
+
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="State" name="state"
+                       value="{{ context.customer.defaultBillingAddress.country.name }}">
+            </div>
+
+            <div class="form-group">
+                <input type="text" class="form-control d-none" placeholder="Zip code" name="zip"
+                       value="{{ context.customer.defaultBillingAddress.zipcode }}">
+            </div>
+
+        </div>
+
+        <div class="alert alert-danger d-none m-3"  id="error-message" role="alert">
+            <div class="error-alert">
+                <p></p>
+            </div>
+        </div>
+
+
+        {% if not page.extensions.nmi_payment.isGuest %}
+                <div class="form-group">
+                    <input type="checkbox" id="saveCardCheckbox" name="saveCard" />
+                    <label for="saveCardCheckbox">
+                        Save my card for future use
+                    </label>
+                </div>
+            {% endif %}
+
+
+        </div>
+        <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
+               class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit">
+    </form>
+    <div id="paymentTokenInfo"></div>
+</div>
+{% endif %}
+
+{#<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC" ></script>#}
+<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ config('NMIPayment.config.publicKeyApi') }}" ></script>
+<script src="https://secure.nmi.com/js/v1/Gateway.js"></script>
+{#<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC" ></script>#}
+
+
