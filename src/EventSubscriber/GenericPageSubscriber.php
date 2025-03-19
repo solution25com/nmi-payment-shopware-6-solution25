@@ -9,29 +9,29 @@ use Shopware\Storefront\Page\Search\SearchPageLoadedEvent;
 
 class GenericPageSubscriber implements EventSubscriberInterface
 {
-  public static function getSubscribedEvents(): array
-  {
-    return [
-      GenericPageLoadedEvent::class => ['setNoindexNofollow', 1000],
-      SearchPageLoadedEvent::class => ['setNoindexNofollowSearchPage', 1000],
-    ];
-  }
+    public static function getSubscribedEvents(): array
+    {
+        return [
+          GenericPageLoadedEvent::class => ['setNoindexNofollow', 1000],
+          SearchPageLoadedEvent::class  => ['setNoindexNofollowSearchPage', 1000],
+        ];
+    }
 
-  public function setNoindexNofollow(GenericPageLoadedEvent $event): void
-  {
-    // Apply noindex, nofollow directly
-    $page = $event->getPage();
-    $page->setMetaInformation((new MetaInformation())->assign([
-      'robots' => 'noindex,nofollow',
-    ]));
-  }
+    public function setNoindexNofollow(GenericPageLoadedEvent $event): void
+    {
+        // Apply noindex, nofollow directly
+        $page = $event->getPage();
+        $page->setMetaInformation((new MetaInformation())->assign([
+          'robots' => 'noindex,nofollow',
+        ]));
+    }
 
-  public function setNoindexNofollowSearchPage(SearchPageLoadedEvent $event): void
-  {
-    // Apply noindex, nofollow directly for search page
-    $page = $event->getPage();
-    $page->setMetaInformation((new MetaInformation())->assign([
-      'robots' => 'noindex,nofollow',
-    ]));
-  }
+    public function setNoindexNofollowSearchPage(SearchPageLoadedEvent $event): void
+    {
+        // Apply noindex, nofollow directly for search page
+        $page = $event->getPage();
+        $page->setMetaInformation((new MetaInformation())->assign([
+          'robots' => 'noindex,nofollow',
+        ]));
+    }
 }

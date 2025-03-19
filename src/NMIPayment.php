@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment;
 
@@ -54,11 +56,10 @@ class NMIPayment extends Plugin
 
     private function addPaymentMethod(PaymentMethodInterface $paymentMethod, Context $context): void
     {
-
         $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
 
         $pluginIdProvider = $this->getDependency(PluginIdProvider::class);
-        $pluginId = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
+        $pluginId         = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
 
         if ($paymentMethodId) {
             $this->setPluginId($paymentMethodId, $pluginId, $context);
@@ -66,13 +67,13 @@ class NMIPayment extends Plugin
         }
 
         $pluginIdProvider = $this->container->get(PluginIdProvider::class);
-        $pluginId = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
+        $pluginId         = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
 
         $paymentData = [
             'handlerIdentifier' => $paymentMethod->getPaymentHandler(),
-            'name' => $paymentMethod->getName(),
-            'description' => $paymentMethod->getDescription(),
-            'pluginId' => $pluginId,
+            'name'              => $paymentMethod->getName(),
+            'description'       => $paymentMethod->getDescription(),
+            'pluginId'          => $pluginId,
             'afterOrderEnabled' => true
         ];
 
@@ -84,7 +85,7 @@ class NMIPayment extends Plugin
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
         $paymentMethodData = [
-            'id' => $paymentMethodId,
+            'id'       => $paymentMethodId,
             'pluginId' => $pluginId,
         ];
 
@@ -93,16 +94,15 @@ class NMIPayment extends Plugin
 
     private function setPaymentMethodIsActive(bool $active, Context $context, PaymentMethodInterface $paymentMethod): void
     {
-
         $paymentRepository = $this->getDependency('payment_method.repository');
-        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
+        $paymentMethodId   = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
 
         if (!$paymentMethodId) {
             return;
         }
 
         $paymentMethodData = [
-            'id' => $paymentMethodId,
+            'id'     => $paymentMethodId,
             'active' => $active,
         ];
 
@@ -112,7 +112,7 @@ class NMIPayment extends Plugin
     private function getPaymentMethodId(string $paymentMethodHandler): ?string
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
-        $paymentCriteria = (new Criteria())->addFilter(new EqualsFilter(
+        $paymentCriteria   = (new Criteria())->addFilter(new EqualsFilter(
             'handlerIdentifier',
             $paymentMethodHandler
         ));

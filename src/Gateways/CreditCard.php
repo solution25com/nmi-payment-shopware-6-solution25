@@ -16,44 +16,40 @@ class CreditCard implements SynchronousPaymentHandlerInterface
 {
     private OrderTransactionStateHandler $transactionStateHandler;
     private NmiTransactionService $nmiTransactionService;
-    private NMIConfigService  $configService;
+    private NMIConfigService $configService;
     private LoggerInterface $logger;
 
     public function __construct(
-      OrderTransactionStateHandler $transactionStateHandler,
-      NmiTransactionService        $nmiTransactionService,
-      NMIConfigService               $configService,
-      LoggerInterface              $logger)
-    {
+        OrderTransactionStateHandler $transactionStateHandler,
+        NmiTransactionService $nmiTransactionService,
+        NMIConfigService $configService,
+        LoggerInterface $logger
+    ) {
         $this->transactionStateHandler = $transactionStateHandler;
-        $this->nmiTransactionService = $nmiTransactionService;
-        $this->configService = $configService;
-        $this->logger = $logger;
+        $this->nmiTransactionService   = $nmiTransactionService;
+        $this->configService           = $configService;
+        $this->logger                  = $logger;
     }
 
-  public function pay(SyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): void
-  {
-    $authorizeOption = $this->configService->getConfig('authorizeAndCapture');
-    $context = $salesChannelContext->getContext();
-    $orderId = $transaction->getOrder()->getId();
-    $paymentMethodName = $salesChannelContext->getPaymentMethod()->getTranslated()['name'];
-    $nmiTransactionId = $dataBag->get('nmi_transaction_id') ?? null;
-    $subscriptionTransactionId = $dataBag->get('nmi_is_subscription') ?? null;
-    $isSubscription = (bool)$subscriptionTransactionId;
+    public function pay(SyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): void
+    {
+        $authorizeOption           = $this->configService->getConfig('authorizeAndCapture');
+        $context                   = $salesChannelContext->getContext();
+        $orderId                   = $transaction->getOrder()->getId();
+        $paymentMethodName         = $salesChannelContext->getPaymentMethod()->getTranslated()['name'];
+        $nmiTransactionId          = $dataBag->get('nmi_transaction_id')  ?? null;
+        $subscriptionTransactionId = $dataBag->get('nmi_is_subscription') ?? null;
+        $isSubscription            = (bool)$subscriptionTransactionId;
 
 
-    if ($authorizeOption) {
-      $this->transactionStateHandler->authorize($transaction->getOrderTransaction()->getId(), $context);
-      $status = TransactionStatuses::AUTHORIZED->value;
-      $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName,$nmiTransactionId, $subscriptionTransactionId,$isSubscription ,$status, $context);
-
-    } else {
-      $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
-      $status = TransactionStatuses::PAID->value;
-      $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName,$nmiTransactionId, $subscriptionTransactionId,$isSubscription ,$status, $context);
-
+        if ($authorizeOption) {
+            $this->transactionStateHandler->authorize($transaction->getOrderTransaction()->getId(), $context);
+            $status = TransactionStatuses::AUTHORIZED->value;
+            $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName, $nmiTransactionId, $subscriptionTransactionId, $isSubscription, $status, $context);
+        } else {
+            $this->transactionStateHandler->paid($transaction->getOrderTransaction()->getId(), $context);
+            $status = TransactionStatuses::PAID->value;
+            $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName, $nmiTransactionId, $subscriptionTransactionId, $isSubscription, $status, $context);
+        }
     }
-
-  }
-
 }

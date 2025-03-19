@@ -31,37 +31,36 @@ class TestCommand extends Command
     private static array $endpoints = [
         self::TRANSACTION => [
             'method' => 'POST',
-            'url' => 'api/transact.php'
+            'url'    => 'api/transact.php'
         ]
     ];
 
     public function __construct(
-        EntityRepository    $productRepository,
+        EntityRepository $productRepository,
         SystemConfigService $systemConfigService,
-        LoggerInterface     $logger,
-        string              $name = null,
-    )
-    {
+        LoggerInterface $logger,
+        string $name = null,
+    ) {
         parent::__construct($name);
-        $this->productRepository = $productRepository;
+        $this->productRepository   = $productRepository;
         $this->systemConfigService = $systemConfigService;
-        $this->logger = $logger;
-        $mode = $systemConfigService->get('NMIPayment.config.mode');
-        $isLive = $mode === 'live';
-        $baseUrl = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
-        $apiKey = $systemConfigService->get($isLive ? 'NMIPayment.config.apiKeyLive' : 'NMIPayment.config.apiKeySandbox');
-        $apiPassword = $systemConfigService->get($isLive ? 'NMIPayment.config.apiPasswordLive' : 'NMIPayment.config.apiPasswordSandbox');
-        $this->privateKey = $systemConfigService->get($isLive ? 'NMIPayment.config.privateKeyApi' : 'NMIPayment.config.privateKeyApi');
+        $this->logger              = $logger;
+        $mode                      = $systemConfigService->get('NMIPayment.config.mode');
+        $isLive                    = $mode === 'live';
+        $baseUrl                   = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
+        $apiKey                    = $systemConfigService->get($isLive ? 'NMIPayment.config.apiKeyLive' : 'NMIPayment.config.apiKeySandbox');
+        $apiPassword               = $systemConfigService->get($isLive ? 'NMIPayment.config.apiPasswordLive' : 'NMIPayment.config.apiPasswordSandbox');
+        $this->privateKey          = $systemConfigService->get($isLive ? 'NMIPayment.config.privateKeyApi' : 'NMIPayment.config.privateKeyApi');
 
         $this->client = new Client(['base_uri' => $baseUrl->value]);
-        $this->token = base64_encode(trim($apiKey) . ':' . trim($apiPassword));
+        $this->token  = base64_encode(trim($apiKey) . ':' . trim($apiPassword));
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln("Test command!");
-//        dump($this->createTransactionRecurring());
-      dd($this->createTransactionRecurring());
+        //        dump($this->createTransactionRecurring());
+        dd($this->createTransactionRecurring());
         return Command::SUCCESS;
     }
 
@@ -82,14 +81,14 @@ class TestCommand extends Command
 
     public function createTransaction(array $queryParams): ?array
     {
-//        $queryParams = [
-//            'type' => 'sale',
-//            'security_key' => $this->privateKey,
-//            'ccnumber' => '4111111111111111',
-//            'ccexp' => '1220',
-//            'ccvcode' => '123',
-//            'amount' => 1889.00,
-//        ];
+        //        $queryParams = [
+        //            'type' => 'sale',
+        //            'security_key' => $this->privateKey,
+        //            'ccnumber' => '4111111111111111',
+        //            'ccexp' => '1220',
+        //            'ccvcode' => '123',
+        //            'amount' => 1889.00,
+        //        ];
 
         $options = [
             'headers' => [
@@ -107,12 +106,12 @@ class TestCommand extends Command
 
     public function createTransactionVoid(array $queryParams): ?array
     {
-//        $queryParams = [
-//            'type' => 'void',
-//            'security_key' => $this->privateKey,
-//            'amount' => $amount,
-//            'transactionid' => $transactionId
-//        ];
+        //        $queryParams = [
+        //            'type' => 'void',
+        //            'security_key' => $this->privateKey,
+        //            'amount' => $amount,
+        //            'transactionid' => $transactionId
+        //        ];
 
         $options = [
             'headers' => [
@@ -130,12 +129,12 @@ class TestCommand extends Command
 
     public function createTransactionRefund(array $queryParams): ?array
     {
-//        $queryParams = [
-//            'type' => 'refund',
-//            'security_key' => $this->privateKey,
-//            'amount' => 1869.00,
-//            'transactionid' => 10086606665
-//        ];
+        //        $queryParams = [
+        //            'type' => 'refund',
+        //            'security_key' => $this->privateKey,
+        //            'amount' => 1869.00,
+        //            'transactionid' => 10086606665
+        //        ];
 
         $options = [
             'headers' => [
@@ -154,14 +153,14 @@ class TestCommand extends Command
     public function createTransactionRecurring(): ?array
     {
         $queryParams = [
-            'security_key' => $this->privateKey,
-            'ccnumber' => '4111111111111111',
-            'ccexp' => '1220',
-            'recurring' => 'add_subscription',
+            'security_key'  => $this->privateKey,
+            'ccnumber'      => '4111111111111111',
+            'ccexp'         => '1220',
+            'recurring'     => 'add_subscription',
             'plan_payments' => 1,
-            'plan_amount' => 18.00,
+            'plan_amount'   => 18.00,
             'day_frequency' => 30,
-            'start_date' => '20241209'
+            'start_date'    => '20241209'
         ];
 
         $options = [
@@ -180,23 +179,23 @@ class TestCommand extends Command
 
     public function createTransactionVault(array $queryParams): ?array
     {
-//        $queryParams = [
-//            'security_key' => $this->privateKey,
-//            'customer_vault' => 'add_customer',
-//            'ccnumber' => '4111111111111111',
-//            'ccexp' => '1234',
-//            'first_name' => 'John',
-//            'last_name' => 'Smith',
-//            'company' => 'Company Inc.',
-//            'address1' => 'Apartment 2',
-//            'address2' => '1234 Main St.',
-//            'city' => 'Chicago',
-//            'state' => 'IL',
-//            'zip' => '60193',
-//            'country' => 'US',
-//            'phone' => '+1 (847) 352 4850',
-//            'email' => 'test@example.com'
-//        ];
+        //        $queryParams = [
+        //            'security_key' => $this->privateKey,
+        //            'customer_vault' => 'add_customer',
+        //            'ccnumber' => '4111111111111111',
+        //            'ccexp' => '1234',
+        //            'first_name' => 'John',
+        //            'last_name' => 'Smith',
+        //            'company' => 'Company Inc.',
+        //            'address1' => 'Apartment 2',
+        //            'address2' => '1234 Main St.',
+        //            'city' => 'Chicago',
+        //            'state' => 'IL',
+        //            'zip' => '60193',
+        //            'country' => 'US',
+        //            'phone' => '+1 (847) 352 4850',
+        //            'email' => 'test@example.com'
+        //        ];
 
         $options = [
             'headers' => [

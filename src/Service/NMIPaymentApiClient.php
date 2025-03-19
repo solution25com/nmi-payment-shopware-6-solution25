@@ -20,12 +20,12 @@ class NMIPaymentApiClient extends Endpoints
     public function __construct(SystemConfigService $systemConfigService, LoggerInterface $logger)
     {
         $this->systemConfigService = $systemConfigService;
-        $this->logger = $logger;
+        $this->logger              = $logger;
 
-        $mode = $systemConfigService->get('NMIPayment.config.mode');
+        $mode   = $systemConfigService->get('NMIPayment.config.mode');
         $isLive = $mode === 'live';
 
-        $baseUrl = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
+        $baseUrl          = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
         $this->privateKey = $systemConfigService->get($isLive ? 'NMIPayment.config.privateKeyApiLive' : 'NMIPayment.config.privateKeyApi');
 
         $this->client = new Client(['base_uri' => $baseUrl->value]);
@@ -62,19 +62,19 @@ class NMIPaymentApiClient extends Endpoints
         return $parsedResponse;
     }
 
-  public function getVaultedCustomer(array $queryParams): ?array
-  {
-    $options = [
-      'headers' => [
-        'accept' => 'application/json',
-        'Content-type' => 'application/json',
-      ],
-      'query' => $queryParams
-    ];
+    public function getVaultedCustomer(array $queryParams): ?array
+    {
+        $options = [
+          'headers' => [
+            'accept'       => 'application/json',
+            'Content-type' => 'application/json',
+          ],
+          'query' => $queryParams
+        ];
 
-    $response = $this->request(self::getEndpoint(self::VAULTEDCUSTOMER), $options);
-    parse_str($response->getBody()->getContents(), $parsedResponse);
-    json_encode($parsedResponse, JSON_PRETTY_PRINT);
-    return $parsedResponse;
-  }
+        $response = $this->request(self::getEndpoint(self::VAULTEDCUSTOMER), $options);
+        parse_str($response->getBody()->getContents(), $parsedResponse);
+        json_encode($parsedResponse, JSON_PRETTY_PRINT);
+        return $parsedResponse;
+    }
 }

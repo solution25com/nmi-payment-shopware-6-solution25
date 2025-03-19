@@ -18,7 +18,6 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
 use Symfony\Component\HttpFoundation\Response;
 
-
 class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
 {
     private EntityRepository $customerRepository;
@@ -26,15 +25,16 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
     private VaultedCustomerService $vaultedCustomerService;
     private NMIConfigService $configService;
 
-    public function __construct(EntityRepository $customerRepository,
-                                NMIPaymentApiClient $nmiPaymentApiClient,
-                                VaultedCustomerService $vaultedCustomerService,
-                                NMIConfigService $configService)
-    {
-        $this->customerRepository = $customerRepository;
-        $this->nmiPaymentApiClient = $nmiPaymentApiClient;
+    public function __construct(
+        EntityRepository $customerRepository,
+        NMIPaymentApiClient $nmiPaymentApiClient,
+        VaultedCustomerService $vaultedCustomerService,
+        NMIConfigService $configService
+    ) {
+        $this->customerRepository     = $customerRepository;
+        $this->nmiPaymentApiClient    = $nmiPaymentApiClient;
         $this->vaultedCustomerService = $vaultedCustomerService;
-        $this->configService = $configService;
+        $this->configService          = $configService;
     }
 
     /**
@@ -43,114 +43,108 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-          AccountEditOrderPageLoadedEvent::Class => 'addPaymentMethodSpecificToAccountOrder',
-          CheckoutConfirmPageLoadedEvent::class => 'addPaymentMethodSpecificFormFields',
+          AccountEditOrderPageLoadedEvent::class => 'addPaymentMethodSpecificToAccountOrder',
+          CheckoutConfirmPageLoadedEvent::class  => 'addPaymentMethodSpecificFormFields',
         ];
     }
 
     public function addPaymentMethodSpecificFormFields(CheckoutConfirmPageLoadedEvent $event): void
     {
-      $threeDS = $this->configService->getConfig('threeDS');
-      $context = $event->getContext();
-      $pageObject = $event->getPage();
-//      dd($pageObject->getCart());
-      $amount = $pageObject->getCart()->getPrice()->getTotalPrice();
-      $salesChannelContext = $event->getSalesChannelContext();
-      $selectedPaymentGateway = $salesChannelContext->getPaymentMethod();
-      $isGuest = $salesChannelContext->getCustomer()->getGuest();
-      $templateVariables = new CheckoutTemplateCustomData();
-      if ($selectedPaymentGateway->getHandlerIdentifier() == CreditCard::class) {
+        $threeDS    = $this->configService->getConfig('threeDS');
+        $context    = $event->getContext();
+        $pageObject = $event->getPage();
+        //      dd($pageObject->getCart());
+        $amount                 = $pageObject->getCart()->getPrice()->getTotalPrice();
+        $salesChannelContext    = $event->getSalesChannelContext();
+        $selectedPaymentGateway = $salesChannelContext->getPaymentMethod();
+        $isGuest                = $salesChannelContext->getCustomer()->getGuest();
+        $templateVariables      = new CheckoutTemplateCustomData();
+        if ($selectedPaymentGateway->getHandlerIdentifier() == CreditCard::class) {
+            $customerId = $salesChannelContext->getCustomer()->getId();
+            //          $currency = $salesChannelContext->getCurrency()->getIsoCode();
+            $isCardSaved       = $this->vaultedCustomerService->vaultedCustomerExist($context, $customerId);
+            $vaultedCustomerId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $customerId) ?? null;
+            $billingId         = $this->vaultedCustomerService->getBillingIdFromCustomerId($context, $customerId);
+            $cardsDropdown     = $this->vaultedCustomerService->dropdownCards($context, $customerId);
 
-        $customerId = $salesChannelContext->getCustomer()->getId();
-//          $currency = $salesChannelContext->getCurrency()->getIsoCode();
-        $isCardSaved = $this->vaultedCustomerService->vaultedCustomerExist($context, $customerId);
-        $vaultedCustomerId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $customerId) ?? null;
-        $billingId = $this->vaultedCustomerService->getBillingIdFromCustomerId($context, $customerId);
-        $cardsDropdown = $this->vaultedCustomerService->dropdownCards($context,$customerId);
-
-        $templateVariables->assign([
-          'template' => '@Storefront/nmi-payment/credit-card.html.twig',
-          'threeDS' => $threeDS,
-          'isGuest' => $isGuest,
-          'gateway' => 'creditCard',
-          'saveCardBackend' => $isCardSaved,
-          'vaultedId' => $vaultedCustomerId,
-          'amount' => $amount,
-          'billingId' => $billingId,
-          'cardsDropdown' => json_encode($cardsDropdown),
+            $templateVariables->assign([
+              'template'        => '@Storefront/nmi-payment/credit-card.html.twig',
+              'threeDS'         => $threeDS,
+              'isGuest'         => $isGuest,
+              'gateway'         => 'creditCard',
+              'saveCardBackend' => $isCardSaved,
+              'vaultedId'       => $vaultedCustomerId,
+              'amount'          => $amount,
+              'billingId'       => $billingId,
+              'cardsDropdown'   => json_encode($cardsDropdown),
 //                'currency' => $currency,
-        ]);
-        $pageObject->addExtension(
-          CheckoutTemplateCustomData::EXTENSION_NAME,
-          $templateVariables
-        );
-      } elseif ($selectedPaymentGateway->getHandlerIdentifier() == AchEcheck::class) {
-        $templateVariables->assign([
-          'template' => '@Storefront/nmi-payment/ach-eCheck.html.twig',
-          'isGuestLogin' => $isGuest,
-          'amount' => $amount,
-          'gateway' => 'achEcheck',
-        ]);
-        $pageObject->addExtension(
-          CheckoutTemplateCustomData::EXTENSION_NAME,
-          $templateVariables
-        );
-      }
-      $lineItemPayloads = [];
-      $isSubscription = false;
-
-      $card = $event->getPage()->getCart()->getLineItems()->getElements();
-
-      foreach ($card as $lineItem) {
-        if (isset($lineItem->getPayload()['isSubscription'])) {
-          $isSubscription = true;
-          break;
+            ]);
+            $pageObject->addExtension(
+                CheckoutTemplateCustomData::EXTENSION_NAME,
+                $templateVariables
+            );
+        } elseif ($selectedPaymentGateway->getHandlerIdentifier() == AchEcheck::class) {
+            $templateVariables->assign([
+              'template'     => '@Storefront/nmi-payment/ach-eCheck.html.twig',
+              'isGuestLogin' => $isGuest,
+              'amount'       => $amount,
+              'gateway'      => 'achEcheck',
+            ]);
+            $pageObject->addExtension(
+                CheckoutTemplateCustomData::EXTENSION_NAME,
+                $templateVariables
+            );
         }
-      }
+        $lineItemPayloads = [];
+        $isSubscription   = false;
+
+        $card = $event->getPage()->getCart()->getLineItems()->getElements();
+
+        foreach ($card as $lineItem) {
+            if (isset($lineItem->getPayload()['isSubscription'])) {
+                $isSubscription = true;
+                break;
+            }
+        }
 
 
-      if ($isSubscription) {
-        $paymentMethods = $pageObject->getPaymentMethods();
-        $filteredPaymentMethods = $paymentMethods->filter(function (PaymentMethodEntity $paymentMethod) {
-          return $paymentMethod->getHandlerIdentifier() == CreditCard::class;
-        });
-        $pageObject->setPaymentMethods($filteredPaymentMethods);
-      }
+        if ($isSubscription) {
+            $paymentMethods         = $pageObject->getPaymentMethods();
+            $filteredPaymentMethods = $paymentMethods->filter(function (PaymentMethodEntity $paymentMethod) {
+                return $paymentMethod->getHandlerIdentifier() == CreditCard::class;
+            });
+            $pageObject->setPaymentMethods($filteredPaymentMethods);
+        }
     }
 
-  public function addPaymentMethodSpecificToAccountOrder($event): void
-  {
+    public function addPaymentMethodSpecificToAccountOrder($event): void
+    {
+        $pageObject             = $event->getPage();
+        $context                = $event->getContext();
+        $salesChannelContext    = $event->getSalesChannelContext();
+        $selectedPaymentGateway = $salesChannelContext->getPaymentMethod();
+        $templateVariables      = new CheckoutTemplateCustomData();
+        if ($selectedPaymentGateway->getHandlerIdentifier() == CreditCard::class) {
+            $customerId        = $salesChannelContext->getCustomer()->getId();
+            $isCardSaved       = $this->vaultedCustomerService->vaultedCustomerExist($context, $customerId);
+            $vaultedCustomerId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $customerId) ?? null;
+            $billingId         = $this->vaultedCustomerService->getBillingIdFromCustomerId($context, $customerId);
+            $cardsDropdown     = $this->vaultedCustomerService->dropdownCards($context, $customerId);
 
-    $pageObject = $event->getPage();
-    $context = $event->getContext();
-    $salesChannelContext = $event->getSalesChannelContext();
-    $selectedPaymentGateway = $salesChannelContext->getPaymentMethod();
-    $templateVariables = new CheckoutTemplateCustomData();
-    if ($selectedPaymentGateway->getHandlerIdentifier() == CreditCard::class) {
-      $customerId = $salesChannelContext->getCustomer()->getId();
-      $isCardSaved = $this->vaultedCustomerService->vaultedCustomerExist($context, $customerId);
-      $vaultedCustomerId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $customerId) ?? null;
-      $billingId = $this->vaultedCustomerService->getBillingIdFromCustomerId($context, $customerId);
-      $cardsDropdown = $this->vaultedCustomerService->dropdownCards($context,$customerId);
 
-
-        $templateVariables->assign([
-          'template' => '@Storefront/nmi-payment/credit-card.html.twig',
-        'gateway' => 'creditCard',
-        'saveCardBackend' => $isCardSaved,
-        'vaultedId' => $vaultedCustomerId,
-        'billingId' => $billingId,
-        'cardsDropdown' => json_encode($cardsDropdown),
+            $templateVariables->assign([
+              'template'      => '@Storefront/nmi-payment/credit-card.html.twig',
+            'gateway'         => 'creditCard',
+            'saveCardBackend' => $isCardSaved,
+            'vaultedId'       => $vaultedCustomerId,
+            'billingId'       => $billingId,
+            'cardsDropdown'   => json_encode($cardsDropdown),
 //                'currency' => $currency,
-      ]);
-      $pageObject->addExtension(
-        CheckoutTemplateCustomData::EXTENSION_NAME,
-        $templateVariables
-      );
+            ]);
+            $pageObject->addExtension(
+                CheckoutTemplateCustomData::EXTENSION_NAME,
+                $templateVariables
+            );
+        }
     }
-
-  }
-
-
-
 }

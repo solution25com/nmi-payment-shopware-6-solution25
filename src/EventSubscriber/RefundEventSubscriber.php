@@ -16,86 +16,82 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class RefundEventSubscriber implements EventSubscriberInterface
 {
+    private NmiTransactionService $nmiTransactionService;
+    private NMIPaymentApiClient $nmiPaymentApiClient;
+    private EntityRepository $orderReturnRepository;
+    private EntityRepository $orderTransactionRepository;
+    private OrderTransactionStateHandler $transactionStateHandler;
+    private NmiConfigService $nmiConfigService;
+    private LoggerInterface $logger;
 
-  private NmiTransactionService $nmiTransactionService;
-  private NMIPaymentApiClient $nmiPaymentApiClient;
-  private EntityRepository $orderReturnRepository;
-  private EntityRepository $orderTransactionRepository;
-  private OrderTransactionStateHandler $transactionStateHandler;
-  private NmiConfigService $nmiConfigService;
-  private LoggerInterface $logger;
+    public function __construct(
+        NmiTransactionService $nmiTransactionService,
+        NMIPaymentApiClient $NMIPaymentApiClient,
+        EntityRepository $orderReturnRepository,
+        EntityRepository $orderTransactionRepository,
+        OrderTransactionStateHandler $transactionStateHandler,
+        NMIConfigService $configService,
+        LoggerInterface $logger
+    ) {
+        $this->nmiTransactionService      = $nmiTransactionService;
+        $this->nmiPaymentApiClient        = $NMIPaymentApiClient;
+        $this->orderReturnRepository      = $orderReturnRepository;
+        $this->orderTransactionRepository = $orderTransactionRepository;
+        $this->transactionStateHandler    = $transactionStateHandler;
+        $this->nmiConfigService           = $configService;
+        $this->logger                     = $logger;
+    }
 
-  public function __construct(
-    NmiTransactionService $nmiTransactionService,
-    NMIPaymentApiClient          $NMIPaymentApiClient,
-    EntityRepository           $orderReturnRepository,
-    EntityRepository           $orderTransactionRepository,
-    OrderTransactionStateHandler $transactionStateHandler,
-    NMIConfigService           $configService,
-    LoggerInterface            $logger)
-  {
-    $this->nmiTransactionService = $nmiTransactionService;
-    $this->nmiPaymentApiClient = $NMIPaymentApiClient;
-    $this->orderReturnRepository = $orderReturnRepository;
-    $this->orderTransactionRepository = $orderTransactionRepository;
-    $this->transactionStateHandler = $transactionStateHandler;
-    $this->nmiConfigService = $configService;
-    $this->logger = $logger;
-  }
+    public static function getSubscribedEvents()
+    {
+        return [
+          'state_enter.order_return.state.in_progress' => 'onProgressRefund'
+        ];
+    }
 
-  public static function getSubscribedEvents()
-  {
-    return [
-      'state_enter.order_return.state.in_progress' => 'onProgressRefund'
-    ];
-  }
-
-  public function onProgressRefund(OrderStateMachineStateChangeEvent $event): void
-  {
-  try{
-
-    $context = $event->getContext();
-    $order = $event->getOrder();
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('orderId', $order->getId()));
-    $orderReturn = $this->orderReturnRepository->search($criteria, $context)->first();
-    $transaction = $this->nmiTransactionService->getTransactionByOrderId($order->getId(), $context);
-    $orderTransactionId = $this->getOrderTransactionIdByOrderId($order->getId(), $context);
-    $orderTotalAmount = $order->getAmountTotal();
+    public function onProgressRefund(OrderStateMachineStateChangeEvent $event): void
+    {
+        try {
+            $context  = $event->getContext();
+            $order    = $event->getOrder();
+            $criteria = new Criteria();
+            $criteria->addFilter(new EqualsFilter('orderId', $order->getId()));
+            $orderReturn        = $this->orderReturnRepository->search($criteria, $context)->first();
+            $transaction        = $this->nmiTransactionService->getTransactionByOrderId($order->getId(), $context);
+            $orderTransactionId = $this->getOrderTransactionIdByOrderId($order->getId(), $context);
+            $orderTotalAmount   = $order->getAmountTotal();
 
 
-    if ($transaction && strtolower($transaction->getStatus()) == strtolower(TransactionStatuses::PAID->value)) {
-      $postData = [
-        'security_key' => $this->nmiConfigService->getConfig('privateKeyApi'),
-        'type' => 'refund',
-        'transactionid' => $transaction->getTransactionId(),
-        'payment' => 'creditcard',
-        'amount' => $orderReturn->getAmountTotal(),
-      ];
+            if ($transaction && strtolower($transaction->getStatus()) == strtolower(TransactionStatuses::PAID->value)) {
+                $postData = [
+                  'security_key'  => $this->nmiConfigService->getConfig('privateKeyApi'),
+                  'type'          => 'refund',
+                  'transactionid' => $transaction->getTransactionId(),
+                  'payment'       => 'creditcard',
+                  'amount'        => $orderReturn->getAmountTotal(),
+                ];
 
-      $response = $this->nmiPaymentApiClient->createTransaction($postData);
-      if($response['responsetext'] == 'SUCCESS') {
-        if($orderReturn->getAmountTotal() == $orderTotalAmount) {
-          $this->transactionStateHandler->refund($orderTransactionId, $context);
-        }else {
-          $this->transactionStateHandler->refundPartially($orderTransactionId, $context);
+                $response = $this->nmiPaymentApiClient->createTransaction($postData);
+                if ($response['responsetext'] == 'SUCCESS') {
+                    if ($orderReturn->getAmountTotal() == $orderTotalAmount) {
+                        $this->transactionStateHandler->refund($orderTransactionId, $context);
+                    } else {
+                        $this->transactionStateHandler->refundPartially($orderTransactionId, $context);
+                    }
+                }
+            }
+        } catch (\Exception $exception) {
         }
-
-      }
     }
-  }
-  catch (\Exception $exception){
-  }
-  }
 
-  private function getOrderTransactionIdByOrderId($orderId, $context)
-  {
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-    $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
-    if ($orderTransaction) {
-      return $orderTransaction->getId();
+    private function getOrderTransactionIdByOrderId($orderId, $context)
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+        if ($orderTransaction) {
+            return $orderTransaction->getId();
+        }
+        return null;
     }
-    return null;
-  }
 }

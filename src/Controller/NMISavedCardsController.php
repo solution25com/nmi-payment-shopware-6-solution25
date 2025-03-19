@@ -13,9 +13,8 @@ use Symfony\Component\Routing\Annotation\Route;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Request;
 
-
 #[Route(defaults: ['_routeScope' => ['storefront']])]
-class NMISavedCardsController  extends StorefrontController
+class NMISavedCardsController extends StorefrontController
 {
     private EntityRepository $vaultedCustomerRepository;
     private NMIVaultedCustomerService $nmiVaultedCustomerService;
@@ -26,110 +25,109 @@ class NMISavedCardsController  extends StorefrontController
         $this->nmiVaultedCustomerService = $nmiVaultedCustomerService;
     }
 
-  #[Route(path: '/account/nmi-saved-cards', name: 'frontend.account.nmi-saved-cards.page', methods: ['GET'])]
-  public function index(SalesChannelContext $context): Response
-  {
-    $customerId = $context->getCustomer()?->getId();
+    #[Route(path: '/account/nmi-saved-cards', name: 'frontend.account.nmi-saved-cards.page', methods: ['GET'])]
+    public function index(SalesChannelContext $context): Response
+    {
+        $customerId = $context->getCustomer()?->getId();
 
-    if (!$customerId) {
-      return $this->redirectToRoute('frontend.account.login.page');
-    }
-
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('customerId', $customerId));
-
-    $savedCards = $this->vaultedCustomerRepository->search($criteria, $context->getContext())->getElements();
-    $defaultBilling = null;
-
-    if (count($savedCards) > 0) {
-      $defaultBilling = json_decode($savedCards[key($savedCards)]->defaultBilling, true)[0] ?? null;
-    }
-
-    $formattedCards = [];
-
-    foreach ($savedCards as $card) {
-      $billingData = json_decode($card->getBillingId(), true);
-      if (is_array($billingData)) {
-        foreach ($billingData as $billingEntry) {
-          $firstSixDigits = substr($billingEntry['lastDigits'], 0, 6);
-//          $cardType = $this->detectCardType($firstSixDigits);
-
-          $formattedCards[] = [
-            'vaultedCustomerId' => $card->getVaultedCustomerId(),
-            'billingId' => $billingEntry['billingId'],
-            'cardType' => $billingEntry['cardType'],
-            'lastDigits' => $billingEntry['lastDigits'] ?? 'XXXX',
-            'firstName' => $billingEntry['firstName'] ?? 'Unknown',
-            'lastName' => $billingEntry['lastName'] ?? 'Unknown',
-            'ccexp' => $billingEntry['ccexp'] ?? '',
-            'name' => $billingEntry['firstName'] ?? 'Unknown',
-            'created_at' => $card->getCreatedAt(),
-            'isDefault' => ($defaultBilling && $defaultBilling['billingId'] == $billingEntry['billingId']) // Compare to set default
-          ];
+        if (!$customerId) {
+            return $this->redirectToRoute('frontend.account.login.page');
         }
-      }
+
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('customerId', $customerId));
+
+        $savedCards     = $this->vaultedCustomerRepository->search($criteria, $context->getContext())->getElements();
+        $defaultBilling = null;
+
+        if (count($savedCards) > 0) {
+            $defaultBilling = json_decode($savedCards[key($savedCards)]->defaultBilling, true)[0] ?? null;
+        }
+
+        $formattedCards = [];
+
+        foreach ($savedCards as $card) {
+            $billingData = json_decode($card->getBillingId(), true);
+            if (is_array($billingData)) {
+                foreach ($billingData as $billingEntry) {
+                    $firstSixDigits = substr($billingEntry['lastDigits'], 0, 6);
+                    //          $cardType = $this->detectCardType($firstSixDigits);
+
+                    $formattedCards[] = [
+                      'vaultedCustomerId' => $card->getVaultedCustomerId(),
+                      'billingId'         => $billingEntry['billingId'],
+                      'cardType'          => $billingEntry['cardType'],
+                      'lastDigits'        => $billingEntry['lastDigits'] ?? 'XXXX',
+                      'firstName'         => $billingEntry['firstName']  ?? 'Unknown',
+                      'lastName'          => $billingEntry['lastName']   ?? 'Unknown',
+                      'ccexp'             => $billingEntry['ccexp']      ?? '',
+                      'name'              => $billingEntry['firstName']  ?? 'Unknown',
+                      'created_at'        => $card->getCreatedAt(),
+                      'isDefault'         => ($defaultBilling && $defaultBilling['billingId'] == $billingEntry['billingId']) // Compare to set default
+                    ];
+                }
+            }
+        }
+
+        return $this->renderStorefront('@Storefront/storefront/page/account/nmi-saved-cards.html.twig', [
+          'savedCards'     => $formattedCards,
+          'defaultBilling' => $defaultBilling
+        ]);
     }
 
-    return $this->renderStorefront('@Storefront/storefront/page/account/nmi-saved-cards.html.twig', [
-      'savedCards' => $formattedCards,
-      'defaultBilling' => $defaultBilling
-    ]);
-  }
+    #[Route(path: '/account/delete-billing-id', name: 'frontend.account.delete-billing-id', methods: ['POST'])]
+    public function deleteBilling(Request $request, SalesChannelContext $context): Response
+    {
+        $data = json_decode($request->getContent(), true);
 
-  #[Route(path: '/account/delete-billing-id', name: 'frontend.account.delete-billing-id', methods: ['POST'])]
-  public function deleteBilling(Request $request, SalesChannelContext $context): Response
-  {
-    $data = json_decode($request->getContent(), true);
+        if (!isset($data['vaulted_customer_id']) || !isset($data['billing_id'])) {
+            return new JsonResponse(
+                'Missing required parameters: vaulted_customer_id or billing_id.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
-    if (!isset($data['vaulted_customer_id']) || !isset($data['billing_id'])) {
-      return new JsonResponse(
-        'Missing required parameters: vaulted_customer_id or billing_id.',
-        Response::HTTP_BAD_REQUEST
-      );
+        try {
+            $response = $this->nmiVaultedCustomerService->deleteBillingRecord(
+                $data['vaulted_customer_id'],
+                $data['billing_id'],
+                $context
+            );
+
+            return new JsonResponse(['message' => 'Billing record deleted successfully.'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                'Billing processing failed due to an internal error: ' . $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
-    try {
-      $response = $this->nmiVaultedCustomerService->deleteBillingRecord(
-        $data['vaulted_customer_id'],
-        $data['billing_id'],
-        $context
-      );
+    #[Route(path: '/account/set-default-billing-id', name: 'frontend.account.set-default-billing-id', methods: ['POST'])]
+    public function setDefaultBilling(Request $request, SalesChannelContext $context): Response
+    {
+        $data = json_decode($request->getContent(), true);
 
-      return new JsonResponse(['message' => 'Billing record deleted successfully.'], Response::HTTP_OK);
+        if (!isset($data['vaulted_customer_id']) || !isset($data['billing_id'])) {
+            return new JsonResponse(
+                'Missing required parameters: vaulted_customer_id or billing_id.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
 
-    } catch (\Exception $e) {
-      return new JsonResponse(
-        'Billing processing failed due to an internal error: ' . $e->getMessage(),
-        Response::HTTP_INTERNAL_SERVER_ERROR
-      );
-    }
-  }
+        try {
+            $this->nmiVaultedCustomerService->setDefaultBilling($data['vaulted_customer_id'], $data['billing_id'], $context);
 
-  #[Route(path: '/account/set-default-billing-id', name: 'frontend.account.set-default-billing-id', methods: ['POST'])]
-  public function setDefaultBilling(Request $request, SalesChannelContext $context): Response
-  {
-    $data = json_decode($request->getContent(), true);
-
-    if (!isset($data['vaulted_customer_id']) || !isset($data['billing_id'])) {
-      return new JsonResponse(
-        'Missing required parameters: vaulted_customer_id or billing_id.',
-        Response::HTTP_BAD_REQUEST
-      );
+            return new JsonResponse(['message' => 'Default billing updated successfully.'], Response::HTTP_OK);
+        } catch (\Exception $e) {
+            return new JsonResponse(
+                'Payment processing failed due to an internal error: ' . $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
+        }
     }
 
-    try {
-      $this->nmiVaultedCustomerService->setDefaultBilling($data['vaulted_customer_id'], $data['billing_id'], $context);
-
-      return new JsonResponse(['message' => 'Default billing updated successfully.'], Response::HTTP_OK);
-    } catch (\Exception $e) {
-      return new JsonResponse(
-        'Payment processing failed due to an internal error: ' . $e->getMessage(),
-        Response::HTTP_INTERNAL_SERVER_ERROR
-      );
-    }
-  }
-
-  #[Route(path: '/account/nmi-saved-cards/save', name: 'frontend.account.nmi-saved-cards.save', methods: ['POST'])]
+    #[Route(path: '/account/nmi-saved-cards/save', name: 'frontend.account.nmi-saved-cards.save', methods: ['POST'])]
     public function saveCard(Request $request, SalesChannelContext $context): Response
     {
         $customer = $context->getCustomer();
@@ -138,11 +136,11 @@ class NMISavedCardsController  extends StorefrontController
         }
 
         $data = [
-            'customerId' => $customer->getId(),
-            'cardType' => $request->request->get('cardType'),
+            'customerId'        => $customer->getId(),
+            'cardType'          => $request->request->get('cardType'),
             'vaultedCustomerId' => $request->request->get('vaultedCustomerId'),
-            'createdAt' => new \DateTime(),
-            'updatedAt' => new \DateTime(),
+            'createdAt'         => new \DateTime(),
+            'updatedAt'         => new \DateTime(),
         ];
 
         $this->vaultedCustomerRepository->upsert([$data], $context->getContext());
@@ -150,29 +148,28 @@ class NMISavedCardsController  extends StorefrontController
         return $this->redirectToRoute('frontend.account.nmi-saved-cards.page');
     }
 
-  private function detectCardType(string $number): string
-  {
-    $re = [
-      'visa' => '/^4[0-9]{5}/',
-      'mastercard' => '/^5[1-5][0-9]{4}/',
-      'amex' => '/^3[47][0-9]{4}/',
-      'diners' => '/^3(?:0[0-5]|[68][0-9])[0-9]/',
-      'discover' => '/^6(?:011|5[0-9]{2})[0-9]/',
-      'jcb' => '/^(?:2131|1800|35\d{2})/',
-      'unionpay' => '/^(62|88)/',
-      'maestro' => '/^(5018|5020|5038|5612|5893|6304|6759|6761|6762|6763|0604|6390)/',
-      'electron' => '/^(4026|417500|4405|4508|4844|4913|4917)/',
-      'dankort' => '/^(5019)/',
-      'interpayment' => '/^(636)/',
-    ];
+    private function detectCardType(string $number): string
+    {
+        $re = [
+          'visa'         => '/^4[0-9]{5}/',
+          'mastercard'   => '/^5[1-5][0-9]{4}/',
+          'amex'         => '/^3[47][0-9]{4}/',
+          'diners'       => '/^3(?:0[0-5]|[68][0-9])[0-9]/',
+          'discover'     => '/^6(?:011|5[0-9]{2})[0-9]/',
+          'jcb'          => '/^(?:2131|1800|35\d{2})/',
+          'unionpay'     => '/^(62|88)/',
+          'maestro'      => '/^(5018|5020|5038|5612|5893|6304|6759|6761|6762|6763|0604|6390)/',
+          'electron'     => '/^(4026|417500|4405|4508|4844|4913|4917)/',
+          'dankort'      => '/^(5019)/',
+          'interpayment' => '/^(636)/',
+        ];
 
-    foreach ($re as $key => $pattern) {
-      if (preg_match($pattern, $number)) {
-        return ucfirst($key);
-      }
+        foreach ($re as $key => $pattern) {
+            if (preg_match($pattern, $number)) {
+                return ucfirst($key);
+            }
+        }
+
+        return 'Unknown';
     }
-
-    return 'Unknown';
-  }
-
 }

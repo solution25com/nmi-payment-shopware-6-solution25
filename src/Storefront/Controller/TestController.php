@@ -11,10 +11,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class TestController extends StorefrontController
 {
-  #[Route(path: '/example', name: 'frontend.example.example', methods: ['GET'])]
-  public function showExample(): Response
-  {
-    return $this->renderStorefront('@SwagBasicExample/storefront/page/example.html.twig', [
-    ]);
-  }
+    #[Route(path: '/example', name: 'frontend.example.example', methods: ['GET'])]
+    public function showExample(): Response
+    {
+        return $this->renderStorefront('@SwagBasicExample/storefront/page/example.html.twig', [
+        ]);
+    }
 }

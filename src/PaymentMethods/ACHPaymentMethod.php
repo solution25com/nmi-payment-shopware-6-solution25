@@ -6,7 +6,6 @@ use NMIPayment\Gateways\AchEcheck;
 
 class ACHPaymentMethod implements PaymentMethodInterface
 {
-
     /**
      * @inheritDoc
      */

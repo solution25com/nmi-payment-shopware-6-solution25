@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Core\Content\VaultedCustomer;
 
@@ -7,64 +9,74 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityIdTrait;
 
 class VaultedCustomerEntity extends Entity
 {
-  use EntityIdTrait;
+    use EntityIdTrait;
 
-  protected $id;
+    protected $id;
 
-  protected ?String $customerId;
+    protected ?string $customerId;
 
-  protected  $vaultedCustomerId;
+    protected $vaultedCustomerId;
 
-  protected  $cardType;
+    protected $cardType;
 
-  protected  $billingId;
-  protected $defaultBilling;
+    protected $billingId;
+    protected $defaultBilling;
 
-  public function getId(): string
-  {
-    return $this->id;
-  }
+    public function getId(): string
+    {
+        return $this->id;
+    }
 
-  public function setId(string $id): void{
-    $this->id = $id;
-  }
+    public function setId(string $id): void
+    {
+        $this->id = $id;
+    }
 
-  public function getCustomerId(): ?String{
-    return $this->customerId;
-  }
+    public function getCustomerId(): ?string
+    {
+        return $this->customerId;
+    }
 
-  public function setCustomerId(?String $customerId): void{
-    $this->customerId = $customerId;
-  }
+    public function setCustomerId(?string $customerId): void
+    {
+        $this->customerId = $customerId;
+    }
 
-  public function getVaultedCustomerId(){
-    return $this->vaultedCustomerId;
-  }
+    public function getVaultedCustomerId()
+    {
+        return $this->vaultedCustomerId;
+    }
 
-  public function setVaultedCustomerId(string $vaultedCustomerId): void{
-    $this->vaultedCustomerId = $vaultedCustomerId;
-  }
+    public function setVaultedCustomerId(string $vaultedCustomerId): void
+    {
+        $this->vaultedCustomerId = $vaultedCustomerId;
+    }
 
-  public function getCardType(){
-    return $this->cardType;
-  }
-  public function setCardType(string $cardType): void{
-    $this->cardType = $cardType;
-  }
+    public function getCardType()
+    {
+        return $this->cardType;
+    }
+    public function setCardType(string $cardType): void
+    {
+        $this->cardType = $cardType;
+    }
 
-  public function getBillingId(){
-    return $this->billingId;
-  }
-  public function setBillingId(string $billingId): void{
-    $this->billingId = $billingId;
-  }
+    public function getBillingId()
+    {
+        return $this->billingId;
+    }
+    public function setBillingId(string $billingId): void
+    {
+        $this->billingId = $billingId;
+    }
 
-  public function getDefaultBilling(){
-    return $this->defaultBilling;
-  }
+    public function getDefaultBilling()
+    {
+        return $this->defaultBilling;
+    }
 
-  public function setDefaultBilling(string $defaultBilling): void{
-    $this->defaultBilling = $defaultBilling;
-  }
-
+    public function setDefaultBilling(string $defaultBilling): void
+    {
+        $this->defaultBilling = $defaultBilling;
+    }
 }

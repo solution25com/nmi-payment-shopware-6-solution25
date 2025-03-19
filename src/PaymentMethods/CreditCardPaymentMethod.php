@@ -6,7 +6,6 @@ use NMIPayment\Gateways\CreditCard;
 
 class CreditCardPaymentMethod implements PaymentMethodInterface
 {
-
     /**
      * @inheritDoc
      */
