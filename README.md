@@ -34,7 +34,7 @@ The plugin includes advanced configuration options, such as API key management f
 - Clone the Plugin Repository:
 - Open your terminal and run the following command in your Shopware 6 custom plugins directory (usually located at custom/plugins/):
   ```
-  git clone [https://github.com/solution25com/maxmind-fraud-prevention-shopware-6-solution25.git](https://github.com/solution25com/maxmind-fraud-prevention-shopware-6-solution25.git)
+  git clone https://github.com/solution25com/nmi-payment-shopware-6-solution25.git
   ```
 
 2. **Install the Plugin in Shopware 6**
@@ -66,9 +66,8 @@ Before using the plugin, configure the following settings:
 4. **API Public Key Sandbox** – Public key for authentication in sandbox mode.
 5. **Signing Key** – Used for secure webhook communication.
 6. **Authorize and Capture** – When enabled, transactions must be manually approved before funds are captured.
-7. **ThreeDS for Credit Card** – When enabled, requires 3D Secure authentication for additional security.
-![Group 7929](https://github.com/user-attachments/assets/e93fa6f8-d008-419e-b827-637c808e25e4)
-![Group 7934](https://github.com/user-attachments/assets/173444c2-ac83-48fc-9912-99c65c2e12af)
+![Group 7971](https://github.com/user-attachments/assets/b0111a6f-b720-4d0a-90d0-2f6468896846)
+![Group 7972](https://github.com/user-attachments/assets/0fc0bfbb-2ff9-45fa-bbc3-91b942841845)
 
 Once the plugin is installed and configured, NMI payments options will be available in the storefront.
 
@@ -137,6 +136,8 @@ COLI allows admins to cancel specific items in an order without affecting the en
 ![Group 7961](https://github.com/user-attachments/assets/1e4bcafa-5b9b-4402-97dd-d348688bf7af)
 ![Group 7944](https://github.com/user-attachments/assets/4e60bf5b-3766-43f1-95a6-1f7a751f717e)
 ![Group 7956](https://github.com/user-attachments/assets/83eef18d-a447-4cbd-ba67-26548c46416e)
+
+_The Coli feature is designed to work exclusively with iPaaS (Integration Platform as a Service) solutions and similar platforms._
 
 #### 4. Refunds (Full & Partial)
 
@@ -215,6 +216,8 @@ Allows customers to securely save their card details for future transactions.
 ![Group 7970](https://github.com/user-attachments/assets/effc8f7c-7cff-4cf0-9323-49ac475b82b3)
 ![Group 7968](https://github.com/user-attachments/assets/fa430be0-cb8c-47f5-89e2-f2ff4953531d)
 ![Group 7969](https://github.com/user-attachments/assets/6052138a-53c2-4078-a875-b8586a2966f5)
+
+_Only registered users can save a card. Guest users do not have the option to save a card._
 
 ### Best Practices
 
