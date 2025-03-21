@@ -88,8 +88,7 @@ This feature allows customers to complete transactions via NMI’s payment gatew
 3. Enter credit card details into the PCI-compliant NMI form.
 4. Submit payment.
 ![Group 7935](https://github.com/user-attachments/assets/ac621b76-417d-4f1d-a4f1-af286f9cfece)
-![Group 7936](https://github.com/user-attachments/assets/942cbb94-c4e9-430a-8d23-313a0f5da568)
-
+![Group 7973](https://github.com/user-attachments/assets/3f03e15d-4dcd-4910-b69c-fca94b9e72aa)
 
 #### 2. ACH Capture
 
@@ -134,7 +133,7 @@ COLI allows admins to cancel specific items in an order without affecting the en
 3. Save the updated order.
 4. Change the payment status from **"Authorized"** to **"Paid."**
 ![Group 7961](https://github.com/user-attachments/assets/1e4bcafa-5b9b-4402-97dd-d348688bf7af)
-![Group 7944](https://github.com/user-attachments/assets/4e60bf5b-3766-43f1-95a6-1f7a751f717e)
+![Group 7974](https://github.com/user-attachments/assets/93a16109-3450-4072-99dd-d2b517dcb79e)
 ![Group 7956](https://github.com/user-attachments/assets/83eef18d-a447-4cbd-ba67-26548c46416e)
 
 _The Coli feature is designed to work exclusively with iPaaS (Integration Platform as a Service) solutions and similar platforms._
@@ -166,7 +165,7 @@ Supports full and partial refunds through NMI.
 
 ##### Full Refund:
 ![Group 7954 (1)](https://github.com/user-attachments/assets/7708bf75-53c8-4566-b0ac-644baaea57e2)
-![Group 7963](https://github.com/user-attachments/assets/a1fc4f55-b18c-411a-b4e7-813b8672c2b1)
+![Group 7975](https://github.com/user-attachments/assets/b8c6043f-e51d-42e4-9864-85b2db706057)
 ![Group 7962](https://github.com/user-attachments/assets/7b82abdb-d850-4a22-9d0d-4603ad162025)
 
 
@@ -193,7 +192,7 @@ The Mixed Card feature enables customers to purchase both regular products and s
 1. Add regular and subscription products to the cart.
 2. Proceed to checkout.
 3. Pay with a single credit card.
-![Group 7960](https://github.com/user-attachments/assets/c800ca63-115d-4326-8166-156ae21cba40)
+![Group 7981](https://github.com/user-attachments/assets/58c8c47c-754f-4631-9dd1-8e206f990d8d)
 
 #### 6. Save Card Feature
 
@@ -212,7 +211,7 @@ Allows customers to securely save their card details for future transactions.
 **Managing Saved Cards:**
 - **Delete Card**: Removes saved card details from NMI.
 - **Add Card**: Allows adding a new card for future transactions.
-![Group 7967](https://github.com/user-attachments/assets/9dd2c285-f564-4006-9ffa-e73799dcfa38)
+![Group 7982](https://github.com/user-attachments/assets/489873ba-b8e4-4404-b0cd-445221b3c5a6)
 ![Group 7970](https://github.com/user-attachments/assets/effc8f7c-7cff-4cf0-9323-49ac475b82b3)
 ![Group 7968](https://github.com/user-attachments/assets/fa430be0-cb8c-47f5-89e2-f2ff4953531d)
 ![Group 7969](https://github.com/user-attachments/assets/6052138a-53c2-4078-a875-b8586a2966f5)
