@@ -307,6 +307,6 @@ _Only registered users can save a card. Guest users do not have the option to sa
 - Check your API credentials, ensure the plugin is active, and verify payment statuses in the **Admin Panel**. Clear the cache if settings don’t save.
 
 ## Wiki Documentation
-Read more about the plugin configuration on our [Wiki]().
+Read more about the plugin configuration on our [Wiki](https://github.com/solution25com/nmi-payment-shopware-6-solution25/wiki).
 
 
