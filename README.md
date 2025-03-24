@@ -8,13 +8,13 @@ The NMI plugin allows Shopware stores to securely process payments using the NMI
 
 ### Key Features
 
-1. **Credit Card Capture**: Securely process credit card payments via NMI’s PCI-compliant payment gateway.
-2. **ACH Capture**: Enable customers to make payments directly from their bank accounts using eCheck (ACH).
-3. **Authorize and Capture**: Allows payment authorization before capturing funds, giving admins control over order approval.
-4. **COLI (Cancel Order by Line Item)**: Admins can cancel individual items within an order, enabling more precise returns and inventory management.
-5. **Refunds**: Easily process full or partial refunds for orders, providing a smooth customer service experience.
-6. **Mixed Cards**: Supports customers purchasing both standard products and subscription items using a single card.
-7. **Save Card Feature**: Enables customers to securely store their credit card information for faster future purchases.
+- **Credit Card Capture**: Securely process credit card payments via NMI’s PCI-compliant payment gateway.
+- **ACH Capture**: Enable customers to make payments directly from their bank accounts using eCheck (ACH).
+- **Authorize and Capture**: Allows payment authorization before capturing funds, giving admins control over order approval.
+- **COLI (Cancel Order by Line Item)**: Admins can cancel individual items within an order, enabling more precise returns and inventory management.
+- **Refunds**: Easily process full or partial refunds for orders, providing a smooth customer service experience.
+- **Mixed Cards**: Supports customers purchasing both standard products and subscription items using a single card.
+- **Save Card Feature**: Enables customers to securely store their credit card information for faster future purchases.
 
 The plugin includes advanced configuration options, such as API key management for live and sandbox environments, webhook signing, and 3D Secure verification for added payment security.
 
