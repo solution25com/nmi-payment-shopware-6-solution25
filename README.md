@@ -8,20 +8,13 @@ The NMI plugin allows Shopware stores to securely process payments using the NMI
 
 ### Key Features
 
-1. **Credit Card Capture**
-   - Securely process credit card payments via NMI’s PCI-compliant payment gateway.
-2. **ACH Capture**
-   - Enable customers to make payments directly from their bank accounts using eCheck (ACH).
-3. **Authorize and Capture**
-   - Allows payment authorization before capturing funds, giving admins control over order approval.
-4. **COLI (Cancel Order by Line Item)**
-   - Admins can cancel individual items within an order, enabling more precise returns and inventory management.
-5. **Refunds**
-   - Easily process full or partial refunds for orders, providing a smooth customer service experience.
-6. **Mixed Cards**
-   - Supports customers purchasing both standard products and subscription items using a single card.
-7. **Save Card Feature**
-   - Enables customers to securely store their credit card information for faster future purchases.
+1. **Credit Card Capture**: Securely process credit card payments via NMI’s PCI-compliant payment gateway.
+2. **ACH Capture**: Enable customers to make payments directly from their bank accounts using eCheck (ACH).
+3. **Authorize and Capture**: Allows payment authorization before capturing funds, giving admins control over order approval.
+4. **COLI (Cancel Order by Line Item)**: Admins can cancel individual items within an order, enabling more precise returns and inventory management.
+5. **Refunds**: Easily process full or partial refunds for orders, providing a smooth customer service experience.
+6. **Mixed Cards**: Supports customers purchasing both standard products and subscription items using a single card.
+7. **Save Card Feature**: Enables customers to securely store their credit card information for faster future purchases.
 
 The plugin includes advanced configuration options, such as API key management for live and sandbox environments, webhook signing, and 3D Secure verification for added payment security.
 
@@ -64,13 +57,13 @@ The plugin includes advanced configuration options, such as API key management f
 
 2. **General Settings**
 
-Configure the following settings:
-1. **API Key for Live**: Required for live transactions.
-2. **API Public Key Live**: Public key for authentication in the live environment.
-3. **API Key for Sandbox**: Required for testing transactions in the sandbox environment.
-4. **API Public Key Sandbox**: Public key for authentication in sandbox mode.
-5. **Signing Key**: Used for secure webhook communication.
-6. **Authorize and Capture**: When enabled, transactions must be manually approved before funds are captured.
+   Configure the following settings:
+- **API Key for Live**: Required for live transactions.
+- **API Public Key Live**: Public key for authentication in the live environment.
+- **API Key for Sandbox**: Required for testing transactions in the sandbox environment.
+- **API Public Key Sandbox**: Public key for authentication in sandbox mode.
+- **Signing Key**: Used for secure webhook communication.
+- **Authorize and Capture**: When enabled, transactions must be manually approved before funds are captured.
 ![Group 7971](https://github.com/user-attachments/assets/b0111a6f-b720-4d0a-90d0-2f6468896846)
 ![Group 7972](https://github.com/user-attachments/assets/0fc0bfbb-2ff9-45fa-bbc3-91b942841845)
 
