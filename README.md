@@ -58,14 +58,19 @@ The plugin includes advanced configuration options, such as API key management f
 
 ## Plugin Configuration
 
-Before using the plugin, configure the following settings:
+1. **Access Plugin Settings**
+- Go to Settings > System > Plugins.
+- Locate NMI and click the three dots (...) icon or the plugin name to open its settings.
 
-1. **API Key for Live** – Required for live transactions.
-2. **API Public Key Live** – Public key for authentication in the live environment.
-3. **API Key for Sandbox** – Required for testing transactions in the sandbox environment.
-4. **API Public Key Sandbox** – Public key for authentication in sandbox mode.
-5. **Signing Key** – Used for secure webhook communication.
-6. **Authorize and Capture** – When enabled, transactions must be manually approved before funds are captured.
+2. **General Settings**
+
+Configure the following settings:
+1. **API Key for Live**: Required for live transactions.
+2. **API Public Key Live**: Public key for authentication in the live environment.
+3. **API Key for Sandbox**: Required for testing transactions in the sandbox environment.
+4. **API Public Key Sandbox**: Public key for authentication in sandbox mode.
+5. **Signing Key**: Used for secure webhook communication.
+6. **Authorize and Capture**: When enabled, transactions must be manually approved before funds are captured.
 ![Group 7971](https://github.com/user-attachments/assets/b0111a6f-b720-4d0a-90d0-2f6468896846)
 ![Group 7972](https://github.com/user-attachments/assets/0fc0bfbb-2ff9-45fa-bbc3-91b942841845)
 
