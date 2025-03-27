@@ -4,7 +4,7 @@
 
 ## Introduction
 
-The NMI plugin allows Shopware stores to securely process payments using the NMI payment gateway. It supports credit card and ACH transactions, giving store owners flexibility in handling payments. The plugin also enables order authorization, refunds, and saved cards for faster checkout.
+The NMI plugin allows Shopware stores to securely process payments using the NMI payment gateway. It supports credit card and ACH transactions , giving store owners flexibility in handling payments. The plugin also enables order authorization, refunds, and saved cards for faster checkout.
 
 ### Key Features
 
