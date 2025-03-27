@@ -39,7 +39,10 @@ jobs:
         run: composer install --no-interaction --prefer-dist
 
       - name: Run Shopware Extension Verifier
-        run: go run . check --check-against=${{ matrix.version-selection }}
+        uses: shopware/github-actions/extension-verifier@main
+        with:
+          action: check
+          check-against: ${{ matrix.version-selection }}
 
       - name: Fail on Verification Errors
         if: failure()
