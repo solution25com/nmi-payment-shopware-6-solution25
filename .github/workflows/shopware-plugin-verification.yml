@@ -24,7 +24,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1' 
+          php-version: '8.1'
           tools: composer:v2
 
       - name: Set up Node.js
@@ -35,15 +35,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21' 
+          go-version: '1.21'  
 
-      - name: Ensure tools/php and tools/js directories exist
-        run: |
-          mkdir -p tools/php
-          mkdir -p tools/js
-
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --prefer-dist -d tools/php
+      - name: Install PHP dependencies (in root directory)
+        run: composer install --no-interaction --prefer-dist
 
       - name: Install Node.js dependencies
         run: npm install --prefix tools/js
