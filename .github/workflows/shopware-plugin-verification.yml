@@ -5,7 +5,7 @@ on:
     branches: [main, develop]
   push:
     tags:
-      - "v*.*.*"  
+      - "v*.*.*"
 
 jobs:
   verify-plugin:
@@ -21,16 +21,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check code style
-        run: |
-          docker run --rm -v $(pwd):/ext ghcr.io/shopwarelabs/extension-verifier:latest \
-            check /ext --only php-cs-fixer --reporter github
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'  # Adjust if needed
+          tools: composer:v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'  # Adjust based on requirements
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'  # Adjust based on requirements
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist -d tools/php
+
+      - name: Install Node.js dependencies
+        run: npm install --prefix tools/js
 
       - name: Run Shopware Extension Verifier
-        uses: shopware/github-actions/extension-verifier@main
-        with:
-          action: check
-          check-against: ${{ matrix.version-selection }}
+        run: go run . check --check-against=${{ matrix.version-selection }}
 
       - name: Fail on Verification Errors
         if: failure()
