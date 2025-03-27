@@ -37,6 +37,9 @@ jobs:
         with:
           go-version: '1.21'
 
+      - name: Allow Symfony Runtime Plugin
+        run: composer config --no-plugins allow-plugins.symfony/runtime true
+
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
 
