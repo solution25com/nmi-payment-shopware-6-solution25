@@ -19,8 +19,8 @@ class Migration1733232383NmiTransactionTable extends MigrationStep
 
     public function update(Connection $connection): void
     {
-        $sql = /** @lang text */
-          <<<SQL
+        $sql // @lang text
+          = <<<'SQL'
         CREATE TABLE IF NOT EXISTS `nmi_transaction` (
             `id` BINARY(16) NOT NULL,
             `order_id` VARCHAR(255) NOT NULL,

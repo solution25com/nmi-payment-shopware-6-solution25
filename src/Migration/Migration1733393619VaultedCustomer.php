@@ -19,8 +19,8 @@ class Migration1733393619VaultedCustomer extends MigrationStep
 
     public function update(Connection $connection): void
     {
-        $sql = /** @lang text */
-          <<<SQL
+        $sql // @lang text
+          = <<<'SQL'
         CREATE TABLE IF NOT EXISTS `nmi_vaulted_customer` (
             `id` BINARY(16) NOT NULL,
             `customer_id` Binary(16) NOT NULL,

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace NMIPayment;
 
+use NMIPayment\PaymentMethods\PaymentMethodInterface;
+use NMIPayment\PaymentMethods\PaymentMethods;
+use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Plugin;
 use Shopware\Core\Framework\Plugin\Context\ActivateContext;
 use Shopware\Core\Framework\Plugin\Context\DeactivateContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
-use Shopware\Core\Framework\Context;
-use NMIPayment\PaymentMethods\PaymentMethodInterface;
-use NMIPayment\PaymentMethods\PaymentMethods;
 
 class NMIPayment extends Plugin
 {
@@ -54,27 +54,33 @@ class NMIPayment extends Plugin
         parent::deactivate($deactivateContext);
     }
 
+    public function getDependency($name): mixed
+    {
+        return $this->container->get($name);
+    }
+
     private function addPaymentMethod(PaymentMethodInterface $paymentMethod, Context $context): void
     {
         $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
 
         $pluginIdProvider = $this->getDependency(PluginIdProvider::class);
-        $pluginId         = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
+        $pluginId = $pluginIdProvider->getPluginIdByBaseClass(static::class, $context);
 
         if ($paymentMethodId) {
             $this->setPluginId($paymentMethodId, $pluginId, $context);
+
             return;
         }
 
         $pluginIdProvider = $this->container->get(PluginIdProvider::class);
-        $pluginId         = $pluginIdProvider->getPluginIdByBaseClass(get_class($this), $context);
+        $pluginId = $pluginIdProvider->getPluginIdByBaseClass(static::class, $context);
 
         $paymentData = [
             'handlerIdentifier' => $paymentMethod->getPaymentHandler(),
-            'name'              => $paymentMethod->getName(),
-            'description'       => $paymentMethod->getDescription(),
-            'pluginId'          => $pluginId,
-            'afterOrderEnabled' => true
+            'name' => $paymentMethod->getName(),
+            'description' => $paymentMethod->getDescription(),
+            'pluginId' => $pluginId,
+            'afterOrderEnabled' => true,
         ];
 
         $paymentRepository = $this->getDependency('payment_method.repository');
@@ -85,7 +91,7 @@ class NMIPayment extends Plugin
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
         $paymentMethodData = [
-            'id'       => $paymentMethodId,
+            'id' => $paymentMethodId,
             'pluginId' => $pluginId,
         ];
 
@@ -95,14 +101,14 @@ class NMIPayment extends Plugin
     private function setPaymentMethodIsActive(bool $active, Context $context, PaymentMethodInterface $paymentMethod): void
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
-        $paymentMethodId   = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
+        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
 
         if (!$paymentMethodId) {
             return;
         }
 
         $paymentMethodData = [
-            'id'     => $paymentMethodId,
+            'id' => $paymentMethodId,
             'active' => $active,
         ];
 
@@ -112,22 +118,17 @@ class NMIPayment extends Plugin
     private function getPaymentMethodId(string $paymentMethodHandler): ?string
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
-        $paymentCriteria   = (new Criteria())->addFilter(new EqualsFilter(
+        $paymentCriteria = (new Criteria())->addFilter(new EqualsFilter(
             'handlerIdentifier',
             $paymentMethodHandler
         ));
 
         $paymentIds = $paymentRepository->searchIds($paymentCriteria, Context::createDefaultContext());
 
-        if ($paymentIds->getTotal() === 0) {
+        if (0 === $paymentIds->getTotal()) {
             return null;
         }
 
         return $paymentIds->getIds()[0];
-    }
-
-    public function getDependency($name): mixed
-    {
-        return $this->container->get($name);
     }
 }

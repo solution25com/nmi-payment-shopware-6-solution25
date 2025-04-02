@@ -7,11 +7,11 @@ namespace NMIPayment\Core\Content\Transaction;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\ApiAware;
-use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
+use Shopware\Core\Framework\DataAbstractionLayer\FieldCollection;
 
 class NmiTransactionDefinition extends EntityDefinition
 {
@@ -35,13 +35,13 @@ class NmiTransactionDefinition extends EntityDefinition
     protected function defineFields(): FieldCollection
     {
         return new FieldCollection([
-          (new IdField('id', 'id'))->addFlags(new ApiAware(), new Required(), new PrimaryKey()),
-          (new StringField('order_id', 'orderId'))->addFlags(new ApiAware()),
-          (new StringField('payment_method_name', 'paymentMethodName'))->addFlags(new ApiAware()),
-          (new StringField('transaction_id', 'transactionId'))->addFlags(new ApiAware()),
-          (new StringField('subscription_transaction_id', 'subscriptionTransactionId'))->addFlags(new ApiAware()),
-          (new BoolField('isSubscription', 'isSubscription'))->addFlags(new ApiAware(), new Required()),
-          (new StringField('status', 'status'))->addFlags(new ApiAware(), new Required()),
+            (new IdField('id', 'id'))->addFlags(new ApiAware(), new Required(), new PrimaryKey()),
+            (new StringField('order_id', 'orderId'))->addFlags(new ApiAware()),
+            (new StringField('payment_method_name', 'paymentMethodName'))->addFlags(new ApiAware()),
+            (new StringField('transaction_id', 'transactionId'))->addFlags(new ApiAware()),
+            (new StringField('subscription_transaction_id', 'subscriptionTransactionId'))->addFlags(new ApiAware()),
+            (new BoolField('isSubscription', 'isSubscription'))->addFlags(new ApiAware(), new Required()),
+            (new StringField('status', 'status'))->addFlags(new ApiAware(), new Required()),
         ]);
     }
 }
