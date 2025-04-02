@@ -25,20 +25,17 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'  
-          tools: composer:v2
-
-      - name: Allow Symfony Runtime Plugin
-        run: composer config --no-plugins allow-plugins.symfony/runtime true
+          tools: composer:v2, phpstan, phpcs 
 
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
 
-      - name: Run Shopware Extension Verifier
-        uses: shopware/github-actions/extension-verifier@main
-        with:
-          action: check
-          check-against: ${{ matrix.version-selection }}
-
+      - name: Run PHPStan
+        run: phpstan analyse src --level=5
+     
+      - name: Run PHPCS
+        run: phpcs --standard=PSR12 src/
+      
       - name: Fail on Verification Errors
         if: failure()
         run: exit 1
