@@ -13,7 +13,7 @@ class VaultedCustomerEntity extends Entity
 
     protected $id;
 
-    protected ?string $customerId;
+    protected ?string $customerId = null;
 
     protected $vaultedCustomerId;
 
@@ -56,6 +56,7 @@ class VaultedCustomerEntity extends Entity
     {
         return $this->cardType;
     }
+
     public function setCardType(string $cardType): void
     {
         $this->cardType = $cardType;
@@ -65,6 +66,7 @@ class VaultedCustomerEntity extends Entity
     {
         return $this->billingId;
     }
+
     public function setBillingId(string $billingId): void
     {
         $this->billingId = $billingId;

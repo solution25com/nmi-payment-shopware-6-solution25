@@ -10,19 +10,6 @@
             <argument type="service" id="NMIPayment.logger"/>
         </service>
 
-        <service id="NMIPayment\Command\TestCommand">
-            <call method="setContainer">
-                <argument type="service" id="service_container"/>
-            </call>
-            <call method="setTwig">
-                <argument type="service" id="twig"/>
-            </call>
-            <tag name="console.command"/>
-            <argument type="service" id="product.repository"/>
-            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
-            <argument type="service" id="NMIPayment.logger"/>
-        </service>
-
         <!-- Controller -->
          <service id="NMIPayment\Controller\NMISavedCardsController">
             <tag name="controller.service_arguments"/>
@@ -106,7 +93,7 @@
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
             <argument type="service" id="order.repository"/>
             <argument type="service" id="order_transaction.repository" />
-            <argument type="service" id="partial_delivery.repository" />
+            <argument type="service" id="partial_delivery.repository" on-invalid="null" />
             <argument type="service" id="order_delivery.repository" />
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="kernel.event_subscriber"/>

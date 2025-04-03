@@ -65,3 +65,4 @@ class WebhookController
         return hash_equals($computedSig, $sig);
     }
 }
+
