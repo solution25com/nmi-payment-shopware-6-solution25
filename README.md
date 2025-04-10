@@ -1,4 +1,4 @@
-![NMI](https://github.com/user-attachments/assets/a8cf2db5-cd8b-4989-a8cc-53903b680761)
+![1](https://github.com/user-attachments/assets/c09cf2b7-ee10-47ea-8eaf-d38aac689176)
 
 # NMI Payments
 
@@ -54,7 +54,7 @@ The plugin includes advanced configuration options, such as API key management f
 
 - After activation, you will see NMI in the list of installed plugins.
 - The plugin name, version, and installation date should appear as shown in the screenshot below.
-![Group 7926](https://github.com/user-attachments/assets/224dddd0-1735-4824-970c-8d5c85282793)
+![2](https://github.com/user-attachments/assets/af23fd9d-db7f-410f-8c79-050ec32f4262)
 
 ## Plugin Configuration
 
@@ -71,8 +71,8 @@ The plugin includes advanced configuration options, such as API key management f
 - **API Public Key Sandbox**: Public key for authentication in sandbox mode.
 - **Signing Key**: Used for secure webhook communication.
 - **Authorize and Capture**: When enabled, transactions must be manually approved before funds are captured.
-![Group 7971](https://github.com/user-attachments/assets/b0111a6f-b720-4d0a-90d0-2f6468896846)
-![Group 7972](https://github.com/user-attachments/assets/0fc0bfbb-2ff9-45fa-bbc3-91b942841845)
+![3](https://github.com/user-attachments/assets/b9977302-565a-41f0-9e98-f2172f283b29)
+![4](https://github.com/user-attachments/assets/acb7ee7a-d3f7-44b2-8cb0-d6cc12aaa300)
 
 Once the plugin is installed and configured, NMI payments options will be available in the storefront.
 
@@ -92,8 +92,8 @@ This feature allows customers to complete transactions via NMI’s payment gatew
 2. Click **"Pay."**
 3. Enter credit card details into the PCI-compliant NMI form.
 4. Submit payment.
-![Group 7935](https://github.com/user-attachments/assets/ac621b76-417d-4f1d-a4f1-af286f9cfece)
-![Group 7973](https://github.com/user-attachments/assets/3f03e15d-4dcd-4910-b69c-fca94b9e72aa)
+![5](https://github.com/user-attachments/assets/22c41d90-db3b-47e8-8aa0-19f2247a4cc6)
+![6](https://github.com/user-attachments/assets/ff1af19a-2ab8-4944-a8da-80202c0e6ad6)
 
 #### 2. ACH Capture
 
@@ -120,9 +120,8 @@ This feature allows payment authorization and capture in two stages. The payment
 1. Enable the **"Authorize and Capture"** feature in plugin settings.
 2. New orders will show as **"Authorized."**
 3. Navigate to **Admin Panel → Orders**, and change the payment status to **"Paid"** or **"Cancelled."**
-![Group 7937](https://github.com/user-attachments/assets/61aa0dde-f67b-4d95-b37e-8a8eb21269dd)
-![Group 7939](https://github.com/user-attachments/assets/12cda0d9-6bde-4a18-9f5a-1d975af84f88)
-
+![7](https://github.com/user-attachments/assets/bfa3f4c0-3c46-499d-a4a0-fddf3262c3f4)
+![8](https://github.com/user-attachments/assets/a0871d2a-1717-4b1c-a823-2710d89fadc0)
 
 #### 4. COLI (Cancel Order by Line Item)
 
@@ -137,9 +136,9 @@ COLI allows admins to cancel specific items in an order without affecting the en
 2. Click **"Delete"** to remove the item(s).
 3. Save the updated order.
 4. Change the payment status from **"Authorized"** to **"Paid."**
-![Group 7961](https://github.com/user-attachments/assets/1e4bcafa-5b9b-4402-97dd-d348688bf7af)
-![Group 7974](https://github.com/user-attachments/assets/93a16109-3450-4072-99dd-d2b517dcb79e)
-![Group 7956](https://github.com/user-attachments/assets/83eef18d-a447-4cbd-ba67-26548c46416e)
+![9](https://github.com/user-attachments/assets/6d2cb70d-d343-4aba-9219-26b0088a725f)
+![10](https://github.com/user-attachments/assets/1ce9627e-0477-45b6-955e-1fd42b4424ac)
+![11](https://github.com/user-attachments/assets/35bdbb64-9848-492d-b617-580d8dfae0b3)
 
 _The Coli feature is designed to work exclusively with iPaaS (Integration Platform as a Service) solutions and similar platforms._
 
@@ -169,9 +168,9 @@ Supports full and partial refunds through NMI.
 7. Change status to **"In Progress"**.
 
 ##### Full Refund:
-![Group 7954 (1)](https://github.com/user-attachments/assets/7708bf75-53c8-4566-b0ac-644baaea57e2)
-![Group 7975](https://github.com/user-attachments/assets/b8c6043f-e51d-42e4-9864-85b2db706057)
-![Group 7962](https://github.com/user-attachments/assets/7b82abdb-d850-4a22-9d0d-4603ad162025)
+![12](https://github.com/user-attachments/assets/190aa2b7-9f65-48cb-b241-7c20201e8a01)
+![13](https://github.com/user-attachments/assets/680cf66f-1774-4ed3-b37e-cde2d80d457b)
+![14](https://github.com/user-attachments/assets/42806d50-3253-4e9e-a697-6b25b0cd2164)
 
 
 ##### Partial Refund:
@@ -181,9 +180,9 @@ Supports full and partial refunds through NMI.
 4. Save the order.
 5. Create a partial refund.
 6. Update the order status to **"In Progress"**.
-![Group 7964](https://github.com/user-attachments/assets/92ce3fb0-4d0c-486e-80a6-4477d705e302)
-![Group 7965](https://github.com/user-attachments/assets/2ab81360-ed28-4a6f-b525-c2ec8447ace5)
-![Group 7966](https://github.com/user-attachments/assets/8353a8a6-1001-40ff-99d3-841134e566cc)
+![15](https://github.com/user-attachments/assets/5784401c-08f3-47e8-9626-1d6e3232ab1e)
+![16](https://github.com/user-attachments/assets/9e6df8c0-f31f-484e-bf3d-747f7b361683)
+![17](https://github.com/user-attachments/assets/3baa353f-6987-48dc-84c7-104025324f58)
 
 #### 5. Mixed Card
 
@@ -197,7 +196,7 @@ The Mixed Card feature enables customers to purchase both regular products and s
 1. Add regular and subscription products to the cart.
 2. Proceed to checkout.
 3. Pay with a single credit card.
-![Group 7981](https://github.com/user-attachments/assets/58c8c47c-754f-4631-9dd1-8e206f990d8d)
+![18](https://github.com/user-attachments/assets/82ccae30-8933-406e-aa70-4f4ad0149671)
 
 #### 6. Save Card Feature
 
@@ -216,10 +215,10 @@ Allows customers to securely save their card details for future transactions.
 **Managing Saved Cards:**
 - **Delete Card**: Removes saved card details from NMI.
 - **Add Card**: Allows adding a new card for future transactions.
-![Group 7982](https://github.com/user-attachments/assets/489873ba-b8e4-4404-b0cd-445221b3c5a6)
-![Group 7970](https://github.com/user-attachments/assets/effc8f7c-7cff-4cf0-9323-49ac475b82b3)
-![Group 7968](https://github.com/user-attachments/assets/fa430be0-cb8c-47f5-89e2-f2ff4953531d)
-![Group 7969](https://github.com/user-attachments/assets/6052138a-53c2-4078-a875-b8586a2966f5)
+![19](https://github.com/user-attachments/assets/fd28783b-68a0-43e7-8525-7733774f43e8)
+![20](https://github.com/user-attachments/assets/6b4b21fb-569e-4e38-aaca-7ef8d0c5953c)
+![21](https://github.com/user-attachments/assets/32198116-6be6-4f42-82ff-791c52c92faa)
+![22](https://github.com/user-attachments/assets/6f9dbbc2-6019-4193-ba1b-31b690982f28)
 
 _Only registered users can save a card. Guest users do not have the option to save a card._
 
