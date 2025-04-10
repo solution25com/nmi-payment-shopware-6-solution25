@@ -1,0 +1,185 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+
+    <services>
+        <service id="NMIPayment\Service\NMIPaymentApiClient">
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <!-- Controller -->
+         <service id="NMIPayment\Controller\NMISavedCardsController">
+            <tag name="controller.service_arguments"/>
+             <argument type="service" id="nmi_vaulted_customer.repository"/>
+             <argument type="service" id="NMIPayment\Service\NMIVaultedCustomerService" />
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
+            </call>
+        </service>
+
+        <service id="NMIPayment\Storefront\Controller\NMIPaymentController" public="true">
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+            <call method="setTwig">
+                <argument type="service" id="twig"/>
+            </call>
+            <argument type="service" id="NMIPayment\Validations\PaymentValidation"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService" />
+            <argument type="service" id="NMIPayment\Service\NMIVaultedCustomerService" />
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Storefront\Controller\WebhookController" public="true">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="event_dispatcher" />
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <!-- End Controller -->
+
+
+        <!-- Gateways -->
+        <service id="NMIPayment\Gateways\CreditCard">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="shopware.payment.method.sync"/>
+        </service>
+
+        <service id="NMIPayment\Gateways\AchEcheck">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="shopware.payment.method.sync"/>
+        </service>
+
+        <!-- End Gateways -->
+
+        <!-- Entity Definitions -->
+
+        <service id="NMIPayment\Core\Content\Transaction\NmiTransactionDefinition">
+            <tag name="shopware.entity.definition" entity="nmi_transaction"/>
+        </service>
+
+        <service id="NMIPayment\Core\Content\VaultedCustomer\VaultedCustomerDefinition">
+            <tag name="shopware.entity.definition" entity="nmi_vaulted_customer"/>
+        </service>
+
+        <!--     End Entity Definitions -->
+
+
+        <!--         Event Subscribers-->
+        <service id="NMIPayment\EventSubscriber\CheckoutConfirmEventSubscriber">
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\OrderVoidNmiPayment">
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository" />
+            <argument type="service" id="order_delivery.repository" />
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\GenericPageSubscriber">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\RefundEventSubscriber">
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="order_return.repository" on-invalid="null"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\RecurringSubscriber">
+            <argument type="service" id="NMIPayment\Service\NMIRecurringVaultedCustomer"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <!--        End Event Subscribers-->
+
+        <!--        Validations-->
+        <service id="NMIPayment\Validations\PaymentValidation">
+            <argument id="Symfony\Component\Validator\Validator\ValidatorInterface" type="service"/>
+        </service>
+        <!--        End Validations-->
+
+
+        <!-- services -->
+
+        <service id="NMIPayment\Service\NmiTransactionService">
+            <argument type="service" id="nmi_transaction.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository" />
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\VaultedCustomerService">
+            <argument type="service" id="nmi_vaulted_customer.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIConfigService">
+            <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIPaymentDataRequestService">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIVaultedCustomerService">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIRecurringVaultedCustomer">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <!-- services -->
+
+        <!-- Logger -->
+
+        <service id="NMIPayment.logger" class="Monolog\Logger">
+            <argument type="string">Nmi</argument>
+            <argument type="collection">
+                <argument type="service" id="NMIPayment.rotatingHandler"/>
+            </argument>
+        </service>
+
+        <service id="NMIPayment.rotatingHandler" class="Monolog\Handler\RotatingFileHandler">
+            <argument type="string">%kernel.logs_dir%/NMIPayment-%kernel.environment%.log</argument>
+        </service>
+
+    </services>
+</container>

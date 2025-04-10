@@ -1,0 +1,256 @@
+{% extends '@Storefront/storefront/page/account/index.html.twig' %}
+
+{% block page_account_main_content %}
+  <div class="nmi-saved b2b-create-title-text">
+    <input type="hidden" name="parentname" value="NMI Saved Cards">
+  </div>
+
+    <div class="account-welcome">
+        <h1>Saved Cards</h1>
+    </div>
+
+  {% if savedCards is empty %}
+    <p>No saved cards found.</p>
+  {% else %}
+      {% set cardImages = {
+          'AMEX': 'https://files.readme.io/97e7acc-Amex.png',
+          'DINERS': 'https://files.readme.io/8c73810-Diners_Club.png',
+          'DISCOVER': 'https://files.readme.io/caea86d-Discover.png',
+          'JCB': 'https://files.readme.io/e076aed-JCB.png',
+          'MASTERCARD': 'https://files.readme.io/5b7b3de-Mastercard.png',
+          'VISA': 'https://files.readme.io/9018c4f-Visa.png',
+          'MAESTRO': 'https://files.readme.io/79d7723-Maestro.png',
+          'UNIONPAY': 'https://files.readme.io/92c35c7-UnionPay.png',
+          'ELECTRON': 'https://files.readme.io/def3490-Electron.png',
+          'DANKORT': 'https://files.readme.io/ff5319d-Dankort.png',
+          'INTERPAYMENT': 'https://files.readme.io/cf79c1b-Interpayment.png',
+          'CUP': 'https://files.readme.io/92c35c7-UnionPay.png'
+      } %}
+    <div id="default-billing" data-default-billing="{{ defaultBilling | json_encode }}"></div>
+
+    <div class="cards-container">
+      {% for card in savedCards %}
+        <div class="credit-card {{ card.cardType|lower }} {% if card.isDefault %}default{% endif %}" data-vaulted-id="{{ card.vaultedCustomerId }}" data-card-type="{{ card.cardType }}">
+            <div class="card-header">
+                <span class="card-type">
+                    <img src="{{ cardImages[card.cardType|upper] }}" alt="{{ card.cardType }}" class="card-icon" />
+                    {{ card.cardType }}
+                </span>
+                {% if card.isDefault %}
+                    <span class="default-badge">Default</span>
+                {% endif %}
+            </div>
+          <div class="card-number">•••• •••• •••• {{ card.lastDigits | slice(-4) }}</div>
+          <div class="card-details">
+            <span>{{ card.firstName }} {{ card.lastName }}</span>
+            <span>Exp: {{ card.ccexp }}</span>
+          </div>
+          <div class="card-actions">
+            {% if not card.isDefault %}
+              <button class="set-default-btn" data-billing-id="{{ card.billingId }}">Set as Default</button>
+              <button class="delete-card-btn" data-billing-id="{{ card.billingId }}">Delete</button>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div>
+    {% if savedCards is not empty %}
+      <p>Add a new card or delete customer vault data</p>
+      <button class="delete-card-btn" id="delete-all" data-vault-id="{{ savedCards[0]['vaultedCustomerId'] }}" >Delete all cards</button>
+
+        <button id="addCardButton" class="set-default-btn">+ Add Card</button>
+
+        <div id="paymentForm" style="display: none;">
+            <form class="theForm" action="">
+                <input type="hidden" name="variant" value="inline">
+                <div class="formInner">
+                    <div class="payment-field">
+                        <input type="text" name="fname" placeholder="Card holder first name" autofocus>
+                    </div>
+                    <div class="payment-field">
+                        <input type="text" name="lname" placeholder="Card holder last name">
+                    </div>
+                    <div id="payment-fields">
+                        <div class="payment-field" id="ccnumber"></div>
+                        <div class="payment-field" id="ccexp"></div>
+                        <div class="payment-field" id="cvv"></div>
+                    </div>
+                </div>
+
+                <button type="submit" id="payButton" class="btn btn-primary btn-block"> Add card </button>
+            </form>
+        </div>
+    {% endif %}
+
+  </div>
+
+  <script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC"></script>
+  <script>
+
+      document.getElementById('addCardButton').addEventListener('click', function () {
+          const paymentForm = document.getElementById('paymentForm');
+          const payButton = document.getElementById('payButton');
+          const isFormVisible = paymentForm.style.display === "block";
+
+          if (isFormVisible) {
+              paymentForm.style.display = "none";
+              this.textContent = "+ Add Card";
+          } else {
+              paymentForm.style.display = "block";
+              this.textContent = "- Remove Card";
+
+              CollectJS.configure({
+                  'callback': function (response) {
+                      submitPaymentData(response);
+                  },
+                  variant: 'inline',
+                  googleFont: 'Abel',
+                  invalidCss: { color: '#B40E3E' },
+                  validCss: { color: '#175033' },
+                  customCss: { 'border-color': '#FFFFFF', 'border-style': 'solid' },
+                  focusCss: { 'border-color': '#3e79db', 'border-style': 'solid', 'border-width': '3px' },
+                  fields: {
+                      cvv: { placeholder: 'CVV' },
+                      ccnumber: { placeholder: 'Credit Card' },
+                      ccexp: { placeholder: 'MM / YY' }
+                  }
+              });
+
+              setTimeout(function() {
+                  payButton.disabled = false;
+              }, 500);
+          }
+      });
+
+      document.addEventListener('DOMContentLoaded', function () {
+          const payButton = document.getElementById('payButton');
+          payButton.addEventListener('click', function () {
+              payButton.disabled = true;
+          });
+      });
+
+
+      async function submitPaymentData(paymentResponse) {
+          try {
+              const form = document.querySelector('.theForm');
+              const formData = {
+                  first_name: form.fname.value,
+                  last_name: form.lname.value,
+                  token: paymentResponse.token,
+                  ccnumber: paymentResponse.card.number,
+                  ccexp: paymentResponse.card.exp,
+                  card_type: paymentResponse.card.type,
+                  vaulted_customer_id: document.getElementById('delete-all').getAttribute('data-vault-id')
+              };
+
+              const response = await fetch('/nmi-add-card', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(formData)
+              });
+
+              const result = await response.json();
+              if (result.success) {
+                  form.submit();
+              } else {
+                  alert('Payment failed: ' + result.errors.join(', '));
+              }
+          } catch (error) {
+              console.error('Error submitting payment data:', error);
+              alert('There was an error processing your payment. Please try again later.');
+          }
+      }
+
+
+      document.addEventListener("DOMContentLoaded", function() {
+          const deleteButtons = document.querySelectorAll('.delete-card-btn');
+          const setDefaultButtons = document.querySelectorAll('.set-default-btn');
+          const deleteAllButton = document.getElementById('delete-all');
+
+
+          if (deleteAllButton) {
+              deleteAllButton.addEventListener('click', function(event) {
+                  const vaultId = deleteAllButton.getAttribute('data-vault-id');
+                  deleteCustomerVault(vaultId);
+              });
+          }
+
+          deleteButtons.forEach(button => {
+              button.addEventListener('click', function(event) {
+                  const billingId = button.getAttribute('data-billing-id');
+                  const vaultedId = button.closest('.credit-card').getAttribute('data-vaulted-id');
+                  deleteVaultedCustomerData(vaultedId, billingId);
+              });
+          });
+
+          setDefaultButtons.forEach(button => {
+              button.addEventListener('click', function(event) {
+                  const card = button.closest('.credit-card');
+                  const billingId = button.getAttribute('data-billing-id');
+                  const vaultedId = card.getAttribute('data-vaulted-id');
+                  setCardAsDefault(vaultedId,billingId);
+              });
+          });
+
+          function deleteVaultedCustomerData(vaultedId, billingId) {
+              const data = {
+                  vaulted_customer_id: vaultedId,
+                  billing_id: billingId
+              };
+
+              console.log(billingId)
+
+              fetch('/account/delete-billing-id', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data),
+              })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log('Card deleted:', data);
+                      window.location.reload();
+                  })
+                  .catch(error => alert('Error deleting card: ' + error));
+          }
+
+          function setCardAsDefault(vaultedId, billingId) {
+              const data = {
+                  vaulted_customer_id: vaultedId,
+                  billing_id: billingId
+              };
+
+              fetch('/account/set-default-billing-id', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data),
+              })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log('Default billing updated successfully:', data);
+                      window.location.reload();
+                  })
+                  .catch(error => alert('Error setting default billing: ' + error));
+          }
+
+          function deleteCustomerVault(vaultId) {
+              const data = {
+                  customer_vault_id: vaultId
+              };
+              fetch('/nmi-payment-delete-vaulted-customer', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data),
+              })
+                  .then(response => response.json())
+                  .then(data => {
+                      console.log('Vault deleted:', data);
+                      window.location.reload();
+                  })
+                  .catch(error => alert('Error deleting vault: ' + error));
+          }
+      });
+  </script>
+{% endblock %}

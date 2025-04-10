@@ -1,0 +1,31 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{% block page_checkout_confirm_tos_control_checkbox %}
+    {{ parent() }}
+    <input
+            type="hidden"
+            required="required"
+            id="nmi-transaction-id"
+            form="confirmOrderForm"
+            value=""
+            name="nmi_transaction_id"
+    >
+
+    <input
+            type="hidden"
+            required="required"
+            id="nmi-is-subscription"
+            form="confirmOrderForm"
+            value=""
+            name="nmi_is_subscription"
+    >
+{% endblock %}
+
+{% block page_checkout_confirm_form_submit %}
+
+    {% if page.extensions.nmi_payment and (page.extensions.nmi_payment.gateway === 'creditCard') or page.extensions.nmi_payment and (page.extensions.nmi_payment.gateway === 'achEcheck') %}
+        {% sw_include page.extensions.nmi_payment.template %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

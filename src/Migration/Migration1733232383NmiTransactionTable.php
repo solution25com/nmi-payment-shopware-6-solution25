@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+namespace NMIPayment\Migration;
+
+use Doctrine\DBAL\Connection;
+use Shopware\Core\Framework\Migration\MigrationStep;
+
+/**
+ * @internal
+ */
+class Migration1733232383NmiTransactionTable extends MigrationStep
+{
+    public function getCreationTimestamp(): int
+    {
+        return 1733232383;
+    }
+
+    public function update(Connection $connection): void
+    {
+        $sql // @lang text
+          = <<<'SQL'
+        CREATE TABLE IF NOT EXISTS `nmi_transaction` (
+            `id` BINARY(16) NOT NULL,
+            `order_id` VARCHAR(255) NOT NULL,
+            `payment_method_name` varchar(255),
+            `transaction_id` varchar(255)  DEFAULT NULL,
+            `subscription_transaction_id` varchar(255) DEFAULT NULL,
+            `isSubscription` tinyint(1) NOT NULL DEFAULT '0',
+            `status` varchar(255) NOT NULL DEFAULT 'pending',
+            `created_at` DATETIME(3),
+            `updated_at` DATETIME(3) DEFAULT NULL,
+            PRIMARY KEY (`id`)
+        )
+            ENGINE = InnoDB
+            DEFAULT CHARSET = utf8mb4
+            COLLATE = utf8mb4_unicode_ci;
+        SQL;
+
+        $connection->executeStatement($sql);
+    }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "solution25/nmi-payment",
+  "description": "NMI payment method for Shopware 6",
+  "type": "shopware-platform-plugin",
+  "version": "1.0.2",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "solution 25",
+      "role": "Manufacturer"
+    }
+  ],
+  "require": {
+    "shopware/core": "~6.6.0"
+  },
+  "extra": {
+    "shopware-plugin-class": "NMIPayment\\NMIPayment",
+    "label": {
+      "de-DE": "NMI payment method for Shopware 6",
+      "en-GB": "NMI payment method for Shopware 6"
+    }
+  },
+  "autoload": {
+    "psr-4": {
+      "NMIPayment\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "NMIPayment\\Tests\\": "tests/"
+    }
+  }
+}
