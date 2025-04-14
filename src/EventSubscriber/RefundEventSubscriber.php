@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace NMIPayment\EventSubscriber;
 
@@ -17,7 +17,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class RefundEventSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly NmiTransactionService $nmiTransactionService, private readonly NMIPaymentApiClient $nmiPaymentApiClient, private readonly EntityRepository $orderReturnRepository, private readonly EntityRepository $orderTransactionRepository, private readonly OrderTransactionStateHandler $transactionStateHandler, private readonly NMIConfigService $nmiConfigService) {}
+    public function __construct(private readonly NmiTransactionService $nmiTransactionService,
+                                private readonly NMIPaymentApiClient $nmiPaymentApiClient,
+                                private readonly EntityRepository $orderReturnRepository,
+                                private readonly EntityRepository $orderTransactionRepository,
+                                private readonly OrderTransactionStateHandler $transactionStateHandler,
+                                private readonly NMIConfigService $nmiConfigService,
+                                private readonly LoggerInterface $logger)
+    {
+    }
 
     public static function getSubscribedEvents()
     {
@@ -34,8 +42,20 @@ class RefundEventSubscriber implements EventSubscriberInterface
             $criteria = new Criteria();
             $criteria->addFilter(new EqualsFilter('orderId', $order->getId()));
             $orderReturn = $this->orderReturnRepository->search($criteria, $context)->first();
+
+            if (!$orderReturn) {
+                $this->logger->warning('No order return found for orderId: ' . $order->getId());
+                return;
+            }
+
             $transaction = $this->nmiTransactionService->getTransactionByOrderId($order->getId(), $context);
             $orderTransactionId = $this->getOrderTransactionIdByOrderId($order->getId(), $context);
+
+             if (!$orderTransactionId) {
+                 $this->logger->warning('No order transaction found for refund process on orderId: ' . $order->getId());
+                 return;
+             }
+
             $orderTotalAmount = $order->getAmountTotal();
 
             if ($transaction && strtolower($transaction->getStatus()) === strtolower(TransactionStatuses::PAID->value)) {
@@ -48,15 +68,19 @@ class RefundEventSubscriber implements EventSubscriberInterface
                 ];
 
                 $response = $this->nmiPaymentApiClient->createTransaction($postData);
-                if ('SUCCESS' == $response['responsetext']) {
-                    if ($orderReturn->getAmountTotal() == $orderTotalAmount) {
+                if ($response['responsetext'] === 'SUCCESS') {
+                    if ($orderReturn->getAmountTotal() === $orderTotalAmount) {
                         $this->transactionStateHandler->refund($orderTransactionId, $context);
                     } else {
                         $this->transactionStateHandler->refundPartially($orderTransactionId, $context);
                     }
                 }
             }
-        } catch (\Exception) {
+        } catch (\Exception $e) {
+          $this->logger->log('Refund processing failed due to: ', $e, [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+          ]);
         }
     }
 

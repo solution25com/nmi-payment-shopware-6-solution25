@@ -51,15 +51,12 @@
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method.sync"/>
         </service>
 
         <service id="NMIPayment\Gateways\AchEcheck">
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method.sync"/>
         </service>
 
@@ -96,10 +93,6 @@
             <tag name="kernel.event_subscriber"/>
         </service>
 
-        <service id="NMIPayment\EventSubscriber\GenericPageSubscriber">
-            <tag name="kernel.event_subscriber"/>
-        </service>
-
         <service id="NMIPayment\EventSubscriber\RefundEventSubscriber">
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
@@ -110,12 +103,6 @@
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="kernel.event_subscriber"/>
         </service>
-
-        <service id="NMIPayment\EventSubscriber\RecurringSubscriber">
-            <argument type="service" id="NMIPayment\Service\NMIRecurringVaultedCustomer"/>
-            <tag name="kernel.event_subscriber"/>
-        </service>
-
         <!--        End Event Subscribers-->
 
         <!--        Validations-->
@@ -129,9 +116,7 @@
 
         <service id="NMIPayment\Service\NmiTransactionService">
             <argument type="service" id="nmi_transaction.repository"/>
-            <argument type="service" id="order.repository"/>
             <argument type="service" id="order_transaction.repository" />
-            <argument type="service" id="NMIPayment.logger"/>
         </service>
 
         <service id="NMIPayment\Service\VaultedCustomerService">
@@ -156,16 +141,6 @@
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
-
-        <service id="NMIPayment\Service\NMIRecurringVaultedCustomer">
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
-            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
-            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
-            <argument type="service" id="order_transaction.repository"/>
-            <argument type="service" id="NMIPayment.logger"/>
-        </service>
-
         <!-- services -->
 
         <!-- Logger -->

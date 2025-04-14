@@ -15,9 +15,8 @@ class VaultedCustomerEntity extends Entity
 
     protected $vaultedCustomerId;
 
-    protected $cardType;
-
     protected $billingId;
+
     protected $defaultBilling;
 
     public function getCustomerId(): ?string
@@ -38,16 +37,6 @@ class VaultedCustomerEntity extends Entity
     public function setVaultedCustomerId(string $vaultedCustomerId): void
     {
         $this->vaultedCustomerId = $vaultedCustomerId;
-    }
-
-    public function getCardType()
-    {
-        return $this->cardType;
-    }
-
-    public function setCardType(string $cardType): void
-    {
-        $this->cardType = $cardType;
     }
 
     public function getBillingId()

@@ -1,11 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Gateways;
 
 use NMIPayment\Library\Constants\TransactionStatuses;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\NmiTransactionService;
-use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Payment\Cart\PaymentHandler\SynchronousPaymentHandlerInterface;
 use Shopware\Core\Checkout\Payment\Cart\SyncPaymentTransactionStruct;
@@ -14,7 +13,9 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class CreditCard implements SynchronousPaymentHandlerInterface
 {
-    public function __construct(private readonly OrderTransactionStateHandler $transactionStateHandler, private readonly NmiTransactionService $nmiTransactionService, private readonly NMIConfigService $configService) {}
+    public function __construct(private readonly OrderTransactionStateHandler $transactionStateHandler, private readonly NmiTransactionService $nmiTransactionService, private readonly NMIConfigService $configService)
+    {
+    }
 
     public function pay(SyncPaymentTransactionStruct $transaction, RequestDataBag $dataBag, SalesChannelContext $salesChannelContext): void
     {

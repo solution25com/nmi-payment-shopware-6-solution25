@@ -7,13 +7,13 @@ namespace NMIPayment\Core\Content\Transaction;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityCollection;
 
 /**
- * @method void                      add(NmiTransactionEntity $entity)
- * @method void                      set(string $key, NmiTransactionEntity $entity)
- * @method NmiTransactionEntity[]    getIterator()
- * @method NmiTransactionEntity[]    getElements()
- * @method null|NmiTransactionEntity get(string $key)
- * @method null|NmiTransactionEntity first()
- * @method null|NmiTransactionEntity last()
+ * @method void add(NmiTransactionEntity $entity)
+ * @method void set(string $key, NmiTransactionEntity $entity)
+ * @method NmiTransactionEntity[] getIterator()
+ * @method NmiTransactionEntity[] getElements()
+ * @method NmiTransactionEntity|null get(string $key)
+ * @method NmiTransactionEntity|null first()
+ * @method NmiTransactionEntity|null last()
  */
 class NmiTransactionCollection extends EntityCollection
 {

@@ -33,6 +33,11 @@
             <label>Api public Live</label>
         </input-field>
 
+        <input-field type="text">
+            <name>gatewayJsLive</name>
+            <label>Checkout public key Live (GatewayJs)</label>
+        </input-field>
+
         <input-field type="password">
             <name>privateKeyApi</name>
             <label>Api private key sandbox</label>
@@ -41,6 +46,11 @@
         <input-field type="text">
             <name>publicKeyApi</name>
             <label>Api public key sandbox</label>
+        </input-field>
+
+        <input-field type="text">
+            <name>gatewayJs</name>
+            <label>Checkout public key (GatewayJs)</label>
         </input-field>
     </card>
 

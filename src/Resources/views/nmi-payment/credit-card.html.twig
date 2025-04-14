@@ -9,9 +9,10 @@
      data-threeDSConfig="{{ page.extensions.nmi_payment.threeDS }}"
      data-billing-customer-id="{{ page.extensions.nmi_payment.billingId }}"
      data-dropdown-cards="{{ page.extensions.nmi_payment.cardsDropdown }}"
+     data-configs="{{ page.extensions.nmi_payment.configs | json_encode }}"
 >
 
-    {% if page.extensions.nmi_payment.saveCardBackend %}
+    {% if page.extensions.nmi_payment.saveCardBackend  %}
 
     <div class="alert alert-danger d-none m-3"  id="error-message" role="alert">
         <div class="error-alert">
@@ -52,16 +53,9 @@
 
             </div>
 
-
-
             <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
                    class="btn btn-primary btn-block w-100">
             <button type="button" class="btn btn-info btn-block w-100 mt-3" id="add-another-vaulted-card">Add Card</button
-
-
-
-{#            <button type="button" class="btn btn-danger btn-block w-100 mt-3" id="delete-vaulted-customer-data">Delete this Card</button>#}
-{#            <button type="button" class="btn btn-info btn-block w-100 mt-3" id="add-another-vaulted-card">Add Card</button>#}
 
         </form>
     </div>
@@ -134,9 +128,7 @@
 </div>
 {% endif %}
 
-{#<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC" ></script>#}
-<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ config('NMIPayment.config.publicKeyApi') }}" ></script>
+<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ page.extensions.nmi_payment.configs.publicKey }}" ></script>
 <script src="https://secure.nmi.com/js/v1/Gateway.js"></script>
-{#<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC" ></script>#}
 
 

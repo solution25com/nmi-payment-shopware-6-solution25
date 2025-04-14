@@ -40,7 +40,6 @@ class VaultedCustomerDefinition extends EntityDefinition
             (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
             (new FkField('customer_id', 'customerId', CustomerDefinition::class))->addFlags(new Required()),
             (new StringField('vaulted_customer_id', 'vaultedCustomerId'))->addFlags(new Required()),
-            new StringField('card_type', 'cardType'),
             new LongTextField('billingId', 'billingId'),
             new StringField('default_billing', 'defaultBilling'),
             new OneToOneAssociationField('customer', 'customer_id', 'id', CustomerDefinition::class, false),
