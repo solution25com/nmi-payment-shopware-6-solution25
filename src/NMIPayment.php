@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NMIPayment;
 
+use Doctrine\DBAL\Connection;
 use NMIPayment\PaymentMethods\PaymentMethodInterface;
 use NMIPayment\PaymentMethods\PaymentMethods;
 use Shopware\Core\Framework\Context;
@@ -34,6 +35,11 @@ class NMIPayment extends Plugin
         if ($uninstallContext->keepUserData()) {
             return;
         }
+
+        $connection = $this->container->get(Connection::class);
+
+        $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
+        $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
 
         parent::uninstall($uninstallContext);
     }
@@ -125,7 +131,7 @@ class NMIPayment extends Plugin
 
         $paymentIds = $paymentRepository->searchIds($paymentCriteria, Context::createDefaultContext());
 
-        if (0 === $paymentIds->getTotal()) {
+        if ($paymentIds->getTotal() === 0) {
             return null;
         }
 

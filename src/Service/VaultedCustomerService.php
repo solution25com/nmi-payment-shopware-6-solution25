@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Service;
 
@@ -12,7 +12,9 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class VaultedCustomerService
 {
-    public function __construct(private readonly EntityRepository $vaultedCustomerRepository, private readonly LoggerInterface $logger) {}
+    public function __construct(private readonly EntityRepository $vaultedCustomerRepository, private readonly LoggerInterface $logger)
+    {
+    }
 
     public function store(SalesChannelContext $salesChannelContext, string $vaultedShopperId, string $cardType, string $billingId, string $defaultBillingId): void
     {
@@ -57,7 +59,7 @@ class VaultedCustomerService
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error('Error storing vaulted shopper data: '.$e->getMessage());
+            $this->logger->error('Error storing vaulted shopper data: ' . $e->getMessage());
         }
     }
 
@@ -74,10 +76,10 @@ class VaultedCustomerService
                 $this->vaultedCustomerRepository->delete([['id' => $existingShopper->getId()]], $context);
                 $this->logger->info('Successfully deleted vaulted customer data from the database.');
             } else {
-                $this->logger->warning('No vaulted customer data found to delete for vault ID: '.$customerVaultId);
+                $this->logger->warning('No vaulted customer data found to delete for vault ID: ' . $customerVaultId);
             }
         } catch (\Exception $e) {
-            $this->logger->error('Error deleting vaulted customer data: '.$e->getMessage());
+            $this->logger->error('Error deleting vaulted customer data: ' . $e->getMessage());
         }
     }
 
@@ -94,7 +96,7 @@ class VaultedCustomerService
                 $billingJson = $existingShopper->getBillingId();
                 $billingArray = json_decode((string) $billingJson, true);
 
-                if (is_array($billingArray)) {
+                if (\is_array($billingArray)) {
                     $updatedBillingArray = array_filter($billingArray, fn ($billing): bool => $billing['billingId'] !== $billingId);
 
                     $updatedBillingArray = array_values($updatedBillingArray);
@@ -109,15 +111,15 @@ class VaultedCustomerService
                         $context
                     );
 
-                    $this->logger->info('Successfully deleted billing data with billingId: '.$billingId);
+                    $this->logger->info('Successfully deleted billing data with billingId: ' . $billingId);
                 } else {
-                    $this->logger->warning('Invalid or empty billing data found for vaulted customer ID: '.$customerVaultId);
+                    $this->logger->warning('Invalid or empty billing data found for vaulted customer ID: ' . $customerVaultId);
                 }
             } else {
-                $this->logger->warning('No vaulted customer data found for vaulted ID: '.$customerVaultId);
+                $this->logger->warning('No vaulted customer data found for vaulted ID: ' . $customerVaultId);
             }
         } catch (\Exception $e) {
-            $this->logger->error('Error deleting billing data: '.$e->getMessage());
+            $this->logger->error('Error deleting billing data: ' . $e->getMessage());
         }
     }
 
@@ -135,7 +137,7 @@ class VaultedCustomerService
                 $billingArray = json_decode((string) $billingJson, true);
 
                 $selectedBilling = null;
-                if (is_array($billingArray)) {
+                if (\is_array($billingArray)) {
                     foreach ($billingArray as $billing) {
                         if ($billing['billingId'] === $billingId) {
                             $selectedBilling = $billing;
@@ -146,7 +148,7 @@ class VaultedCustomerService
                 }
 
                 if ($selectedBilling) {
-                    $this->logger->info('Selected Billing: '.json_encode($selectedBilling));
+                    $this->logger->info('Selected Billing: ' . json_encode($selectedBilling));
                     $this->vaultedCustomerRepository->update(
                         [
                             [
@@ -159,15 +161,15 @@ class VaultedCustomerService
                         $context
                     );
 
-                    $this->logger->info('Successfully updated default billing for vaulted customer: '.$vaultedCustomerId);
+                    $this->logger->info('Successfully updated default billing for vaulted customer: ' . $vaultedCustomerId);
                 } else {
-                    $this->logger->warning('No billing data found for billingId: '.$billingId);
+                    $this->logger->warning('No billing data found for billingId: ' . $billingId);
                 }
             } else {
-                $this->logger->warning('No vaulted customer data found for vaulted customer ID: '.$vaultedCustomerId);
+                $this->logger->warning('No vaulted customer data found for vaulted customer ID: ' . $vaultedCustomerId);
             }
         } catch (\Exception $e) {
-            $this->logger->error('Error billing: '.$e->getMessage());
+            $this->logger->error('Error billing: ' . $e->getMessage());
         }
     }
 
@@ -186,7 +188,7 @@ class VaultedCustomerService
         $criteria->addFilter(new EqualsFilter('customerId', $customerId));
         $vaultedShopper = $this->vaultedCustomerRepository->search($criteria, $context)->first();
 
-        return null !== $vaultedShopper;
+        return $vaultedShopper !== null;
     }
 
     public function getBillingIdFromCustomerId(Context $context, string $customerId)
@@ -240,7 +242,7 @@ class VaultedCustomerService
 
         foreach ($savedCards as $card) {
             $billingData = json_decode((string) $card->getBillingId(), true);
-            if (is_array($billingData)) {
+            if (\is_array($billingData)) {
                 foreach ($billingData as $billingEntry) {
                     $firstSixDigits = substr((string) $billingEntry['lastDigits'], 0, 6);
 
@@ -249,7 +251,7 @@ class VaultedCustomerService
                         'billingId' => $billingEntry['billingId'],
                         'lastDigits' => $billingEntry['lastDigits'] ?? 'XXXX',
                         'firstName' => $billingEntry['firstName'] ?? 'Unknown',
-                        'isDefault' => ($defaultBilling && $defaultBilling['billingId'] == $billingEntry['billingId']),
+                        'isDefault' => ($defaultBilling && $defaultBilling['billingId'] === $billingEntry['billingId']),
                     ];
                 }
             }

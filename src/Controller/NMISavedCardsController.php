@@ -51,6 +51,9 @@ class NMISavedCardsController  extends StorefrontController
       $billingData = json_decode($card->getBillingId(), true);
       if (is_array($billingData)) {
         foreach ($billingData as $billingEntry) {
+          $firstSixDigits = substr($billingEntry['lastDigits'], 0, 6);
+//          $cardType = $this->detectCardType($firstSixDigits);
+
           $formattedCards[] = [
             'vaultedCustomerId' => $card->getVaultedCustomerId(),
             'billingId' => $billingEntry['billingId'],

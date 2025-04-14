@@ -12,10 +12,15 @@ class NmiTransactionEntity extends Entity
     use EntityIdTrait;
 
     protected string $orderId;
+
     protected string $paymentMethodName;
+
     protected string $transactionId;
+
     protected string $status;
+
     protected bool $isSubscription;
+
     protected string $subscriptionTransactionId;
 
     public function getOrderId(): string

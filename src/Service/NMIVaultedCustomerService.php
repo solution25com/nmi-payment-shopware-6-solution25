@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Service;
 
@@ -9,7 +9,9 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class NMIVaultedCustomerService
 {
-    public function __construct(private readonly NMIConfigService $nmiConfigService, private readonly NMIPaymentApiClient $nmiPaymentApiClient, private readonly NMIPaymentDataRequestService $nmiPaymentDataRequestService, private readonly VaultedCustomerService $vaultedCustomerService, private readonly LoggerInterface $logger) {}
+    public function __construct(private readonly NMIConfigService $nmiConfigService, private readonly NMIPaymentApiClient $nmiPaymentApiClient, private readonly NMIPaymentDataRequestService $nmiPaymentDataRequestService, private readonly VaultedCustomerService $vaultedCustomerService, private readonly LoggerInterface $logger)
+    {
+    }
 
     public function vaultedCapture(array $data, Cart $cart, SalesChannelContext $context): array
     {
@@ -54,7 +56,7 @@ class NMIVaultedCustomerService
             'acu_enabled' => 'true',
             'line_items' => $allItems,
         ];
-        $billingIds = json_decode((string) $getDefaultBilling, true);
+
         $defaultBId = $billingIds[0];
 
         if ($data['customer_vault_id']) {
@@ -62,7 +64,7 @@ class NMIVaultedCustomerService
         }
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-        $this->logger->info('Vaulted Capture Response -> '.json_encode($response));
+        $this->logger->info('Vaulted Capture Response -> ' . json_encode($response));
 
         $processedResponse = $this->nmiPaymentDataRequestService->handleNMIResponse($response);
 
@@ -97,9 +99,9 @@ class NMIVaultedCustomerService
         ];
 
         $response = $this->nmiPaymentApiClient->createTransaction($postUpdateData);
-        $this->logger->info('Billing method(addMultipleCards) response: '.json_encode($response));
+        $this->logger->info('Billing method(addMultipleCards) response: ' . json_encode($response));
 
-        if ('1' === $response['response']) {
+        if ($response['response'] === '1') {
             return [
                 'success' => true,
                 'message' => 'Customer billing added.',
@@ -109,7 +111,7 @@ class NMIVaultedCustomerService
 
         return [
             'success' => false,
-            'message' => 'Failed to add customer billing data from vault: '.($response['responsetext'] ?? 'Unknown error'),
+            'message' => 'Failed to add customer billing data from vault: ' . ($response['responsetext'] ?? 'Unknown error'),
         ];
     }
 
@@ -149,7 +151,7 @@ class NMIVaultedCustomerService
 
     public function deleteVaultedCustomerData(string $customerVaultId, SalesChannelContext $context): array
     {
-        $this->logger->info('Starting delete process for vaulted customer with ID: '.$customerVaultId);
+        $this->logger->info('Starting delete process for vaulted customer with ID: ' . $customerVaultId);
 
         $postData = [
             'security_key' => $this->nmiConfigService->getConfig('privateKeyApi'),
@@ -159,9 +161,9 @@ class NMIVaultedCustomerService
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
 
-        $this->logger->info('Delete response: '.json_encode($response));
+        $this->logger->info('Delete response: ' . json_encode($response));
 
-        if ('1' === $response['response']) {
+        if ($response['response'] === '1') {
             return [
                 'success' => true,
                 'message' => 'Customer data successfully deleted from vault.',
@@ -170,7 +172,7 @@ class NMIVaultedCustomerService
 
         return [
             'success' => false,
-            'message' => 'Failed to delete customer data from vault: '.($response['responsetext'] ?? 'Unknown error'),
+            'message' => 'Failed to delete customer data from vault: ' . ($response['responsetext'] ?? 'Unknown error'),
         ];
     }
 
@@ -185,9 +187,9 @@ class NMIVaultedCustomerService
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
 
-        $this->logger->info('Delete response: '.json_encode($response));
+        $this->logger->info('Delete response: ' . json_encode($response));
 
-        if ('1' === $response['response']) {
+        if ($response['response'] === '1') {
             $this->vaultedCustomerService->deleteBillingFromDB($context, $customerVaultId, $billingId);
 
             return [
@@ -198,7 +200,7 @@ class NMIVaultedCustomerService
 
         return [
             'success' => false,
-            'message' => 'Failed to delete billing data from vault: '.($response['responsetext'] ?? 'Unknown error'),
+            'message' => 'Failed to delete billing data from vault: ' . ($response['responsetext'] ?? 'Unknown error'),
         ];
     }
 

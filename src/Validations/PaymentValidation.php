@@ -9,7 +9,9 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class PaymentValidation
 {
-    public function __construct(private readonly ValidatorInterface $validator) {}
+    public function __construct(private readonly ValidatorInterface $validator)
+    {
+    }
 
     public function validateCreditCardPaymentData(?array $data): array
     {
@@ -25,7 +27,6 @@ class PaymentValidation
             'last_name' => new Assert\NotBlank(),
             'address1' => new Assert\NotBlank(),
             'city' => new Assert\NotBlank(),
-            //      'state' => new Assert\NotBlank(),
             'zip' => new Assert\NotBlank(),
             'ccnumber' => new Assert\NotBlank(),
             'ccexp' => new Assert\NotBlank(),
@@ -45,7 +46,6 @@ class PaymentValidation
             'shipping_postal' => new Assert\Optional(new Assert\Type('string')),
             'ship_from_postal' => new Assert\Optional(new Assert\Type('string')),
             'summary_commodity_code' => new Assert\Optional(new Assert\Type('string')),
-            //      'dup_seconds' => new Assert\NotBlank(),
             'line_items' => new Assert\Optional(
                 new Assert\All([
                     new Assert\Collection([

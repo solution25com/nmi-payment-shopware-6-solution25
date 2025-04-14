@@ -6,11 +6,11 @@ namespace NMIPayment\Library\Constants;
 
 enum TransactionStatuses: string
 {
-    case PENDING = 'Pending';
-    case PAID = 'Paid';
-    case FAIL = 'Fail';
-    case REFUND = 'Refund';
-    case CANCELLED = 'Cancelled';
-    case AUTHORIZED = 'Authorized';
-    case UNCONFIRMED = 'Unconfirmed';
+    case PENDING = 'pending';
+    case PAID = 'paid';
+    case FAIL = 'fail';
+    case REFUND = 'refund';
+    case CANCELLED = 'cancelled';
+    case AUTHORIZED = 'authorized';
+    case UNCONFIRMED = 'unconfirmed';
 }

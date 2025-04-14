@@ -25,7 +25,6 @@ class Migration1733393619VaultedCustomer extends MigrationStep
             `id` BINARY(16) NOT NULL,
             `customer_id` Binary(16) NOT NULL,
             `vaulted_customer_id` VARCHAR(255) NOT NULL,
-            `card_type` varchar(255) DEFAULT NULL,
             `created_at` DATETIME(3),
             `updated_at` DATETIME(3) DEFAULT NULL,
             PRIMARY KEY (`id`),
