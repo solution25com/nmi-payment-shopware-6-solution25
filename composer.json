@@ -4,12 +4,6 @@
   "type": "shopware-platform-plugin",
   "version": "1.0.2",
   "license": "MIT",
-  "authors": [
-    {
-      "name": "solution 25",
-      "role": "Manufacturer"
-    }
-  ],
   "require": {
     "shopware/core": "~6.6.0",
     "shopware/storefront": "^6.6"
@@ -17,10 +11,29 @@
   "extra": {
     "shopware-plugin-class": "NMIPayment\\NMIPayment",
     "label": {
-      "de-DE": "NMI payment method for Shopware 6",
+      "de-DE": "NMI Zahlungsanbieter für Shopware 6",
       "en-GB": "NMI payment method for Shopware 6"
+    },
+    "description": {
+      "de-DE": "NMI Zahlungsintegration für Shopware 6",
+      "en-GB": "NMI payment integration for Shopware 6"
+    },
+    "manufacturerLink": {
+      "de-DE": "https://solution25.com/",
+      "en-GB": "https://solution25.com/en/home_en/"
+    },
+    "supportLink": {
+      "de-DE": "https://solution25.com/",
+      "en-GB": "https://solution25.com/en/home_en/"
     }
   },
+  "authors": [
+    {
+      "name": "Solution25",
+      "email": "info@solution25.com",
+      "homepage": "https://solution25.com/"
+    }
+  ],
   "autoload": {
     "psr-4": {
       "NMIPayment\\": "src/"
