@@ -11,7 +11,8 @@
     }
   ],
   "require": {
-    "shopware/core": "~6.6.0"
+    "shopware/core": "~6.6.0",
+    "shopware/storefront": "^6.6"
   },
   "extra": {
     "shopware-plugin-class": "NMIPayment\\NMIPayment",
