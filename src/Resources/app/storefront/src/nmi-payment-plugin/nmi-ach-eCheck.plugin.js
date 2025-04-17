@@ -54,7 +54,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                 'Tokenization failed:',
                 response ? response.error : 'No response'
             );
-            alert('Payment tokenization failed. Please try again.');
+            console.error('Payment tokenization failed. Please try again.');
             return;
         }
         this.submitaCheck(response);
@@ -66,7 +66,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                 'Tokenization failed:',
                 response ? response.error : 'No response'
             );
-            alert('Payment tokenization failed. Please try again.');
+            console.error('Payment tokenization failed. Please try again.');
             return;
         }
 
@@ -87,14 +87,14 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                 if (data.success) {
                     document.getElementById('nmi-transaction-id').value =
                         JSON.parse(data.transaction_id);
-                    alert(`Payment success: ${data.message}`);
+                    console.error(`Payment success: ${data.message}`);
                     document.getElementById('confirmOrderForm').submit();
                 } else {
-                    alert(`Payment failed: ${data.message}`);
+                    console.error(`Payment failed: ${data.message}`);
                 }
             })
             .catch((error) => {
-                alert('Error submitting payment: ' + error);
+                console.error('Error submitting payment: ' + error);
             });
     }
 }

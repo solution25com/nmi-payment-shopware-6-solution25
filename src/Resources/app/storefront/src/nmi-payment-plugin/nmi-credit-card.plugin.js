@@ -148,7 +148,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     submitPayment(response) {
         if (!response.token) {
             console.error('Tokenization failed:', response.error);
-            alert('Payment tokenization failed. Please try again.');
+            console.error('Payment tokenization failed. Please try again.');
             return;
         }
 
@@ -163,7 +163,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     addBillingToCustomer(response) {
         if (!response.token) {
             console.error('Tokenization failed:', response.error);
-            alert('Payment tokenization failed. Please try again.');
+            console.error('Payment tokenization failed. Please try again.');
             return;
         }
 
@@ -195,7 +195,6 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                 window.location.reload();
             })
             .catch((error) => {
-                alert('Error deleting vaulted customer data: ' + error);
                 console.error('Error deleting vaulted customer data:', error);
                 this._showLoading(false);
             });
@@ -215,7 +214,6 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                 this._showLoading(false);
             })
             .catch((error) => {
-                alert('Error fetching vaulted customer data: ' + error);
                 console.error('Error fetching vaulted customer data:', error);
                 this._showLoading(false);
             });
@@ -406,7 +404,6 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
         PaymentService.addBillingToCustomerData(paymentUrl, paymentData)
             .then((response) => {
                 if (response.success) {
-                    alert(`Payment success: ${response.message}`);
                 } else {
                     const errors = response.errors || [
                         response.message || 'An unknown error occurred',

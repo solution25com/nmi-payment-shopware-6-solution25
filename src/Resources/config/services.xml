@@ -37,12 +37,6 @@
             <argument type="service" id="NMIPayment.logger"/>
         </service>
 
-        <service id="NMIPayment\Storefront\Controller\WebhookController" public="true">
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="event_dispatcher" />
-            <argument type="service" id="NMIPayment.logger"/>
-        </service>
-
         <!-- End Controller -->
 
 
