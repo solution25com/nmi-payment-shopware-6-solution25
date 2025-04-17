@@ -2,7 +2,7 @@
   "name": "solution25/nmi-payment",
   "description": "NMI payment method for Shopware 6",
   "type": "shopware-platform-plugin",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "license": "MIT",
   "authors": [
     {
