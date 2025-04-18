@@ -404,6 +404,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
         PaymentService.addBillingToCustomerData(paymentUrl, paymentData)
             .then((response) => {
                 if (response.success) {
+                    // success
                 } else {
                     const errors = response.errors || [
                         response.message || 'An unknown error occurred',
