@@ -26,23 +26,27 @@ class NMIPayment extends Plugin
         }
     }
 
-    public function uninstall(UninstallContext $uninstallContext): void
-    {
-        foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), new $paymentMethod());
-        }
-
-        if ($uninstallContext->keepUserData()) {
-            return;
-        }
-
-        $connection = $this->container->get(Connection::class);
-
-        $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
-        $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
-
-        parent::uninstall($uninstallContext);
+  public function uninstall(UninstallContext $uninstallContext): void
+  {
+    foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
+      $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), new $paymentMethod());
     }
+
+    if (!$uninstallContext->keepUserData()) {
+      $connection = $this->container->get(Connection::class);
+      $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
+      $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
+
+      $connection->executeStatement(
+        'DELETE FROM `migration` WHERE `class` LIKE :migrationPattern;',
+        [
+          'migrationPattern' => 'NMIPayment\Migration\%',
+        ]
+      );
+    }
+
+    parent::uninstall($uninstallContext);
+  }
 
     public function activate(ActivateContext $activateContext): void
     {
