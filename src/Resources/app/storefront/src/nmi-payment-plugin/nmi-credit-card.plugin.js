@@ -297,9 +297,23 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
             document.head.appendChild(script);
 
             script.onload = () => {
-                gateway = GatewayJsLoader.createGateway(this.configs.checkoutKey);
-                if (gateway) {
+                try{
+                    gateway = GatewayJsLoader.createGateway(this.configs.checkoutKey);
+
+                    if (!gateway) {
+                        console.error('Gateway initialization failed.');
+                        this.displayErrors(['Payment service is currently unavailable.']);
+                        return;
+                    }
+
                     threeDS = gateway.get3DSecure();
+
+                    if (!threeDS) {
+                        console.error('3DSecure is not available.');
+                        this.displayErrors(['3D Secure is not available for your payment method.']);
+                        return;
+                    }
+
                     paymentData.cavv = response.cavv;
                     paymentData.xid = response.xid;
                     paymentData.eci = response.eci;
@@ -313,19 +327,24 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
                     threeDSecureInterface.on('failure', function (e) {
                         console.warn(e);
                     });
+
                     gateway.on('error', function (e) {
                         console.error(e);
                     });
 
                     this.submitToPaymentService(
-                        this.options.paymentUrls.creditCard,
-                        paymentData
+                      this.options.paymentUrls.creditCard,
+                      paymentData
                     );
+                } catch (e) {
+                    console.error('3DSecure start failed:', e);
+                    this.displayErrors(['Your merchant account does not support 3D Secure payments.']);
                 }
             };
 
             script.onerror = () => {
                 console.error('Failed to load Gateway.js.');
+                this.displayErrors(['Could not load secure payment service.']);
             };
         } else {
             this.submitToPaymentService(
@@ -370,6 +389,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     submitToPaymentService(paymentUrl, paymentData) {
         PaymentService.submitPayment(paymentUrl, paymentData)
             .then((response) => {
+
                 if (response.success) {
                     let transactionId =
                         response.responses.payment.transaction_id;
