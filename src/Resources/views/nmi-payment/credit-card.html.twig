@@ -9,10 +9,22 @@
      data-threeDSConfig="{{ page.extensions.nmi_payment.threeDS }}"
      data-billing-customer-id="{{ page.extensions.nmi_payment.billingId }}"
      data-dropdown-cards="{{ page.extensions.nmi_payment.cardsDropdown }}"
+     data-shipping-error="{{ page.extensions.nmi_payment.shippingError }}"
+     data-billing-first-name="{{ page.extensions.nmi_payment.billingFirstName }}"
+     data-billing-last-name="{{ page.extensions.nmi_payment.billingLastName }}"
      data-configs="{{ page.extensions.nmi_payment.configs | json_encode }}"
 >
 
-    {% if page.extensions.nmi_payment.saveCardBackend  %}
+    <div class="d-none" id="nmi-customer-data">
+        <input type="text" class="form-control" placeholder="First Name" name="fname" value="{{ context.customer.firstName }}">
+        <input type="text" class="form-control" placeholder="Last Name" name="lname" value="{{ context.customer.lastName }}">
+        <input type="text" class="form-control" placeholder="Street Address" name="address1" value="{{ context.customer.defaultBillingAddress.street }}">
+        <input type="text" class="form-control" placeholder="City" name="city" value="{{ context.customer.defaultBillingAddress.city }}">
+        <input type="text" class="form-control" placeholder="State" name="state" value="{{ context.customer.defaultBillingAddress.country.name }}">
+        <input type="text" class="form-control" placeholder="Zip code" name="zip" value="{{ context.customer.defaultBillingAddress.zipcode }}">
+    </div>
+
+    {% if page.extensions.nmi_payment.saveCardBackend %}
 
     <div class="alert alert-danger d-none m-3"  id="error-message" role="alert">
         <div class="error-alert">
@@ -28,15 +40,15 @@
                 <div class="form-details-card-info d-flex align-items-center justify-content-start">
                     <div class="form-details-card-input">
                     </div>
-                   <div class="form-details-card-name">
-                       <div class="d-flex align-items-center gap-1">
-                           <p id="vaulted-first-name"> </p>
-                           <p id="vaulted-last-name"> </p>
-                       </div>
-                       <div>
-                           <p id="vaulted-last-four-digits"></p>
-                       </div>
-                   </div>
+                    <div class="form-details-card-name">
+                        <div class="d-flex gap-1">
+                            <p id="vaulted-first-name"> </p>
+                            <p id="vaulted-last-name"> </p>
+                        </div>
+                        <div>
+                            <p id="vaulted-last-four-digits"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-details-card-type">
                     <p id="vaulted-card-type"></p>
@@ -54,8 +66,25 @@
             </div>
 
             <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
-                   class="btn btn-primary btn-block w-100">
-            <button type="button" class="btn btn-info btn-block w-100 mt-3" id="add-another-vaulted-card">Add Card</button
+                   class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit2"
+                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %} >
+
+            <input type="submit" id="pay-with-new-card" value="Pay with a new card"
+                   class="btn btn-outline-secondary btn-block w-100 mt-2 mb-2 nmiConfirmFormSubmit1"
+                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %} >
+
+
+            <div class="form-group save-card-for-later">
+                <input type="checkbox" id="saveCardCheckbox" class="cds-checkout-confirm-disclaimer form-check-input" name="saveCard" />
+                <label for="saveCardCheckbox">
+                    Save new card for future
+                </label>
+            </div>
+
+
+            <div id="orderProcessingLoader2" class="order-processing-overlay" style="display: none;">
+                <div class="loader"></div>
+            </div>
 
         </form>
     </div>
@@ -64,46 +93,10 @@
 
     <form class="checkout-form-nmi" id="checkout-form-nmi" action="#">
         <div class="formInner">
-
             <h3>Payment information Data</h3>
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="First Name" name="fname"
-                       value="{{ context.customer.firstName }}">
-            </div>
-
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="Last Name" name="lname"
-                       value="{{ context.customer.lastName }}">
-            </div>
-
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="Street Address" name="address1"
-                       value="{{ context.customer.defaultBillingAddress.street }}">
-            </div>
-
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="City" name="city"
-                       value="{{ context.customer.defaultBillingAddress.city }}">
-            </div>
-
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="State" name="state"
-                       value="{{ context.customer.defaultBillingAddress.country.name }}">
-            </div>
-
-            <div class="form-group">
-                <input type="text" class="form-control d-none" placeholder="Zip code" name="zip"
-                       value="{{ context.customer.defaultBillingAddress.zipcode }}">
-            </div>
-
         </div>
 
-        <div class="alert alert-danger d-none m-3"  id="error-message" role="alert" style="padding: 10px;">
+        <div class="alert alert-danger d-none m-3"  id="error-message" role="alert">
             <div class="error-alert">
                 <p></p>
             </div>
@@ -111,19 +104,25 @@
 
 
         {% if not page.extensions.nmi_payment.isGuest %}
-                <div class="form-group">
-                    <input type="checkbox" id="saveCardCheckbox" name="saveCard" />
-                    <label for="saveCardCheckbox">
-                        Save my card for future use
-                    </label>
-                </div>
-            {% endif %}
+            <div class="form-group">
+                <input type="checkbox" id="saveCardCheckbox" name="saveCard" />
+                <label for="saveCardCheckbox">
+                    Save my card for future use
+                </label>
+            </div>
+        {% endif %}
+
+        <input type="submit" id=""
+               value="Pay {% if page.order %}{{ page.order.price.totalPrice | currency }}{% else %}{{ page.cart.price.totalPrice | currency }}{% endif %}"
+               class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit1"
+                {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
 
 
+        <div id="orderProcessingLoader1" class="order-processing-overlay" style="display: none;">
+            <div class="loader"></div>
         </div>
-        <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
-               class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit">
     </form>
+
     <div id="paymentTokenInfo"></div>
 </div>
 {% endif %}

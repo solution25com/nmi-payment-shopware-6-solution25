@@ -2,6 +2,7 @@
 
 namespace NMIPayment\Controller;
 
+use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\NMIVaultedCustomerService;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -19,16 +20,21 @@ class NMISavedCardsController  extends StorefrontController
 {
   private EntityRepository $vaultedCustomerRepository;
   private NMIVaultedCustomerService $nmiVaultedCustomerService;
+  private NMIConfigService  $configService;
 
-  public function __construct(EntityRepository $vaultedCustomerRepository, NMIVaultedCustomerService $nmiVaultedCustomerService)
+  public function __construct(EntityRepository $vaultedCustomerRepository,
+                              NMIVaultedCustomerService $nmiVaultedCustomerService,
+                              NmiConfigService $configService)
   {
     $this->vaultedCustomerRepository = $vaultedCustomerRepository;
     $this->nmiVaultedCustomerService = $nmiVaultedCustomerService;
+    $this->configService = $configService;
   }
 
   #[Route(path: '/account/nmi-saved-cards', name: 'frontend.account.nmi-saved-cards.page', methods: ['GET'])]
   public function index(SalesChannelContext $context): Response
   {
+
     $customerId = $context->getCustomer()?->getId();
 
     if (!$customerId) {
@@ -72,9 +78,12 @@ class NMISavedCardsController  extends StorefrontController
 
     return $this->renderStorefront('@Storefront/storefront/page/account/nmi-saved-cards.html.twig', [
       'savedCards' => $formattedCards,
-      'defaultBilling' => $defaultBilling
+      'defaultBilling' => $defaultBilling,
+      'configs' => $this->getModeConfig()
     ]);
   }
+
+
 
   #[Route(path: '/account/delete-billing-id', name: 'frontend.account.delete-billing-id', methods: ['POST'])]
   public function deleteBilling(Request $request, SalesChannelContext $context): Response
@@ -171,6 +180,23 @@ class NMISavedCardsController  extends StorefrontController
     $this->vaultedCustomerRepository->upsert([$data], $context->getContext());
 
     return $this->redirectToRoute('frontend.account.nmi-saved-cards.page');
+  }
+
+  private function getModeConfig(): array
+  {
+    $mode = $this->configService->getConfig('mode');
+
+    return match ($mode) {
+      'live' => [
+        'publicKey' => $this->configService->getConfig('publicKeyApiLive'),
+        'checkoutKey' => $this->configService->getConfig('gatewayJsLive'),
+      ],
+      'sandbox' => [
+        'publicKey' => $this->configService->getConfig('publicKeyApi'),
+        'checkoutKey' => $this->configService->getConfig('gatewayJs'),
+      ],
+      default => [],
+    };
   }
 
 }

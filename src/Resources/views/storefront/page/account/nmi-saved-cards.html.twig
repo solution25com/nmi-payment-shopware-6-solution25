@@ -2,7 +2,7 @@
 
 {% block page_account_main_content %}
   <div class="nmi-saved b2b-create-title-text">
-    <input type="hidden" name="parentname" value="Saved Cards">
+    <input type="hidden" name="parentname" value="NMI Saved Cards">
   </div>
 
     <div class="account-welcome">
@@ -27,8 +27,9 @@
           'CUP': 'https://files.readme.io/92c35c7-UnionPay.png'
       } %}
     <div id="default-billing" data-default-billing="{{ defaultBilling | json_encode }}"></div>
+    <div id="plugin-configs" data-plugin-configs="{{ configs | json_encode }}"></div>
 
-    <div class="cards-container">
+      <div class="cards-container">
       {% for card in savedCards %}
         <div class="credit-card {{ card.cardType|lower }} {% if card.isDefault %}default{% endif %}" data-vaulted-id="{{ card.vaultedCustomerId }}" data-card-type="{{ card.cardType }}">
             <div class="card-header">
@@ -48,7 +49,7 @@
           <div class="card-actions">
             {% if not card.isDefault %}
               <button class="set-default-btn" data-billing-id="{{ card.billingId }}">Set as Default</button>
-              <button class="delete-card-btn" data-billing-id="{{ card.billingId }}">Delete</button>
+              <button class="delete-card-btn custom-btn" data-billing-id="{{ card.billingId }}">Delete</button>
             {% endif %}
           </div>
         </div>
@@ -59,9 +60,9 @@
   <div>
     {% if savedCards is not empty %}
       <p>Add a new card or delete customer vault data</p>
-      <button class="delete-card-btn" id="delete-all" data-vault-id="{{ savedCards[0]['vaultedCustomerId'] }}" >Delete all cards</button>
+      <button class="delete-card-btn custom-btn" id="delete-all" data-vault-id="{{ savedCards[0]['vaultedCustomerId'] }}" >Delete all cards</button>
 
-        <button id="addCardButton" class="set-default-btn">+ Add Card</button>
+        <button id="addCardButton" class="add-card-button custom-btn">+ Add Card</button>
 
         <div id="paymentForm" style="display: none;">
             <form class="theForm" action="">
@@ -87,43 +88,66 @@
 
   </div>
 
-  <script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC"></script>
-  <script>
+    <script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ configs.publicKey}}"></script>
+    <script>
+        document.getElementById('addCardButton').addEventListener('click', function () {
+            const paymentForm = document.getElementById('paymentForm');
+            const payButton = document.getElementById('payButton');
+            const isFormVisible = paymentForm.style.display === "block";
 
-      document.getElementById('addCardButton').addEventListener('click', function () {
-          const paymentForm = document.getElementById('paymentForm');
-          const payButton = document.getElementById('payButton');
-          const isFormVisible = paymentForm.style.display === "block";
+            if (isFormVisible) {
+                paymentForm.style.display = "none";
+                this.textContent = "+ Add Card";
+            } else {
+                paymentForm.style.display = "block";
+                this.textContent = "- Remove Card";
 
-          if (isFormVisible) {
-              paymentForm.style.display = "none";
-              this.textContent = "+ Add Card";
-          } else {
-              paymentForm.style.display = "block";
-              this.textContent = "- Remove Card";
+                CollectJS.configure({
+                    'callback': function (response) {
+                        if (response.error) {
+                            console.error(response.error);
+                        } else {
+                            submitPaymentData(response);
+                        }
+                    },
+                    variant: 'inline',
+                    googleFont: 'Abel',
+                    invalidCss: { color: '#B40E3E' },
+                    validCss: { color: '#175033' },
+                    customCss: {
+                        'border-color': '#FFFFFF',
+                        'border-style': 'solid'
+                    },
+                    focusCss: {
+                        'border-color': '#3e79db',
+                        'border-style': 'solid',
+                        'border-width': '3px'
+                    },
+                    fields: {
+                        ccnumber: {
+                            selector: "#ccnumber",
+                            title: "Card Number",
+                            placeholder: "0000 0000 0000 0000",
+                        },
+                        ccexp: {
+                            selector: "#ccexp",
+                            title: "Card Expiration",
+                            placeholder: "01 / 25",
+                        },
+                        cvv: {
+                            display: "show",
+                            selector: "#cvv",
+                            title: "CVV Code",
+                            placeholder: "***",
+                        }
+                    }
+                });
 
-              CollectJS.configure({
-                  'callback': function (response) {
-                      submitPaymentData(response);
-                  },
-                  variant: 'inline',
-                  googleFont: 'Abel',
-                  invalidCss: { color: '#B40E3E' },
-                  validCss: { color: '#175033' },
-                  customCss: { 'border-color': '#FFFFFF', 'border-style': 'solid' },
-                  focusCss: { 'border-color': '#3e79db', 'border-style': 'solid', 'border-width': '3px' },
-                  fields: {
-                      cvv: { placeholder: 'CVV' },
-                      ccnumber: { placeholder: 'Credit Card' },
-                      ccexp: { placeholder: 'MM / YY' }
-                  }
-              });
-
-              setTimeout(function() {
-                  payButton.disabled = false;
-              }, 500);
-          }
-      });
+                setTimeout(function () {
+                    payButton.disabled = false;
+                }, 500);
+            }
+        });
 
       document.addEventListener('DOMContentLoaded', function () {
           const payButton = document.getElementById('payButton');
@@ -156,11 +180,11 @@
               if (result.success) {
                   form.submit();
               } else {
-                  alert('Payment failed: ' + result.errors.join(', '));
+                  console.error('Payment failed: ' + result.errors.join(', '));
               }
           } catch (error) {
               console.error('Error submitting payment data:', error);
-              alert('There was an error processing your payment. Please try again later.');
+              console.error('There was an error processing your payment. Please try again later.');
           }
       }
 
@@ -213,7 +237,7 @@
                       console.log('Card deleted:', data);
                       window.location.reload();
                   })
-                  .catch(error => alert('Error deleting card: ' + error));
+                  .catch(error => console.error('Error deleting card: ' + error));
           }
 
           function setCardAsDefault(vaultedId, billingId) {
@@ -232,7 +256,7 @@
                       console.log('Default billing updated successfully:', data);
                       window.location.reload();
                   })
-                  .catch(error => alert('Error setting default billing: ' + error));
+                  .catch(error => console.error('Error setting default billing: ' + error));
           }
 
           function deleteCustomerVault(vaultId) {
@@ -249,7 +273,7 @@
                       console.log('Vault deleted:', data);
                       window.location.reload();
                   })
-                  .catch(error => alert('Error deleting vault: ' + error));
+                  .catch(error => console.error('Error deleting vault: ' + error));
           }
       });
   </script>

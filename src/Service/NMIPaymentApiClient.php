@@ -8,61 +8,99 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use NMIPayment\Library\Constants\EnvironmentUrl;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\System\SystemConfig\SystemConfigService;
 
 class NMIPaymentApiClient extends Endpoints
 {
-    private string $privateKey;
+  private string $privateKey;
+  private Client $client;
+  private NMIConfigService $nmiConfigService;
+  private $salesChannelId;
+  private LoggerInterface $logger;
 
-    private Client $client;
+  public function __construct(
+    NMIConfigService $nmiConfigService,
+    LoggerInterface $logger
+  )
+  {
+    $this->nmiConfigService = $nmiConfigService;
+    $this->logger = $logger;
+  }
 
-    private SystemConfigService $systemConfigService;
+  public function initializeForSalesChannel(string $salesChannelId = ''): void
+  {
+    $this->salesChannelId = $salesChannelId;
+    $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
+    $isLive = $mode === 'live';
 
-    private LoggerInterface $logger;
+    $baseUrl = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
+    $this->privateKey = $this->nmiConfigService->getConfig(
+      $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+      $salesChannelId
+    );
 
-    public function __construct(SystemConfigService $systemConfigService, LoggerInterface $logger)
-    {
-        $this->systemConfigService = $systemConfigService;
-        $this->logger = $logger;
+    $this->client = new Client(['base_uri' => $baseUrl->value]);
+  }
 
-        $mode = $systemConfigService->get('NMIPayment.config.mode');
-        $isLive = $mode === 'live';
+  private function assertInitialized(): void
+  {
+    if (!isset($this->client)) {
+      throw new \RuntimeException('NMIPaymentApiClient must be initialized using initializeForSalesChannel() before use.');
+    }
+  }
 
-        $baseUrl = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
-        $this->privateKey = $systemConfigService->get($isLive ? 'NMIPayment.config.privateKeyApiLive' : 'NMIPayment.config.privateKeyApi');
+  private function request(array $endpoint, array $options)
+  {
+    $this->assertInitialized();
 
-        $this->client = new Client(['base_uri' => $baseUrl->value]);
+    try {
+      ['method' => $method, 'url' => $url] = $endpoint;
+      return $this->client->request($method, $url, $options);
+    } catch (GuzzleException $e) {
+      $this->logger->error('NMI API Request Error: ' . $e->getMessage(), ['exception' => $e]);
+      return null;
+    }
+  }
+
+  public function createTransaction(array $queryParams): ?array
+  {
+    $this->assertInitialized();
+
+    $options = [
+      'headers' => [
+        'Accept' => 'application/json',
+      ],
+      'query' => $queryParams,
+    ];
+
+    $response = $this->request(self::getEndpoint(self::TRANSACTION), $options);
+
+    if (!$response) {
+      return null;
     }
 
-    public function getConfig(string $configName): string|bool
-    {
-        return $this->systemConfigService->get('NMIPayment.config.' . trim($configName));
+    parse_str($response->getBody()->getContents(), $parsedResponse);
+    return $parsedResponse;
+  }
+
+  public function getVaultedCustomer(array $queryParams): ?array
+  {
+    $this->assertInitialized();
+
+    $options = [
+      'headers' => [
+        'Accept' => 'application/json',
+        'Content-type' => 'application/json',
+      ],
+      'query' => $queryParams,
+    ];
+
+    $response = $this->request(self::getEndpoint(self::VAULTEDCUSTOMER), $options);
+
+    if (!$response) {
+      return null;
     }
 
-    public function createTransaction(array $queryParams): ?array
-    {
-        $options = [
-            'headers' => [
-                'Accept' => 'application/json',
-            ],
-            'query' => $queryParams,
-        ];
-
-        $response = $this->request(self::getEndpoint(self::TRANSACTION), $options);
-        parse_str($response->getBody()->getContents(), $parsedResponse);
-        json_encode($parsedResponse, \JSON_PRETTY_PRINT);
-
-        return $parsedResponse;
-    }
-
-    private function request(array $endpoint, $options)
-    {
-        try {
-            ['method' => $method, 'url' => $url] = $endpoint;
-
-            return $this->client->request($method, $url, $options);
-        } catch (GuzzleException $e) {
-            $this->logger->error($e);
-        }
-    }
+    parse_str($response->getBody()->getContents(), $parsedResponse);
+    return $parsedResponse;
+  }
 }

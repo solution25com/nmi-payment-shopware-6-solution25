@@ -108,23 +108,8 @@ class PaymentValidation
             'billing_id' => new Assert\Optional([
                 new Assert\Type('string'),
             ]),
-        ]);
-
-        return $this->validate($data, $constraint);
-    }
-
-    public function validateAchEcheckPaymentData(?array $data): array
-    {
-        $constraint = new Assert\Collection([
-            'token' => new Assert\NotBlank(),
-            'amount' => [
-                new Assert\NotBlank(),
-                new Assert\Type(['type' => 'numeric']),
-                new Assert\GreaterThan(0),
-            ],
-            'checkname' => new Assert\NotBlank(),
-            'checkaba' => new Assert\NotBlank(),
-            'checkaccount' => new Assert\NotBlank(),
+          'first_name' => new Assert\Optional([new Assert\Type('string')]),
+          'last_name' => new Assert\Optional([new Assert\Type('string')]),
         ]);
 
         return $this->validate($data, $constraint);

@@ -57,10 +57,7 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
 
         if ($selectedPaymentGateway->getHandlerIdentifier() === CreditCard::class) {
             $this->addPaymentMethodExtension($templateVariables, $pageObject, 'creditCard', $amount, $threeDS, $isGuest, $shippingError, $context, $salesChannelContext);
-        } elseif ($selectedPaymentGateway->getHandlerIdentifier() === AchEcheck::class) {
-            $this->addPaymentMethodExtension($templateVariables, $pageObject, 'achEcheck', $amount, $threeDS, $isGuest, $shippingError, $context, $salesChannelContext);
         }
-
     }
 
     private function addPaymentMethodExtension(
@@ -107,8 +104,6 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         switch ($gateway) {
             case 'creditCard':
                 return '@Storefront/nmi-payment/credit-card.html.twig';
-            case 'achEcheck':
-                return '@Storefront/nmi-payment/ach-eCheck.html.twig';
             default:
                 return '';
         }

@@ -14,16 +14,22 @@ use Shopware\Core\Framework\Uuid\Uuid;
 class NmiTransactionService
 {
   private EntityRepository $nmiTransactionRepository;
+  private EntityRepository $orderRepository;
   private EntityRepository $orderTransactionRepository;
+  private LoggerInterface $logger;
 
   public function __construct(EntityRepository $nmiTransactionRepository,
-                              EntityRepository $orderTransactionRepository)
+                              EntityRepository $orderRepository,
+                              EntityRepository $orderTransactionRepository,
+                              LoggerInterface $logger)
   {
     $this->nmiTransactionRepository = $nmiTransactionRepository;
+    $this->orderRepository = $orderRepository;
     $this->orderTransactionRepository = $orderTransactionRepository;
+    $this->logger = $logger;
   }
 
-  public function updateTransactionStatus($orderId, $status, $context)
+  public function updateTransactionStatus($orderId, $status, $context): void
   {
     $transaction = $this->getTransactionByOrderId($orderId, $context);
 
@@ -34,9 +40,23 @@ class NmiTransactionService
         'updatedAt' => (new \DateTime())->format('Y-m-d H:i:s')
       ]
     ], $context);
+
+    $this->orderRepository->upsert([[
+      'id' => $orderId,
+      'nmiTransaction' => [
+        'data' => [
+          'id' => $transaction->getId(),
+          'nmiTransactionId' => $transaction->getId(),
+          'paymentMethodName' => $transaction->getPaymentMethodName(),
+          'subscriptionTransactionId' => $transaction->getSubscriptionTransactionId(),
+          'isSubscription' => $transaction->getIsSubscription(),
+          'status' => $status,
+        ]
+      ]
+    ]], $context);
   }
 
-  public function addTransaction($orderId, $paymentMethodName, $transactionId, $subscriptionTransactionId, $isSubscription, $status, $context): void
+  public function addTransaction($orderId, $paymentMethodName, $transactionId, $subscriptionTransactionId, $isSubscription, $status, $selectedBillingId, $context): void
   {
     $tableNmiId = Uuid::randomHex();
     $this->nmiTransactionRepository->upsert([
@@ -48,9 +68,24 @@ class NmiTransactionService
         'subscriptionTransactionId' => $subscriptionTransactionId,
         'isSubscription' => $isSubscription,
         'status' => $status,
+        'selectedBillingId' => $selectedBillingId,
         'createdAt' => (new \DateTime())->format('Y-m-d H:i:s')
       ]
     ], $context);
+
+    $this->orderRepository->upsert([[
+      'id' => $orderId,
+      'nmiTransaction' => [
+        'data' => [
+          'id' => $tableNmiId,
+          'nmiTransactionId' => $transactionId,
+          'subscriptionTransactionId' => $subscriptionTransactionId,
+          'isSubscription' => $isSubscription,
+          'paymentMethodName' => $paymentMethodName,
+          'status' => $status,
+        ]
+      ]
+    ]], $context);
 
   }
 

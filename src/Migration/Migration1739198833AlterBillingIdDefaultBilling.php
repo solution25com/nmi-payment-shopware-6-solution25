@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Migration;
 
@@ -21,13 +19,14 @@ class Migration1739198833AlterBillingIdDefaultBilling extends MigrationStep
 
     public function update(Connection $connection): void
     {
-        $sqlAlter // @lang text
-          = <<<'SQL'
+
+      $sqlAlter = /** @lang text */
+        <<<SQL
         ALTER TABLE `nmi_vaulted_customer`
             ADD COLUMN `billingId` LONGTEXT DEFAULT NULL,
             ADD COLUMN `default_billing` VARCHAR(255) DEFAULT NULL;
         SQL;
 
-        $connection->executeStatement($sqlAlter);
+      $connection->executeStatement($sqlAlter);
     }
 }

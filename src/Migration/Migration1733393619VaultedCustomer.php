@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Migration;
 
@@ -19,12 +17,13 @@ class Migration1733393619VaultedCustomer extends MigrationStep
 
     public function update(Connection $connection): void
     {
-        $sql // @lang text
-          = <<<'SQL'
+        $sql = /** @lang text */
+          <<<SQL
         CREATE TABLE IF NOT EXISTS `nmi_vaulted_customer` (
             `id` BINARY(16) NOT NULL,
             `customer_id` Binary(16) NOT NULL,
             `vaulted_customer_id` VARCHAR(255) NOT NULL,
+            `card_type` varchar(255) DEFAULT NULL,
             `created_at` DATETIME(3),
             `updated_at` DATETIME(3) DEFAULT NULL,
             PRIMARY KEY (`id`),

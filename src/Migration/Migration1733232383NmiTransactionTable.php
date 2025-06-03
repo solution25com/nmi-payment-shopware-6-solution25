@@ -1,6 +1,4 @@
-<?php
-
-declare(strict_types=1);
+<?php declare(strict_types=1);
 
 namespace NMIPayment\Migration;
 
@@ -17,10 +15,11 @@ class Migration1733232383NmiTransactionTable extends MigrationStep
         return 1733232383;
     }
 
-    public function update(Connection $connection): void
-    {
-        $sql // @lang text
-          = <<<'SQL'
+  public function update(Connection $connection): void
+  {
+    $sql =
+      /** @lang text */
+      <<<SQL
         CREATE TABLE IF NOT EXISTS `nmi_transaction` (
             `id` BINARY(16) NOT NULL,
             `order_id` VARCHAR(255) NOT NULL,
@@ -38,6 +37,6 @@ class Migration1733232383NmiTransactionTable extends MigrationStep
             COLLATE = utf8mb4_unicode_ci;
         SQL;
 
-        $connection->executeStatement($sql);
-    }
+    $connection->executeStatement($sql);
+  }
 }

@@ -1,31 +1,38 @@
 export default class CollectJsLoader {
     static loadCollectJS(collectJsUrl, callback, paymentType, options = {}) {
-        if (typeof CollectJS === 'undefined') {
-            const script = document.createElement('script');
-            script.src = collectJsUrl;
-            script.setAttribute(
-                'data-tokenization-key',
-                'jygC3z-8XkphM-JEBByn-6JTRdC' // TODO: Do not hardcode key
-            );
-            document.head.appendChild(script);
+        console.log('Loading CollectJS...');
 
-            script.onload = () => {
+        return new Promise((resolve, reject) => {
+            if (typeof CollectJS === 'undefined') {
+                console.log('after start')
+                const script = document.createElement('script');
+                script.src = collectJsUrl;
+                script.setAttribute('data-tokenization-key', 'jygC3z-8XkphM-JEBByn-6JTRdC');
+                document.head.appendChild(script);
+
+                script.onload = () => {
+                    console.log('CollectJS loaded and configured');
+                    CollectJS.configure({
+                        paymentType: paymentType,
+                        callback,
+                        ...options
+                    });
+                    resolve();
+                };
+
+                script.onerror = () => {
+                    console.error('Failed to load CollectJS.');
+                    reject();
+                };
+            } else {
+                console.warn('CollectJS is already loaded');
                 CollectJS.configure({
-                    paymentType,
+                    paymentType: paymentType,
                     callback,
-                    ...options,
+                    ...options
                 });
-            };
-
-            script.onerror = () => {
-                console.error('Failed to load CollectJS.');
-            };
-        } else {
-            CollectJS.configure({
-                paymentType,
-                callback,
-                ...options,
-            });
-        }
+                resolve();
+            }
+        });
     }
 }
