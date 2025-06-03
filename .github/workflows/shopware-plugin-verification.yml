@@ -31,13 +31,16 @@ jobs:
 
       - name: ❌ Extension Verifier Failed – Errors were found
         if: failure() && steps.verifier.outcome == 'failure'
+        env:
+          VERSION_SELECTION: ${{ matrix.version-selection }}
         run: |
           echo "❌ Shopware Extension Verifier detected issues. Please review and fix them."
-          echo "### ❌ Shopware Extension Verifier Failed (${matrix.version-selection})" >> $GITHUB_STEP_SUMMARY
-          exit 1
+          echo "### ❌ Shopware Extension Verifier Failed (${VERSION_SELECTION})" >> $GITHUB_STEP_SUMMARY
 
       - name: ✅ Extension Verifier Passed – No errors found
         if: success() && steps.verifier.outcome == 'success'
+        env:
+          VERSION_SELECTION: ${{ matrix.version-selection }}
         run: |
           echo "✅ Shopware Extension Verifier ran successfully. No issues found!"
-          echo "### ✅ Shopware Extension Verifier Passed (${matrix.version-selection})" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Shopware Extension Verifier Passed (${VERSION_SELECTION})" >> $GITHUB_STEP_SUMMARY
