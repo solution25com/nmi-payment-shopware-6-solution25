@@ -321,6 +321,8 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 }
 ```
 
+---
+
 
 ### Best Practices
 
