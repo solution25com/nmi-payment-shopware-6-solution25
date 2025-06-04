@@ -222,6 +222,106 @@ Allows customers to securely save their card details for future transactions.
 
 _Only registered users can save a card. Guest users do not have the option to save a card._
 
+
+## NMI Plugin - API Documentation
+
+This document provides detailed information about the API endpoints available in the NMI Plugin for Shopware 6. These endpoints allow authorized users to initiate transactions and retrieve transaction details using query-based parameters.
+
+---
+
+## NMI Transaction Initiation
+
+**Endpoint:**  
+`POST /api/transact.php`
+
+**Description:**  
+Initiates a transaction using query parameters sent via a POST request. This is the typical gateway interaction endpoint for processing payments through NMI.
+
+**Request Headers:**
+- `Accept: application/json`
+
+**Example Request Body (x-www-form-urlencoded):**
+```
+security_key=6457Thfj624V5r7WUwc5v6a68Zsd6YEm
+type=sale
+ccnumber=4111111111111111
+ccexp=1025
+cvv=123
+amount=1
+```
+
+**Successful Response (x-www-form-urlencoded response format):**
+```
+response=1
+responsetext=SUCCESS
+authcode=123456
+transactionid=10778056102
+response_code=100
+type=sale
+cvvresponse=N
+```
+
+**Example Error Response:**
+```
+response=3
+responsetext=Payment Token does not exist REFID:333061802
+response_code=300
+```
+
+---
+
+## NMI Transaction Query
+
+**Endpoint:**  
+`POST /api/query.php`
+
+**Description:**  
+Sends a query request to the NMI gateway to retrieve transaction details. Useful for post-transaction operations such as verifying payment status, fetching historical data, or reconciling records.
+
+**Request Headers:**
+- `Accept: application/json`
+- `Content-Type: application/json`
+
+**Example Request Body:**
+```json
+{
+  "security_key": "6457Thfj624V5r7WUwc5v6a68Zsd6YEm",
+  "report_type": "transaction",
+  "transactionid": "10778056102"
+}
+```
+
+**Successful Response:**
+```json
+{
+  "nm_response": {
+    "transaction": {
+      "transaction_id": "10778056102",
+      "transaction_type": "cc",
+      "condition": "complete",
+      "order_id": "1234567890",
+      "first_name": "John",
+      "last_name": "Smith",
+      "cc_number": "4xxxxxxxxxxx1111",
+      "cc_exp": "1025",
+      "amount": "1.00",
+      "response_text": "SUCCESS",
+      "response_code": "100"
+    }
+  }
+}
+```
+
+**Example Error Response:**
+```json
+{
+  "nm_response": {
+    "error_response": "Invalid security key provided. REFID:987654321"
+  }
+}
+```
+
+
 ### Best Practices
 
 #### 1. Configure API Keys Correctly
