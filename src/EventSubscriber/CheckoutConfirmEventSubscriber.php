@@ -88,7 +88,7 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
             $cardsDropdown = $this->vaultedCustomerService->dropdownCards($context, $customerId);
 
             $templateVariables->assign([
-                'configs' => $this->getModeConfig(),
+                'configs' => $this->configService->getModeConfig(),
                 'saveCardBackend' => $isCardSaved,
                 'vaultedId' => $vaultedCustomerId,
                 'billingId' => $billingId,
@@ -108,22 +108,4 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
                 return '';
         }
     }
-
-  private function getModeConfig(): array
-  {
-    $mode = $this->configService->getConfig('mode');
-
-    return match ($mode) {
-      'live' => [
-        'publicKey' => $this->configService->getConfig('publicKeyApiLive'),
-        'checkoutKey' => $this->configService->getConfig('gatewayJsLive'),
-      ],
-      'sandbox' => [
-        'publicKey' => $this->configService->getConfig('publicKeyApi'),
-        'checkoutKey' => $this->configService->getConfig('gatewayJs'),
-      ],
-      default => [],
-    };
-  }
-
 }

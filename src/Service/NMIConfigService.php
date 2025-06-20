@@ -13,4 +13,21 @@ class NMIConfigService
     return $this->systemConfigService->get('NMIPayment.config.' . trim($configName), $salesChannelId);
   }
 
+  public function getModeConfig(): array
+  {
+    $mode = $this->getConfig('mode');
+
+    return match ($mode) {
+      'live' => [
+        'publicKey' => $this->getConfig('publicKeyApiLive'),
+        'checkoutKey' => $this->getConfig('gatewayJsLive'),
+      ],
+      'sandbox' => [
+        'publicKey' => $this->getConfig('publicKeyApi'),
+        'checkoutKey' => $this->getConfig('gatewayJs'),
+      ],
+      default => [],
+    };
+  }
+
 }

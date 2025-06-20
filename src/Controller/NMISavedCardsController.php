@@ -57,9 +57,6 @@ class NMISavedCardsController  extends StorefrontController
       $billingData = json_decode($card->getBillingId(), true);
       if (is_array($billingData)) {
         foreach ($billingData as $billingEntry) {
-          $firstSixDigits = substr($billingEntry['lastDigits'], 0, 6);
-//          $cardType = $this->detectCardType($firstSixDigits);
-
           $formattedCards[] = [
             'vaultedCustomerId' => $card->getVaultedCustomerId(),
             'billingId' => $billingEntry['billingId'],
@@ -79,7 +76,7 @@ class NMISavedCardsController  extends StorefrontController
     return $this->renderStorefront('@Storefront/storefront/page/account/nmi-saved-cards.html.twig', [
       'savedCards' => $formattedCards,
       'defaultBilling' => $defaultBilling,
-      'configs' => $this->getModeConfig()
+      'configs' => $this->configService->getModeConfig()
     ]);
   }
 
@@ -180,23 +177,6 @@ class NMISavedCardsController  extends StorefrontController
     $this->vaultedCustomerRepository->upsert([$data], $context->getContext());
 
     return $this->redirectToRoute('frontend.account.nmi-saved-cards.page');
-  }
-
-  private function getModeConfig(): array
-  {
-    $mode = $this->configService->getConfig('mode');
-
-    return match ($mode) {
-      'live' => [
-        'publicKey' => $this->configService->getConfig('publicKeyApiLive'),
-        'checkoutKey' => $this->configService->getConfig('gatewayJsLive'),
-      ],
-      'sandbox' => [
-        'publicKey' => $this->configService->getConfig('publicKeyApi'),
-        'checkoutKey' => $this->configService->getConfig('gatewayJs'),
-      ],
-      default => [],
-    };
   }
 
 }

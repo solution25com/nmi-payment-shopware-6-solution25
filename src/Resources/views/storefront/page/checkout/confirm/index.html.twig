@@ -2,6 +2,8 @@
 
 {% block page_checkout_confirm_tos_control_checkbox %}
     {{ parent() }}
+
+    {% if page.extensions.nmi_payment %}
     <input
             type="hidden"
             required="required"
@@ -28,6 +30,7 @@
             value=""
             name="nmi_selected_billing_id"
     >
+    {% endif %}
 {% endblock %}
 
 {% block page_checkout_confirm_form_submit %}

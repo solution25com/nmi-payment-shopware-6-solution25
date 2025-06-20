@@ -30,12 +30,12 @@
             <label>Api private key Live</label>
         </input-field>
 
-        <input-field type="password">
+        <input-field type="text">
             <name>publicKeyApiLive</name>
             <label>Api public Live</label>
         </input-field>
 
-        <input-field type="password">
+        <input-field type="text">
             <name>gatewayJsLive</name>
             <label>Checkout public key Live (GatewayJs)</label>
         </input-field>
@@ -49,12 +49,12 @@
             <label>Api private key sandbox</label>
         </input-field>
 
-        <input-field type="password">
+        <input-field type="text">
             <name>publicKeyApi</name>
             <label>Api public key sandbox</label>
         </input-field>
 
-        <input-field type="password">
+        <input-field type="text">
             <name>gatewayJs</name>
             <label>Checkout public key (GatewayJs)</label>
         </input-field>
