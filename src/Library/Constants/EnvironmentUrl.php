@@ -6,6 +6,5 @@ namespace NMIPayment\Library\Constants;
 
 enum EnvironmentUrl: string
 {
-    case SANDBOX = 'https://secure.nmi.com';
-    case LIVE = 'https://secure.nmi.com/api/live';
+    case DEFAULT_URL_PROD_AND_SANDBOX = 'https://secure.nmi.com';
 }

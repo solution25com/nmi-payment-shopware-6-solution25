@@ -71,6 +71,14 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         $context,
         $salesChannelContext
     ): void {
+
+        $billingAddress = $salesChannelContext
+            ->getCustomer()
+            ->getDefaultBillingAddress();
+        $city = $billingAddress
+            ? trim((string) $billingAddress->getCity())
+            : '';
+
         $templateVariables->assign([
             'template' => $this->getTemplateForGateway($gateway),
             'threeDS' => $threeDS,
@@ -87,12 +95,17 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
             $billingId = $this->vaultedCustomerService->getBillingIdFromCustomerId($context, $customerId);
             $cardsDropdown = $this->vaultedCustomerService->dropdownCards($context, $customerId);
 
+            $city = $salesChannelContext->getCustomer()->getDefaultBillingAddress()
+                ? $salesChannelContext->getCustomer()->getDefaultBillingAddress()->getCity()
+                : null;
+
             $templateVariables->assign([
                 'configs' => $this->configService->getModeConfig(),
                 'saveCardBackend' => $isCardSaved,
                 'vaultedId' => $vaultedCustomerId,
                 'billingId' => $billingId,
                 'cardsDropdown' => json_encode($cardsDropdown),
+                'billingCity' => $city,
             ]);
         }
 

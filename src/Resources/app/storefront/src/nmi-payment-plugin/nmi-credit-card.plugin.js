@@ -48,6 +48,7 @@ export default class NmiCreditCardPlugin extends Plugin {
         this.cardHolderLastName = document.getElementById('card-holder-last-name');
         this.billingFirstName = this.parentCreditCardWrapper.getAttribute('data-billing-first-name');
         this.billingLastName = this.parentCreditCardWrapper.getAttribute('data-billing-last-name');
+        this.billingCity = this.parentCreditCardWrapper.getAttribute('data-billing-city');
         this.confirmOrderForm = document.forms[this.options.confirmFormId];
 
         this.cards = JSON.parse(this.dropdownCards);
@@ -295,13 +296,14 @@ export default class NmiCreditCardPlugin extends Plugin {
         const threeDSActivate = this.threeDSConfig; // till activate
 
         let gateway, threeDS;
+
         const paymentData = {
             token: response.token,
             amount: this.amount,
             first_name: document.querySelector('input[name="fname"]').value,
             last_name: document.querySelector('input[name="lname"]').value,
             address1: document.querySelector('input[name="address1"]').value,
-            city: document.querySelector('input[name="city"]').value,
+            city: this.billingCity,
             // state: document.querySelector('input[name="state"]').value,
             zip: document.querySelector('input[name="zip"]').value,
             ccnumber: response.card.number,
@@ -310,7 +312,6 @@ export default class NmiCreditCardPlugin extends Plugin {
             customer_vault: document.querySelector("#saveCardCheckbox") ? (document.querySelector("#saveCardCheckbox").checked ? "add_customer" : null) : null,
             saveCard: document.querySelector("#saveCardCheckbox") ? document.querySelector("#saveCardCheckbox").checked : false,
         };
-
 
         if (threeDSActivate) {
             const script = document.createElement('script');

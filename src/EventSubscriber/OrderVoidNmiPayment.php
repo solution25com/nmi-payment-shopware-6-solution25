@@ -233,6 +233,8 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
           ];
 
           $response = $this->nmiPaymentApiClient->createTransaction($postData);
+          $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
+
         }
       } catch (\Throwable $exception) {
         $this->logger->error('Error during state machine transition: ' . $exception->getMessage(), [

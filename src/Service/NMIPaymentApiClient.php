@@ -11,6 +11,7 @@ use Psr\Log\LoggerInterface;
 
 class NMIPaymentApiClient extends Endpoints
 {
+
   private string $privateKey;
   private Client $client;
   private NMIConfigService $nmiConfigService;
@@ -26,20 +27,22 @@ class NMIPaymentApiClient extends Endpoints
     $this->logger = $logger;
   }
 
-  public function initializeForSalesChannel(string $salesChannelId = ''): void
-  {
-    $this->salesChannelId = $salesChannelId;
-    $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
-    $isLive = $mode === 'live';
+    public function initializeForSalesChannel(string $salesChannelId = ''): void
+    {
+        $this->salesChannelId = $salesChannelId;
+        $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
+        $isLive = $mode === 'live';
 
-    $baseUrl = $isLive ? EnvironmentUrl::LIVE : EnvironmentUrl::SANDBOX;
-    $this->privateKey = $this->nmiConfigService->getConfig(
-      $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
-      $salesChannelId
-    );
+        $baseUrl = EnvironmentUrl::DEFAULT_URL_PROD_AND_SANDBOX;
 
-    $this->client = new Client(['base_uri' => $baseUrl->value]);
-  }
+        $this->privateKey = $this->nmiConfigService->getConfig(
+          $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+          $salesChannelId
+        );
+
+        $this->client = new Client(['base_uri' => $baseUrl->value]);
+    }
+
 
   private function assertInitialized(): void
   {
