@@ -66,13 +66,23 @@
 
             </div>
 
-            <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
-                   class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit2"
-                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %} >
+            <div class="position-relative d-inline-block w-100">
+                <input type="submit" id=""
+                       value="Pay {{ page.cart.price.totalPrice|currency }}"
+                       class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit2"
+                        {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
+
+                <div id="orderProcessingLoader2"
+                     class="order-processing-overlay position-absolute"
+                     style="display: none; top: 50%; left: 22%; transform: translateY(-50%);">
+                    <div style="color : #154fa1" class="loader"></div>
+                </div>
+            </div>
 
             <input type="submit" id="pay-with-new-card" value="Pay with a new card"
                    class="btn btn-outline-secondary btn-block w-100 mt-2 mb-2 nmiConfirmFormSubmit1"
-                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %} >
+                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
+
 
 
             <div class="form-group save-card-for-later">
@@ -82,10 +92,6 @@
                 </label>
             </div>
 
-
-            <div id="orderProcessingLoader2" class="order-processing-overlay" style="display: none;">
-                <div class="loader"></div>
-            </div>
 
         </form>
     </div>
@@ -113,15 +119,19 @@
             </div>
         {% endif %}
 
-        <input type="submit" id=""
-               value="Pay {% if page.order %}{{ page.order.price.totalPrice | currency }}{% else %}{{ page.cart.price.totalPrice | currency }}{% endif %}"
-               class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit1"
-                {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
+        <div class="position-relative d-inline-block w-100">
+            <input type="submit" id=""
+                   value="Pay {% if page.order %}{{ page.order.price.totalPrice | currency }}{% else %}{{ page.cart.price.totalPrice | currency }}{% endif %}"
+                   class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit1"
+                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
 
-
-        <div id="orderProcessingLoader1" class="order-processing-overlay" style="display: none;">
-            <div class="loader"></div>
+            <div id="orderProcessingLoader1"
+                 class="order-processing-overlay position-absolute"
+                 style="display: none; top: 55%; left: 20%; transform: translateY(-50%);">
+                <div style="color: #154fa1" class="loader"></div>
+            </div>
         </div>
+
     </form>
 
     <div id="paymentTokenInfo"></div>
