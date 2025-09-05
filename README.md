@@ -18,6 +18,9 @@ The NMI plugin allows Shopware stores to securely process payments using the NMI
 
 The plugin includes advanced configuration options, such as API key management for live and sandbox environments, webhook signing, and 3D Secure verification for added payment security.
 
+## Compatibility
+- ✅ Shopware 6.6.x 
+
 ## Get Started
 
 ### Installation & Activation
