@@ -24,7 +24,7 @@
         </input-field>
     </card>
     <card>
-        <title>Live :</title>
+        <title>Live / Sandbox :</title>
         <input-field type="password">
             <name>privateKeyApiLive</name>
             <label>Api private key Live</label>
@@ -40,10 +40,6 @@
             <label>Checkout public key Live (GatewayJs)</label>
         </input-field>
 
-    </card>
-
-    <card>
-        <title>Sandbox :</title>
         <input-field type="password">
             <name>privateKeyApi</name>
             <label>Api private key sandbox</label>
@@ -58,6 +54,11 @@
             <name>gatewayJs</name>
             <label>Checkout public key (GatewayJs)</label>
         </input-field>
+
+        <component name="nmi-api-test">
+            <name>NmiApi</name>
+        </component>
+
     </card>
 
     <card>

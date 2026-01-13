@@ -2,47 +2,44 @@
 <div id="nmi-ach-echeck" data-nmi-ach-echeck="true"
      data-amount="{{ page.extensions.nmi_payment.amount }}"
      data-guest="{{ page.extensions.nmi_payment.isGuest }}"
+     data-configs="{{ page.extensions.nmi_payment.configs | json_encode }}"
 >
 
-<form class="checkout-form-nmi" id="checkout-form-nmi" action="#">
-    <div class="formInner">
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="First Name" name="fname"
-                   value="{{ context.customer.firstName }}">
-
-        </div>
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="Last Name" name="lname"
-                   value="{{ context.customer.lastName }}">
-
-        </div>
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="Street Address" name="address1"
-                   value="{{ context.customer.defaultBillingAddress.street }}">
-
-        </div>
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="City" name="city"
-                   value="{{ context.customer.defaultBillingAddress.city }}">
-
-        </div>
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="State" name="state"
-                   value="{{ context.customer.defaultBillingAddress.country.name }}">
-
-        </div>
-        <div class="form-group">
-            <input type="text" class="form-control d-none" placeholder="Zip code" name="zip"
-                   value="{{ context.customer.defaultBillingAddress.zipcode }}">
-
-        </div>
+    <div class="d-none" id="nmi-customer-data">
+        <input type="text" class="form-control" placeholder="First Name" name="fname" value="{{ context.customer.firstName }}">
+        <input type="text" class="form-control" placeholder="Last Name" name="lname" value="{{ context.customer.lastName }}">
+        <input type="text" class="form-control" placeholder="Street Address" name="address1" value="{{ context.customer.defaultBillingAddress.street }}">
+        <input type="text" class="form-control" placeholder="City" name="city" value="{{ context.customer.defaultBillingAddress.city }}">
+        <input type="text" class="form-control" placeholder="State" name="state" value="{{ context.customer.defaultBillingAddress.country.name }}">
+        <input type="text" class="form-control" placeholder="Zip code" name="zip" value="{{ context.customer.defaultBillingAddress.zipcode }}">
     </div>
-    <input type="submit" id="" value="Pay {{ page.cart.price.totalPrice|currency }}"
-           class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit">
-</form>
-<div id="paymentTokenInfo"></div>
+
+    <form class="checkout-form-nmi" id="checkout-form-nmi" action="#">
+        <div class="formInner">
+            <h3>Payment information Data</h3>
+        </div>
+
+        <div class="alert alert-danger d-none m-3" id="error-message" role="alert">
+            <div class="error-alert">
+                <p></p>
+            </div>
+        </div>
+
+        <div class="position-relative d-inline-block w-100">
+            <input type="submit" id=""
+                   value="Pay {% if page.order %}{{ page.order.price.totalPrice | currency }}{% else %}{{ page.cart.price.totalPrice | currency }}{% endif %}"
+                   class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit"
+                    {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
+
+            <div id="orderProcessingLoader1"
+                 class="order-processing-overlay position-absolute"
+                 style="display: none; top: 55%; left: 20%; transform: translateY(-50%);">
+                <div style="color: #154fa1" class="loader"></div>
+            </div>
+        </div>
+    </form>
+
+    <div id="paymentTokenInfo"></div>
 </div>
 
-{# <a href="https://quickclick.com/r/3mrjiicm73o5g8fwuf5eendffst1or">NMI button submit order</a> #}
-<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ config('NMIPayment.config.publicKeyApi') }}" ></script>
-{#<script src="https://secure.networkmerchants.com/token/Collect.js" data-tokenization-key="jygC3z-8XkphM-JEBByn-6JTRdC" data-variant="inline"></script>#}
+<script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ page.extensions.nmi_payment.configs.publicKey }}" ></script>

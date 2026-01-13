@@ -1,0 +1,17 @@
+{
+  "NMI": {
+    "apiTest": {
+      "connection": {
+        "test-api-connection": "API-Verbindung testen"
+      },
+      "success": {
+        "title": "NMI API-Test",
+        "message": "Verbindung erfolgreich!"
+      },
+      "error": {
+        "title": "NMI API-Test",
+        "message": "Verbindungstest fehlgeschlagen! Bitte überprüfen Sie die API-Zugangsdaten."
+      }
+    }
+  }
+}

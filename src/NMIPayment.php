@@ -15,6 +15,7 @@ use Shopware\Core\Framework\Plugin\Context\ActivateContext;
 use Shopware\Core\Framework\Plugin\Context\DeactivateContext;
 use Shopware\Core\Framework\Plugin\Context\InstallContext;
 use Shopware\Core\Framework\Plugin\Context\UninstallContext;
+use Shopware\Core\Framework\Plugin\Context\UpdateContext;
 use Shopware\Core\Framework\Plugin\Util\PluginIdProvider;
 
 class NMIPayment extends Plugin
@@ -51,9 +52,18 @@ class NMIPayment extends Plugin
     public function activate(ActivateContext $activateContext): void
     {
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
+            $this->addPaymentMethod(new $paymentMethod(), $activateContext->getContext());
             $this->setPaymentMethodIsActive(true, $activateContext->getContext(), new $paymentMethod());
         }
         parent::activate($activateContext);
+    }
+
+    public function update(UpdateContext $updateContext): void
+    {
+        foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
+            $this->addPaymentMethod(new $paymentMethod(), $updateContext->getContext());
+        }
+        parent::update($updateContext);
     }
 
     public function deactivate(DeactivateContext $deactivateContext): void

@@ -6,5 +6,6 @@ class PaymentMethods
 {
     public const PAYMENT_METHODS = [
         CreditCardPaymentMethod::class,
+        ACHPaymentMethod::class,
     ];
 }

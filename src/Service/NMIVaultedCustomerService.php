@@ -5,6 +5,7 @@ namespace NMIPayment\Service;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\Framework\Uuid\Uuid;
+use Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 
 class NMIVaultedCustomerService
@@ -13,6 +14,7 @@ class NMIVaultedCustomerService
   private NMIPaymentApiClient $nmiPaymentApiClient;
   private NMIPaymentDataRequestService $nmiPaymentDataRequestService;
   private VaultedCustomerService $vaultedCustomerService;
+  private NumberRangeValueGeneratorInterface $numberRangeGenerator;
   private LoggerInterface $logger;
 
 
@@ -21,6 +23,7 @@ class NMIVaultedCustomerService
     NmiPaymentApiClient $nmiPaymentApiClient,
     NMIPaymentDataRequestService $nmiPaymentDataRequestService,
     VaultedCustomerService $vaultedCustomerService,
+    NumberRangeValueGeneratorInterface $numberRangeGenerator,
     LoggerInterface $logger)
 
   {
@@ -28,6 +31,7 @@ class NMIVaultedCustomerService
     $this->nmiPaymentApiClient = $nmiPaymentApiClient;
     $this->nmiPaymentDataRequestService = $nmiPaymentDataRequestService;
     $this->vaultedCustomerService = $vaultedCustomerService;
+    $this->numberRangeGenerator = $numberRangeGenerator;
     $this->logger = $logger;
   }
 
@@ -68,11 +72,20 @@ class NMIVaultedCustomerService
       $allItems[] = $productData;
     }
 
+    $salesChannelId = $context->getSalesChannel()->getId();
+    $predictedOrderNumber = $this->numberRangeGenerator->getValue(
+      'order',
+      $context->getContext(),
+      $salesChannelId,
+      true
+    );
+
     $postData = [
       'security_key' => $this->getSecurityKey($context),
       'amount' => $data['amount'] ?? null,
       'currency' => 'USD',
       'type' => $paymentMethodType ? 'auth' : 'sale',
+      'orderid' => $predictedOrderNumber,
       'first_name' => $data['first_name'],
       'last_name' => $data['last_name'],
       'address1' => $billingAddress ? $billingAddress->getStreet() : '',
@@ -274,8 +287,13 @@ class NMIVaultedCustomerService
   {
     $salesChannelId = $context->getSalesChannel()->getId();
     $this->nmiPaymentApiClient->initializeForSalesChannel($salesChannelId);
+    $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
+    $isLive = $mode === 'live';
 
-    return $this->nmiConfigService->getConfig('privateKeyApi', $salesChannelId);
+    return $this->nmiConfigService->getConfig(
+      $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+      $salesChannelId
+    );
   }
 
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NMIPayment\Storefront\Controller;
 
 use NMIPayment\Service\NMIPaymentDataRequestService;
+use NMIPayment\Service\NMIACHPaymentDataRequestService;
 use NMIPayment\Service\NMIVaultedCustomerService;
 use NMIPayment\Service\VaultedCustomerService;
 use Shopware\Core\Checkout\Cart\Cart;
@@ -23,6 +24,7 @@ class NMIPaymentController extends StorefrontController
   private  VaultedCustomerService $vaultedCustomerService;
   private  NMIPaymentDataRequestService $nmiPaymentDataRequestService;
   private  NMIVaultedCustomerService $nmiVaultedCustomerService;
+  private  NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService;
   private readonly LoggerInterface $logger;
 
   public function __construct(
@@ -30,6 +32,7 @@ class NMIPaymentController extends StorefrontController
     VaultedCustomerService       $vaultedCustomerService,
     NMIPaymentDataRequestService $nmiPaymentDataRequestService,
     NMIVaultedCustomerService    $nmiVaultedCustomerService,
+    NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService,
     LoggerInterface              $logger
   )
   {
@@ -37,6 +40,7 @@ class NMIPaymentController extends StorefrontController
     $this->vaultedCustomerService = $vaultedCustomerService;
     $this->nmiPaymentDataRequestService = $nmiPaymentDataRequestService;
     $this->nmiVaultedCustomerService = $nmiVaultedCustomerService;
+    $this->nmiACHPaymentDataRequestService = $nmiACHPaymentDataRequestService;
     $this->logger = $logger;
   }
 
@@ -204,6 +208,29 @@ class NMIPaymentController extends StorefrontController
       return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
 
     } catch (\Exception $e) {
+      return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
+    }
+  }
+
+  #[Route(
+    path: '/nmi-payment-ach',
+    name: 'frontend.nmi-ach.payment',
+    methods: ['POST']
+  )]
+  public function achPayment(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
+  {
+    $data = json_decode($request->getContent(), true);
+    $validationErrors = $this->validator->validateACHPaymentData($data);
+
+    if (!empty($validationErrors)) {
+      return $this->createErrorResponse('Invalid request data.', $validationErrors, Response::HTTP_BAD_REQUEST);
+    }
+
+    try {
+      $paymentResponse = $this->nmiACHPaymentDataRequestService->sendACHPaymentRequestToNMI($data, $cart, $context);
+      return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
+    } catch (\Exception $e) {
+      $this->logger->error('ACH Payment processing failed', ['exception' => $e]);
       return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
   }

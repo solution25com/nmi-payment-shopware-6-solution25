@@ -115,6 +115,31 @@ class PaymentValidation
         return $this->validate($data, $constraint);
     }
 
+    public function validateACHPaymentData(?array $data): array
+    {
+        $constraint = new Assert\Collection([
+            'token' => new Assert\NotBlank(),
+            'amount' => [
+                new Assert\NotBlank(),
+                new Assert\Type(['type' => 'numeric']),
+                new Assert\GreaterThan(0),
+            ],
+            'checkname' => new Assert\Optional(new Assert\Type('string')),
+            'checkaba' => new Assert\Optional(new Assert\Type('string')),
+            'checkaccount' => new Assert\Optional(new Assert\Type('string')),
+            'account_holder_type' => new Assert\Optional(new Assert\Type('string')),
+            'account_type' => new Assert\Optional(new Assert\Type('string')),
+            'first_name' => new Assert\NotBlank(),
+            'last_name' => new Assert\NotBlank(),
+            'address1' => new Assert\Optional(new Assert\Type('string')),
+            'city' => new Assert\Optional(new Assert\Type('string')),
+            'state' => new Assert\Optional(new Assert\Type('string')),
+            'zip' => new Assert\Optional(new Assert\Type('string')),
+        ]);
+
+        return $this->validate($data, $constraint);
+    }
+
     private function validate(?array $data, Assert\Collection $constraint): array
     {
         $violations = $this->validator->validate($data, $constraint);

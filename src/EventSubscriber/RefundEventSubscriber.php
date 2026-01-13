@@ -57,10 +57,20 @@ class RefundEventSubscriber implements EventSubscriberInterface
              }
 
             $orderTotalAmount = $order->getAmountTotal();
+            $salesChannelId = $order->getSalesChannelId();
 
             if ($transaction && strtolower($transaction->getStatus()) === strtolower(TransactionStatuses::PAID->value)) {
+                $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
+                $isLive = $mode === 'live';
+                $securityKey = $this->nmiConfigService->getConfig(
+                    $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+                    $salesChannelId
+                );
+
+                $this->nmiPaymentApiClient->initializeForSalesChannel($salesChannelId);
+
                 $postData = [
-                    'security_key' => $this->nmiConfigService->getConfig('privateKeyApi'),
+                    'security_key' => $securityKey,
                     'type' => 'refund',
                     'transactionid' => $transaction->getTransactionId(),
                     'payment' => 'creditcard',

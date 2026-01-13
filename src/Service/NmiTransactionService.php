@@ -111,4 +111,15 @@ class NmiTransactionService
     }
   }
 
+  public function getTransactionByTransactionId(string $transactionId, Context $context): null|Entity
+  {
+    $criteria = new Criteria();
+    $criteria->addFilter(new EqualsFilter('transactionId', $transactionId));
+    try {
+      return $this->nmiTransactionRepository->search($criteria, $context)->last();
+    } catch (\Exception $e) {
+      return null;
+    }
+  }
+
 }

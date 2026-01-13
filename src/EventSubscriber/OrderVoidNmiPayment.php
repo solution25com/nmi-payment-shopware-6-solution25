@@ -92,8 +92,12 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
             $order = $this->orderRepository->search($criteria, $event->getContext())->first();
 
             $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
-            $securityKey = $this->nmiConfigService->getConfig('privateKeyApi', $order->getSalesChannelId());
-
+            $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
+            $isLive = $mode === 'live';
+            $securityKey = $this->nmiConfigService->getConfig(
+                $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+                $order->getSalesChannelId()
+            );
 
             $postData = [
               'security_key' => $securityKey,
@@ -133,7 +137,12 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
             }
 
             $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
-            $securityKey = $this->nmiConfigService->getConfig('privateKeyApi', $order->getSalesChannelId());
+            $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
+            $isLive = $mode === 'live';
+            $securityKey = $this->nmiConfigService->getConfig(
+                $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+                $order->getSalesChannelId()
+            );
 
             $lineItems = $order->getLineItems();
             $addShippingCosts = $order->getShippingCosts()->getTotalPrice() ?? 0;
@@ -218,7 +227,12 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
         $order = $this->orderRepository->search($criteria, $event->getContext())->first();
 
         $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
-        $securityKey = $this->nmiConfigService->getConfig('privateKeyApi', $order->getSalesChannelId());
+        $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
+        $isLive = $mode === 'live';
+        $securityKey = $this->nmiConfigService->getConfig(
+            $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
+            $order->getSalesChannelId()
+        );
 
         $transaction = $this->nmiTransactionService
           ->getTransactionByOrderId($order->getId(), $event->getContext());

@@ -25,6 +25,14 @@
              <argument type="service" id="NMIPayment\Service\NMIConfigService" />
          </service>
 
+        <service id="NMIPayment\Storefront\Controller\TestApiConnectionController" public="true">
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="router"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
         <service id="NMIPayment\Storefront\Controller\NMIPaymentController" public="true">
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
@@ -36,7 +44,16 @@
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService" />
             <argument type="service" id="NMIPayment\Service\NMIVaultedCustomerService" />
+            <argument type="service" id="NMIPayment\Service\NMIACHPaymentDataRequestService" />
             <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Storefront\Controller\NMIWebhookController" public="true">
+            <argument type="service" id="NMIPayment\Service\NMIWebhookService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
         </service>
 
         <!-- End Controller -->
@@ -44,6 +61,14 @@
 
         <!-- Gateways -->
         <service id="NMIPayment\Gateways\CreditCard">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="shopware.payment.method.sync"/>
+        </service>
+
+        <service id="NMIPayment\Gateways\AchEcheck">
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
@@ -125,6 +150,7 @@
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
 
@@ -133,6 +159,23 @@
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIACHPaymentDataRequestService">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="Shopware\Core\System\NumberRange\ValueGenerator\NumberRangeValueGeneratorInterface"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NMIWebhookService">
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
         <!-- services -->

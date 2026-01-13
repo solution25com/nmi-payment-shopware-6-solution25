@@ -106,4 +106,56 @@ class NMIPaymentApiClient extends Endpoints
     parse_str($response->getBody()->getContents(), $parsedResponse);
     return $parsedResponse;
   }
+
+    public function testConnection(string $salesChannelId): bool
+    {
+        try {
+            $this->initializeForSalesChannel($salesChannelId);
+
+            $queryParams = [
+                'security_key'      => $this->privateKey,
+                'customer_vault_id' => 'nonexistent_test_id_12345', // safe dummy ID
+            ];
+
+            $this->assertInitialized();
+
+            $options = [
+                'headers' => [
+                    'Accept' => 'application/xml',
+                ],
+                'form_params' => $queryParams,
+            ];
+
+            $endpoint = self::getEndpoint(self::VAULTEDCUSTOMER);
+            $response = $this->client->request($endpoint['method'], $endpoint['url'], $options);
+
+            $body = trim($response->getBody()->getContents());
+
+            // Parse XML
+            $xml = @simplexml_load_string($body);
+
+            if ($xml === false) {
+                // Could not parse XML, treat as failure
+                return false;
+            }
+
+            // If error_response element exists, key is invalid
+            if (isset($xml->error_response) && (string)$xml->error_response !== '') {
+                return false;
+            }
+
+            // Otherwise, key is valid
+            return true;
+
+        } catch (\Throwable $e) {
+            $this->logger->error('Test connection failed: ' . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            return false;
+        }
+    }
+
+
+
+
 }
