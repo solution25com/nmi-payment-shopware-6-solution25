@@ -1,31 +1,41 @@
 export default class CollectJsLoader {
-    static loadCollectJS(collectJsUrl, callback, paymentType, options = {}) {
-        console.log('Loading CollectJS...');
+    static loadCollectJS(collectJsUrl, callback, paymentType, options = {}, onError = () => {} ) {
+
+        let parentCreditCardWrapper = document.getElementById('nmi-credit-card');
+        const parentCreditCardWrapperACH = document.getElementById('nmi-ach-echeck');
+        if (parentCreditCardWrapper == null){
+            parentCreditCardWrapper = parentCreditCardWrapperACH;
+        }
+        const configs = JSON.parse(parentCreditCardWrapper.getAttribute('data-configs'));
 
         return new Promise((resolve, reject) => {
             if (typeof CollectJS === 'undefined') {
-                console.log('after start')
                 const script = document.createElement('script');
                 script.src = collectJsUrl;
-                script.setAttribute('data-tokenization-key', 'jygC3z-8XkphM-JEBByn-6JTRdC');
+                script.setAttribute('data-tokenization-key', configs.publicKey);
                 document.head.appendChild(script);
-
                 script.onload = () => {
-                    console.log('CollectJS loaded and configured');
-                    CollectJS.configure({
-                        paymentType: paymentType,
-                        callback,
-                        ...options
-                    });
-                    resolve();
+                    try{
+                        CollectJS.configure({
+                            paymentType: paymentType,
+                            callback,
+                            ...options
+                        });
+                        resolve();
+                    }
+                    catch (err){
+                        onError();
+                        reject()
+                    }
+
                 };
 
                 script.onerror = () => {
                     console.error('Failed to load CollectJS.');
+                    onError()
                     reject();
                 };
             } else {
-                console.warn('CollectJS is already loaded');
                 CollectJS.configure({
                     paymentType: paymentType,
                     callback,

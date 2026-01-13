@@ -95,6 +95,7 @@ class NMIWebhookService
             return;
         }
 
+        // get context from the order
         $context = Context::createDefaultContext();
         $transaction = $this->transactionService->getTransactionByTransactionId($transactionId, $context);
 
@@ -198,8 +199,7 @@ class NMIWebhookService
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('orderId', $orderId));
         $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
-        
+
         return $orderTransaction ? $orderTransaction->getId() : null;
     }
 }
-

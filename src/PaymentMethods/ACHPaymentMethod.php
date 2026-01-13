@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\PaymentMethods;
 
@@ -21,5 +23,3 @@ class ACHPaymentMethod implements PaymentMethodInterface
         return AchEcheck::class;
     }
 }
-
-

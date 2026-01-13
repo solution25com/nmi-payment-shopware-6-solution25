@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:ignoreFile
 declare(strict_types=1);
 
 namespace NMIPayment;
@@ -27,27 +27,27 @@ class NMIPayment extends Plugin
         }
     }
 
-  public function uninstall(UninstallContext $uninstallContext): void
-  {
-    foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-      $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), new $paymentMethod());
+    public function uninstall(UninstallContext $uninstallContext): void
+    {
+        foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
+            $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), new $paymentMethod());
+        }
+
+        if (!$uninstallContext->keepUserData()) {
+            $connection = $this->container->get(Connection::class);
+            $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
+            $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
+
+            $connection->executeStatement(
+                'DELETE FROM `migration` WHERE `class` LIKE :migrationPattern;',
+                [
+                'migrationPattern' => 'NMIPayment\Migration\%',
+                ]
+            );
+        }
+
+        parent::uninstall($uninstallContext);
     }
-
-    if (!$uninstallContext->keepUserData()) {
-      $connection = $this->container->get(Connection::class);
-      $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
-      $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
-
-      $connection->executeStatement(
-        'DELETE FROM `migration` WHERE `class` LIKE :migrationPattern;',
-        [
-          'migrationPattern' => 'NMIPayment\Migration\%',
-        ]
-      );
-    }
-
-    parent::uninstall($uninstallContext);
-  }
 
     public function activate(ActivateContext $activateContext): void
     {
@@ -81,7 +81,7 @@ class NMIPayment extends Plugin
 
     private function addPaymentMethod(PaymentMethodInterface $paymentMethod, Context $context): void
     {
-        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
+        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler(), $context);
 
         $pluginIdProvider = $this->getDependency(PluginIdProvider::class);
         $pluginId = $pluginIdProvider->getPluginIdByBaseClass(static::class, $context);
@@ -99,6 +99,7 @@ class NMIPayment extends Plugin
             'handlerIdentifier' => $paymentMethod->getPaymentHandler(),
             'name' => $paymentMethod->getName(),
             'description' => $paymentMethod->getDescription(),
+            'technicalName' => $paymentMethod->getName(),
             'pluginId' => $pluginId,
             'afterOrderEnabled' => true,
         ];
@@ -121,7 +122,7 @@ class NMIPayment extends Plugin
     private function setPaymentMethodIsActive(bool $active, Context $context, PaymentMethodInterface $paymentMethod): void
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
-        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler());
+        $paymentMethodId = $this->getPaymentMethodId($paymentMethod->getPaymentHandler(), $context);
 
         if (!$paymentMethodId) {
             return;
@@ -135,15 +136,14 @@ class NMIPayment extends Plugin
         $paymentRepository->update([$paymentMethodData], $context);
     }
 
-    private function getPaymentMethodId(string $paymentMethodHandler): ?string
+    private function getPaymentMethodId(string $paymentMethodHandler, Context $context): ?string
     {
         $paymentRepository = $this->getDependency('payment_method.repository');
         $paymentCriteria = (new Criteria())->addFilter(new EqualsFilter(
             'handlerIdentifier',
             $paymentMethodHandler
         ));
-
-        $paymentIds = $paymentRepository->searchIds($paymentCriteria, Context::createDefaultContext());
+        $paymentIds = $paymentRepository->searchIds($paymentCriteria, $context);
 
         if ($paymentIds->getTotal() === 0) {
             return null;

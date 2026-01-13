@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Migration;
 
@@ -9,7 +11,7 @@ use Shopware\Core\Framework\Migration\MigrationStep;
 /**
  * @internal
  */
-#[Package('core')]
+#[Package('checkout')]
 class Migration1739198833AlterBillingIdDefaultBilling extends MigrationStep
 {
     public function getCreationTimestamp(): int
@@ -20,13 +22,13 @@ class Migration1739198833AlterBillingIdDefaultBilling extends MigrationStep
     public function update(Connection $connection): void
     {
 
-      $sqlAlter = /** @lang text */
+        $sqlAlter = /** @lang text */
         <<<SQL
         ALTER TABLE `nmi_vaulted_customer`
             ADD COLUMN `billingId` LONGTEXT DEFAULT NULL,
             ADD COLUMN `default_billing` VARCHAR(255) DEFAULT NULL;
         SQL;
 
-      $connection->executeStatement($sqlAlter);
+        $connection->executeStatement($sqlAlter);
     }
 }

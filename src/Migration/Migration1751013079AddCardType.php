@@ -1,8 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Migration;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 use Shopware\Core\Framework\Migration\MigrationStep;
 
 /**
@@ -15,11 +18,12 @@ class Migration1751013079AddCardType extends MigrationStep
         return 1751013079;
     }
 
+    /**
+     * @throws Exception
+     */
     public function update(Connection $connection): void
     {
-        $schemaManager = method_exists($connection, 'createSchemaManager')
-            ? $connection->createSchemaManager()
-            : $connection->getSchemaManager();
+        $schemaManager = $connection->createSchemaManager();
 
         $columns = $schemaManager->listTableColumns('nmi_vaulted_customer');
 

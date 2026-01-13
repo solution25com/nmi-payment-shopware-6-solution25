@@ -1,0 +1,101 @@
+{% sw_extends '@Storefront/storefront/page/account/_page.html.twig' %}
+
+{% block page_account_main_content %}
+  {{ parent() }}
+  <div class="nmi-saved b2b-create-title-text">
+    <input type="hidden" name="parentname" value="{{ 'NMI.saved-cards.nmi-saved-cards' | trans }}">
+  </div>
+
+  <div class="account-welcome">
+    <span class="h1">{{ 'NMI.saved-cards.title-saved-cards' | trans }}</span>
+  </div>
+
+  <div data-nmi-payment-saved-cards-plugin>
+    {% if savedCards is empty %}
+      <p>{{ 'NMI.saved-cards.no-saved-cards' | trans }}</p>
+    {% else %}
+      {% set cardImages = {
+        'AMEX': 'https://files.readme.io/97e7acc-Amex.png',
+        'DINERS': 'https://files.readme.io/8c73810-Diners_Club.png',
+        'DISCOVER': 'https://files.readme.io/caea86d-Discover.png',
+        'JCB': 'https://files.readme.io/e076aed-JCB.png',
+        'MASTERCARD': 'https://files.readme.io/5b7b3de-Mastercard.png',
+        'VISA': 'https://files.readme.io/9018c4f-Visa.png',
+        'MAESTRO': 'https://files.readme.io/79d7723-Maestro.png',
+        'UNIONPAY': 'https://files.readme.io/92c35c7-UnionPay.png',
+        'ELECTRON': 'https://files.readme.io/def3490-Electron.png',
+        'DANKORT': 'https://files.readme.io/ff5319d-Dankort.png',
+        'INTERPAYMENT': 'https://files.readme.io/cf79c1b-Interpayment.png',
+        'CUP': 'https://files.readme.io/92c35c7-UnionPay.png'
+      } %}
+
+      <div id="default-billing" data-default-billing="{{ defaultBilling | json_encode }}"></div>
+      <div id="plugin-configs" data-plugin-configs="{{ configs | json_encode }}"></div>
+
+      <div class="cards-container">
+        {% for card in savedCards %}
+          <div class="credit-card {{ card.cardType|lower }} {% if card.isDefault %}default{% endif %}"
+               data-vaulted-id="{{ card.vaultedCustomerId }}" data-card-type="{{ card.cardType }}">
+            <div class="card-header">
+                            <span class="card-type">
+                                <img src="{{ cardImages[card.cardType|upper] }}" alt="{{ card.cardType }}" class="card-icon" />
+                                {{ card.cardType }}
+                            </span>
+              {% if card.isDefault %}
+                <span class="default-badge">{{ 'NMI.saved-cards.default' | trans }}</span>
+              {% endif %}
+            </div>
+
+            <div class="card-number">•••• •••• •••• {{ card.lastDigits | slice(-4) }}</div>
+            <div class="card-details">
+              <span>{{ card.firstName }} {{ card.lastName }}</span>
+              <span>{{ 'NMI.saved-cards.exp' | trans }} {{ card.ccexp }}</span>
+            </div>
+            <div class="card-actions">
+              {% if not card.isDefault %}
+                <button class="set-default-btn" data-billing-id="{{ card.billingId }}">{{ 'NMI.saved-cards.set-as-default' | trans }}</button>
+                <button class="delete-card-btn custom-btn" data-billing-id="{{ card.billingId }}">{{ 'NMI.saved-cards.delete' | trans }}</button>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div>
+      {% if savedCards is not empty %}
+        <p>{{ 'NMI.saved-cards.add-new-card-or-delete' | trans }}</p>
+
+        <button class="delete-card-btn custom-btn" id="delete-all"
+                data-vault-id="{{ savedCards[0]['vaultedCustomerId'] }}">{{ 'NMI.saved-cards.delete-all-cards' | trans }}</button>
+
+        <button id="addCardButton" class="add-card-button custom-btn">{{ 'NMI.saved-cards.add-card' | trans }}</button>
+
+        <div id="paymentForm">
+          <form class="theForm" action="">
+            <input type="hidden" name="variant" value="inline">
+            <div class="formInner">
+              <div class="payment-field">
+                <label>
+                  <input type="text" name="fname" placeholder="{{ 'NMI.saved-cards.card-holder-fname' | trans }}" autofocus>
+                </label>
+              </div>
+              <div class="payment-field">
+                <input type="text" name="lname" placeholder="{{ 'NMI.saved-cards.card-holder-lname' | trans }}">
+              </div>
+              <div id="payment-fields">
+                <div class="payment-field" id="ccnumber"></div>
+                <div class="payment-field" id="ccexp"></div>
+                <div class="payment-field" id="cvv"></div>
+              </div>
+            </div>
+
+            <button type="submit" id="payButton" class="btn btn-primary btn-block">{{ 'NMI.saved-cards.card-add' | trans }}</button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ configs.publicKey }}"></script>
+{% endblock %}

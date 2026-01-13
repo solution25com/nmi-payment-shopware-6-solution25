@@ -2,7 +2,7 @@
   "name": "solution25/nmi-payment",
   "description": "NMI Payment - Shopware 6",
   "type": "shopware-platform-plugin",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "MIT",
   "authors": [
     {
@@ -12,8 +12,8 @@
     }
   ],
   "require": {
-    "shopware/core": "~6.6.0",
-    "shopware/storefront": "^6.6"
+    "shopware/core": "^6.6 || ^6.7",
+    "shopware/storefront": "^6.6 || ^6.7"
   },
   "extra": {
     "shopware-plugin-class": "NMIPayment\\NMIPayment",
@@ -22,8 +22,8 @@
       "en-GB": "NMI Payment"
     },
     "description": {
-      "de-DE": "NMI Zahlungsanbieter Plugin für Shopware",
-      "en-GB": "NMI payment provider plugin for Shopware"
+      "de-DE": "NMI Zahlungsanbieter-Plugin für Shopware mit sicherer, schneller und zuverlässiger Zahlungsintegration, vollständiger Gateway-Unterstützung und globaler Kompatibilität.",
+      "en-GB": "NMI payment provider plugin for Shopware offering secure, fast, and reliable payment integration with full gateway support, fraud protection, and global compatibility."
     },
     "manufacturerLink": {
       "de-DE": "https://solution25.com/",
@@ -43,5 +43,13 @@
     "psr-4": {
       "NMIPayment\\Tests\\": "tests/"
     }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
+    }
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "^4.0"
   }
 }

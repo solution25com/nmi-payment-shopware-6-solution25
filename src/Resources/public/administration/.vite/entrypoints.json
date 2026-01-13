@@ -1,0 +1,23 @@
+{
+  "base": "/bundles/nmipayment/administration/",
+  "entryPoints": {
+    "n-m-i-payment": {
+      "css": [],
+      "dynamic": [],
+      "js": [
+        "/bundles/nmipayment/administration/assets/n-m-i-payment-CCDEaUei.js"
+      ],
+      "legacy": false,
+      "preload": []
+    }
+  },
+  "legacy": false,
+  "metadatas": {},
+  "version": [
+    "7.1.0",
+    7,
+    1,
+    0
+  ],
+  "viteServer": null
+}

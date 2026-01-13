@@ -7,9 +7,7 @@ export default class PaymentService {
       body: JSON.stringify(paymentData),
     })
       .then(async (response) => {
-        console.log('response in payment-service before if ok statement', response);
         if (!response.ok) {
-          console.log('here after the ok',response)
           const errorData = await response.json().catch(() => null);
           throw new Error(
             errorData?.message || 'Payment submission failed with an unknown error'

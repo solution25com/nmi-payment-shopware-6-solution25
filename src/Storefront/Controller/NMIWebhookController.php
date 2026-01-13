@@ -41,7 +41,7 @@ class NMIWebhookController extends StorefrontController
 
             $webhookData = json_decode($webhookBody, true);
             $this->logger->info('NMI Webhook received', $webhookData);
-            
+
             if (!$webhookData) {
                 $this->logger->error('NMI Webhook: Invalid JSON payload');
                 return new Response('Invalid payload', Response::HTTP_BAD_REQUEST);
@@ -59,5 +59,3 @@ class NMIWebhookController extends StorefrontController
         }
     }
 }
-
-

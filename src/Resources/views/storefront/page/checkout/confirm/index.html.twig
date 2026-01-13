@@ -34,7 +34,7 @@
 {% endblock %}
 
 {% block page_checkout_confirm_form_submit %}
-
+    <input id="nmiPaymentData" type="hidden" name="nmiPaymentData" value=""/>
     {% if page.extensions.nmi_payment and (page.extensions.nmi_payment.gateway === 'creditCard') or page.extensions.nmi_payment and (page.extensions.nmi_payment.gateway === 'achEcheck') %}
         {% sw_include page.extensions.nmi_payment.template %}
     {% else %}

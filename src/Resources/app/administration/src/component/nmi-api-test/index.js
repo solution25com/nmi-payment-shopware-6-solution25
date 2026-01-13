@@ -1,5 +1,4 @@
 import template from './nmi-api.html.twig';
-import NmiApiTestService from "../../service/nmi-api-test.service";
 
 const { Component, Mixin } = Shopware;
 

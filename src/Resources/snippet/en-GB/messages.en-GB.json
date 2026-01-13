@@ -1,0 +1,41 @@
+{
+  "NMI": {
+    "credit-card": {
+      "fields": {
+        "select-saved-card": "Select a Saved Card",
+        "save-new-card": "Save new card for future",
+        "payment-info-data": "Payment information Data",
+        "save-my-card": "Save my card for future use",
+        "pay-with-new-card": "Pay with a new card",
+        "pay": "Pay "
+      }
+    },
+    "saved-cards": {
+      "title-saved-cards": "Saved Cards",
+      "no-saved-cards": "No saved cards found.",
+      "default": "Default",
+      "set-as-default": "Set as Default",
+      "delete": "Delete",
+      "add-new-card-or-delete": "Add a new card or delete customer vault data",
+      "delete-all-cards": "Delete all cards",
+      "add-card": "+ Add Card",
+      "card-add": " Add Card ",
+      "card-holder-fname": "Card holder first name",
+      "card-holder-lname": "Card holder last name",
+      "nmi-saved-cards": "NMI Saved Cards",
+      "exp": "Exp:"
+    },
+    "sidebar": {
+      "saved-cards-title": "Saved Cards"
+    },
+    "ach-echeck": {
+      "first-name": "First Name",
+      "last-name": "Last Name",
+      "street-address": "Street Address",
+      "city": "City",
+      "state": "State",
+      "zip-code": "Zip code",
+      "pay": "Pay "
+    }
+  }
+}

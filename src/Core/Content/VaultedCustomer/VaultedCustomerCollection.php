@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Core\Content\VaultedCustomer;
 
@@ -15,8 +17,8 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityCollection;
  */
 class VaultedCustomerCollection extends EntityCollection
 {
-  protected function getExpectedClass(): string
-  {
-    return VaultedCustomerEntity::class;
-  }
+    protected function getExpectedClass(): string
+    {
+        return VaultedCustomerEntity::class;
+    }
 }

@@ -1,10 +1,10 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Storefront\Controller;
 
 use NMIPayment\Service\NMIPaymentApiClient;
-use Shopware\Core\Framework\Context;
-use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,7 +15,6 @@ use Symfony\Component\Routing\RouterInterface;
 #[Route(defaults: ['_routeScope' => ['api']])]
 class TestApiConnectionController extends StorefrontController
 {
-
     private NMIPaymentApiClient $nmiApiClient;
     private RouterInterface $router;
 
@@ -26,7 +25,7 @@ class TestApiConnectionController extends StorefrontController
     }
 
     #[Route(path: '/api/_action/nmi-test-connection/test-connection', name: 'api.action.nmi.test-connection', methods: ['POST'])]
-    public function testConnection(Request $request, Context $context): Response
+    public function testConnection(Request $request): Response
     {
         $salesChannelId = $request->get('salesChannelId') ?? '';
         $result = $this->nmiApiClient->testConnection($salesChannelId);
@@ -36,11 +35,9 @@ class TestApiConnectionController extends StorefrontController
         return new JsonResponse([
             'success' => $result,
             'webhookUrl' => $webhookUrl,
-            'message' => $result 
-                ? 'API connection successful. Use the webhook URL below to register webhooks in NMI merchant portal (Settings > Webhooks).' 
+            'message' => $result
+                ? 'API connection successful. Use the webhook URL below to register webhooks in NMI merchant portal (Settings > Webhooks).'
                 : 'API connection failed. Please check your credentials.'
         ]);
     }
 }
-
-

@@ -1,14 +1,19 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\EventSubscriber;
 
+use NMIPayment\Core\Content\Transaction\NmiTransactionEntity;
 use NMIPayment\Library\Constants\TransactionStatuses;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\NMIPaymentApiClient;
 use NMIPayment\Service\NmiTransactionService;
 use Psr\Log\LoggerInterface;
+use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
 use Shopware\Core\Checkout\Order\Event\OrderStateMachineStateChangeEvent;
+use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -17,14 +22,15 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class RefundEventSubscriber implements EventSubscriberInterface
 {
-    public function __construct(private readonly NmiTransactionService $nmiTransactionService,
-                                private readonly NMIPaymentApiClient $nmiPaymentApiClient,
-                                private readonly EntityRepository $orderReturnRepository,
-                                private readonly EntityRepository $orderTransactionRepository,
-                                private readonly OrderTransactionStateHandler $transactionStateHandler,
-                                private readonly NMIConfigService $nmiConfigService,
-                                private readonly LoggerInterface $logger)
-    {
+    public function __construct(
+        private readonly NmiTransactionService $nmiTransactionService,
+        private readonly NMIPaymentApiClient $nmiPaymentApiClient,
+        private readonly ?EntityRepository $orderReturnRepository,
+        private readonly EntityRepository $orderTransactionRepository,
+        private readonly OrderTransactionStateHandler $transactionStateHandler,
+        private readonly NMIConfigService $nmiConfigService,
+        private readonly LoggerInterface $logger
+    ) {
     }
 
     public static function getSubscribedEvents()
@@ -51,12 +57,16 @@ class RefundEventSubscriber implements EventSubscriberInterface
             $transaction = $this->nmiTransactionService->getTransactionByOrderId($order->getId(), $context);
             $orderTransactionId = $this->getOrderTransactionIdByOrderId($order->getId(), $context);
 
-             if (!$orderTransactionId) {
-                 $this->logger->warning('No order transaction found for refund process on orderId: ' . $order->getId());
-                 return;
-             }
-
+            if (!$orderTransactionId) {
+                $this->logger->warning('No order transaction found for refund process on orderId: ' . $order->getId());
+                return;
+            }
+            /** @var OrderEntity $order */
+            /** @var OrderEntity $orderReturn */
+            /** @var NmiTransactionEntity|null $transaction */
             $orderTotalAmount = $order->getAmountTotal();
+            /** @var NmiTransactionEntity|null $transaction */
+
             $salesChannelId = $order->getSalesChannelId();
 
             if ($transaction && strtolower($transaction->getStatus()) === strtolower(TransactionStatuses::PAID->value)) {
@@ -68,7 +78,6 @@ class RefundEventSubscriber implements EventSubscriberInterface
                 );
 
                 $this->nmiPaymentApiClient->initializeForSalesChannel($salesChannelId);
-
                 $postData = [
                     'security_key' => $securityKey,
                     'type' => 'refund',
@@ -87,10 +96,10 @@ class RefundEventSubscriber implements EventSubscriberInterface
                 }
             }
         } catch (\Exception $e) {
-          $this->logger->log('Refund processing failed due to: ', $e, [
+            $this->logger->log('Refund processing failed due to: ', $e, [
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
-          ]);
+            ]);
         }
     }
 
@@ -99,6 +108,7 @@ class RefundEventSubscriber implements EventSubscriberInterface
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('orderId', $orderId));
         $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+        /** @var OrderTransactionEntity|null $orderTransaction */
         if ($orderTransaction) {
             return $orderTransaction->getId();
         }

@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.2.2] - 2025-12-19
+## [1.1.2] - 2025-12-19
+
+### Fixes
+- Added compatibility with Shopware 6.7.x
+- 
+---
+
+## [1.1.1] - 2025-12-19
 
 ### Added Features
 - Webhooks and validation to handle:

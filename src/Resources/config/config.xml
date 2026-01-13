@@ -1,92 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
 
     <card>
         <title>NMI Payment Settings</title>
-        <title lang="de-DE">NMI Payment Settings</title>
+        <title lang="de-DE">NMI-Zahlungseinstellungen</title>
 
         <input-field type="single-select">
             <name>mode</name>
             <label>Mode</label>
+            <label lang="de-DE">Modus</label>
             <options>
                 <option>
                     <id>sandbox</id>
                     <name>Sandbox</name>
+                    <name lang="de-DE">Sandbox</name>
                 </option>
                 <option>
                     <id>live</id>
                     <name>Live</name>
+                    <name lang="de-DE">Live</name>
                 </option>
             </options>
             <defaultValue>sandbox</defaultValue>
         </input-field>
     </card>
+
     <card>
         <title>Live / Sandbox :</title>
+        <title lang="de-DE">Live / Sandbox :</title>
+
         <input-field type="password">
             <name>privateKeyApiLive</name>
             <label>Api private key Live</label>
+            <label lang="de-DE">API-Privatschlüssel Live</label>
         </input-field>
 
         <input-field type="text">
             <name>publicKeyApiLive</name>
             <label>Api public Live</label>
+            <label lang="de-DE">API-Öffentlicher Schlüssel Live</label>
         </input-field>
 
         <input-field type="text">
             <name>gatewayJsLive</name>
             <label>Checkout public key Live (GatewayJs)</label>
+            <label lang="de-DE">Öffentlicher Checkout-Schlüssel Live (GatewayJs)</label>
         </input-field>
 
         <input-field type="password">
             <name>privateKeyApi</name>
             <label>Api private key sandbox</label>
+            <label lang="de-DE">API-Privatschlüssel Sandbox</label>
         </input-field>
 
         <input-field type="text">
             <name>publicKeyApi</name>
             <label>Api public key sandbox</label>
+            <label lang="de-DE">API-Öffentlicher Schlüssel Sandbox</label>
         </input-field>
 
         <input-field type="text">
             <name>gatewayJs</name>
             <label>Checkout public key (GatewayJs)</label>
+            <label lang="de-DE">Öffentlicher Checkout-Schlüssel (GatewayJs)</label>
         </input-field>
 
         <component name="nmi-api-test">
             <name>NmiApi</name>
         </component>
-
     </card>
 
     <card>
         <input-field type="password">
             <name>signingKey</name>
             <label>SigningKey for webhooks</label>
+            <label lang="de-DE">SigningKey für Webhooks</label>
             <helpText>This key is necessary for receiving webhooks. Add the URL to the NMI merchant portal (https://example.com/webhook), and you will receive the signingKey.</helpText>
+            <helpText lang="de-DE">Dieser Schlüssel ist notwendig, um Webhooks zu empfangen. Fügen Sie die URL im NMI-Händlerportal hinzu (https://example.com/webhook), dann erhalten Sie den SigningKey.</helpText>
         </input-field>
     </card>
 
+    <card>
+
+        <input-field type="single-select">
+            <name>flow</name>
+            <options>
+                <option>
+                    <id>order_payment</id>
+                    <name>Order then payment</name>
+                    <name lang="de-DE">Order then payment</name>
+                </option>
+                <option>
+                    <id>payment_order</id>
+                    <name>Payment then Order</name>
+                    <name lang="de-DE">Payment then Order</name>
+                </option>
+            </options>
+            <defaultValue>order_payment</defaultValue>
+            <label>Flow</label>
+            <label lang="de-DE">Flow</label>
+            <helpText>
+                Defines the sequence of the payment flow.
+                "Order then Payment" – The order will be created first. If the payment fails, the order status will be set to "failed".
+                "Payment then Order" – The payment will be attempted first. If it fails, no order will be created.
+            </helpText>
+            <helpText lang="de-DE">
+                Definiert die Reihenfolge des Zahlungsablaufs.
+                „Bestellung dann Zahlung“ – Die Bestellung wird zuerst erstellt. Wenn die Zahlung fehlschlägt, wird der Bestellstatus auf „Fehlgeschlagen“ gesetzt.
+                „Zahlung dann Bestellung“ – Zuerst wird versucht, die Zahlung durchzuführen. Bei einem Fehler wird keine Bestellung erstellt.
+            </helpText>
+        </input-field>
+
+    </card>
 
     <card>
         <title>Authorize and capture</title>
+        <title lang="de-DE">Autorisieren und erfassen</title>
+
         <input-field type="checkbox">
             <name>authorizeAndCapture</name>
             <label>Credit card - Authorize and capture</label>
-            <helpText>Allow admin to manually authorize and capture payments
-            When enabled, the admin can review and approve payments.All payment will be on hold until the admin approves it</helpText>
-            <default>false</default>
-        </input-field>
-    </card>
-
-    <card>
-        <title>ThrreDS for Credit Card</title>
-        <input-field type="checkbox">
-            <name>threeDS</name>
-            <label>Enable / Disable </label>
-            <helpText>When enabling this feature, all credit cards require 3D Secure to proceed with the payment.</helpText>
+            <label lang="de-DE">Kreditkarte – Autorisieren und erfassen</label>
+            <helpText>Allow admin to manually authorize and capture payments. When enabled, the admin can review and approve payments. All payments will be on hold until the admin approves it.</helpText>
+            <helpText lang="de-DE">Erlaubt es dem Admin, Zahlungen manuell zu autorisieren und zu erfassen. Wenn aktiviert, kann der Admin Zahlungen überprüfen und genehmigen. Alle Zahlungen bleiben ausstehend, bis sie genehmigt werden.</helpText>
             <default>false</default>
         </input-field>
     </card>

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Core\Content\VaultedCustomer;
 
@@ -15,33 +17,33 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
 
 class VaultedCustomerDefinition extends EntityDefinition
 {
-  public const ENTITY_NAME = 'nmi_vaulted_customer';
+    public const ENTITY_NAME = 'nmi_vaulted_customer';
 
-  public function getEntityName(): string
-  {
-    return self::ENTITY_NAME;
-  }
+    public function getEntityName(): string
+    {
+        return self::ENTITY_NAME;
+    }
 
-  public function getEntityClass(): string
-  {
-    return VaultedCustomerEntity::class;
-  }
+    public function getEntityClass(): string
+    {
+        return VaultedCustomerEntity::class;
+    }
 
-  public function getCollectionClass(): string
-  {
-    return VaultedCustomerCollection::class;
-  }
+    public function getCollectionClass(): string
+    {
+        return VaultedCustomerCollection::class;
+    }
 
-  protected function defineFields(): FieldCollection
-  {
-    return new FieldCollection([
-      (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
-      (new FkField('customer_id', 'customerId', CustomerDefinition::class))->addFlags(new Required()),
-      (new StringField('vaulted_customer_id', 'vaultedCustomerId'))->addFlags(new Required()),
-      (new StringField('card_type', 'cardType')),
-      (new LongTextField('billingId', 'billingId')),
-      (new StringField('default_billing', 'defaultBilling')),
-      new OneToOneAssociationField('customer', 'customer_id', 'id', CustomerDefinition::class, false)
-    ]);
-  }
+    protected function defineFields(): FieldCollection
+    {
+        return new FieldCollection([
+        (new IdField('id', 'id'))->addFlags(new Required(), new PrimaryKey()),
+        (new FkField('customer_id', 'customerId', CustomerDefinition::class))->addFlags(new Required()),
+        (new StringField('vaulted_customer_id', 'vaultedCustomerId'))->addFlags(new Required()),
+        (new StringField('card_type', 'cardType')),
+        (new LongTextField('billingId', 'billingId')),
+        (new StringField('default_billing', 'defaultBilling')),
+        new OneToOneAssociationField('customer', 'customer_id', 'id', CustomerDefinition::class, false)
+        ]);
+    }
 }

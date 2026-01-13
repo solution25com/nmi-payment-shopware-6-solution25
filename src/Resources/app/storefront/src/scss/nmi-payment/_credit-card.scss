@@ -147,10 +147,10 @@
       width: 100%;
       border-radius: 2px;
       padding: 4px 8px;
-      font-size: 16px!important;
+      font-size: 16px;
       &:focus {
         border: 3px solid #3e79db;
-        outline: none !important;
+        outline: none ;
       }
     }
   }
@@ -304,14 +304,20 @@
   }
 
   .set-default-btn {
-    background-color: deepskyblue;
-    color: black;
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    padding: 0.5rem;
+    margin: 0 10px 0 0;
     font-size: 14px;
-    padding: 4px 8px;
-    border-radius: 5px;
+    border-radius: 4px;
+    height: 32px;
     font-weight: bold;
-    border: deepskyblue;
+    background: #D72828;
+    color: #fff;
+    border: 1px solid #D72828;
   }
+
 
   .custom-btn{
       display:inline-flex;
@@ -325,19 +331,6 @@
       border-radius: 4px;
       height: 32px;
       background: transparent;
-  }
-  .set-default-btn{
-    display:inline-flex;
-    width: fit-content;
-    align-items: center;
-    padding: 0.5rem;
-    border: 1px solid #D72828;
-    color: #fff;
-    margin: 0 10px 0 0;
-    font-size: 14px;
-    border-radius: 4px;
-    height: 32px;
-    background: #D72828;
   }
 
   .card-icon {
@@ -367,6 +360,13 @@
 }
 .save-card-for-later{
   padding-bottom:16px;
+}
+.order-processing-overlay{
+  display: none;
+}
+
+#paymentForm{
+  display: none;
 }
 
 .form-details {
@@ -414,4 +414,19 @@
   color: #ccc;
   font-weight: 400;
   text-transform: uppercase;
+}
+#orderProcessingLoader2{
+  display: none;
+  top: 50%;
+  left: 22%;
+  transform: translateY(-50%);
+}
+#orderProcessingLoader1{
+  display: none;
+  top: 50%;
+  left: 22%;
+  transform: translateY(-50%);
+}
+.loader{
+  color: #154fa1;
 }

@@ -1,0 +1,41 @@
+{
+  "NMI": {
+    "credit-card": {
+      "fields": {
+        "select-saved-card": "Gespeicherte Karte auswählen",
+        "save-new-card": "Neue Karte für die Zukunft speichern",
+        "payment-info-data": "Zahlungsinformationen",
+        "save-my-card": "Meine Karte für zukünftige Verwendung speichern",
+        "pay-with-new-card": "Mit einer neuen Karte bezahlen",
+        "pay": "Bezahlen"
+      }
+    },
+    "saved-cards": {
+      "title-saved-cards": "Gespeicherte Karten",
+      "no-saved-cards": "Keine gespeicherten Karten gefunden.",
+      "default": "Standard",
+      "set-as-default": "Als Standard festlegen",
+      "delete": "Löschen",
+      "add-new-card-or-delete": "Neue Karte hinzufügen oder Kundendaten im Tresor löschen",
+      "delete-all-cards": "Alle Karten löschen",
+      "add-card": "+ Karte hinzufügen",
+      "card-add": " Karte hinzufügen ",
+      "card-holder-fname": "Vorname des Karteninhabers",
+      "card-holder-lname": "Nachname des Karteninhabers",
+      "nmi-saved-cards": "NMI Gespeicherte Karten",
+      "exp": "Ablauf:"
+    },
+    "sidebar": {
+      "saved-cards-title": "Gespeicherte Karten"
+    },
+    "ach-echeck": {
+      "first-name": "Vorname",
+      "last-name": "Nachname",
+      "street-address": "Straßenadresse",
+      "city": "Stadt",
+      "state": "Bundesland",
+      "zip-code": "Postleitzahl",
+      "pay": "Bezahlen "
+    }
+  }
+}

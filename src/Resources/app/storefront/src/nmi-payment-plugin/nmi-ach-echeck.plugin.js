@@ -1,8 +1,7 @@
-import Plugin from 'src/plugin-system/plugin.class';
 import CollectJsLoader from '../services/collect-js-loader';
 import PaymentService from '../services/payment-service';
 
-export default class NmiAchEcheckPlugin extends Plugin {
+export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
     static options = {
         confirmFormId: 'confirmOrderForm',
         paymentUrls: {

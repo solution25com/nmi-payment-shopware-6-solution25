@@ -13,37 +13,40 @@ use Shopware\Core\Framework\Uuid\Uuid;
 
 class NmiTransactionService
 {
-  private EntityRepository $nmiTransactionRepository;
-  private EntityRepository $orderRepository;
-  private EntityRepository $orderTransactionRepository;
-  private LoggerInterface $logger;
+    private EntityRepository $nmiTransactionRepository;
+    private EntityRepository $orderRepository;
+    private EntityRepository $orderTransactionRepository;
+    private LoggerInterface $logger;
 
-  public function __construct(EntityRepository $nmiTransactionRepository,
-                              EntityRepository $orderRepository,
-                              EntityRepository $orderTransactionRepository,
-                              LoggerInterface $logger)
-  {
-    $this->nmiTransactionRepository = $nmiTransactionRepository;
-    $this->orderRepository = $orderRepository;
-    $this->orderTransactionRepository = $orderTransactionRepository;
-    $this->logger = $logger;
-  }
+    public function __construct(
+        EntityRepository $nmiTransactionRepository,
+        EntityRepository $orderRepository,
+        EntityRepository $orderTransactionRepository,
+        LoggerInterface $logger
+    ) {
+        $this->nmiTransactionRepository = $nmiTransactionRepository;
+        $this->orderRepository = $orderRepository;
+        $this->orderTransactionRepository = $orderTransactionRepository;
+        $this->logger = $logger;
+    }
 
-  public function updateTransactionStatus($orderId, $status, $context): void
-  {
-    $transaction = $this->getTransactionByOrderId($orderId, $context);
+    public function updateTransactionStatus($orderId, $status, $context): void
+    {
+        /** @var NmiTransactionEntity|null $transaction */
 
-    $this->nmiTransactionRepository->update([
-      [
+        $transaction = $this->getTransactionByOrderId($orderId, $context);
+
+        $this->nmiTransactionRepository->update([
+        [
         'id' => $transaction->getId(),
         'status' => $status,
         'updatedAt' => (new \DateTime())->format('Y-m-d H:i:s')
-      ]
-    ], $context);
+        ]
+        ], $context);
 
-    $this->orderRepository->upsert([[
-      'id' => $orderId,
-      'nmiTransaction' => [
+        $this->orderRepository->upsert([[
+        'id' => $orderId,
+        'nmiTransaction' => [
         'data' => [
           'id' => $transaction->getId(),
           'nmiTransactionId' => $transaction->getId(),
@@ -52,15 +55,15 @@ class NmiTransactionService
           'isSubscription' => $transaction->getIsSubscription(),
           'status' => $status,
         ]
-      ]
-    ]], $context);
-  }
+        ]
+        ]], $context);
+    }
 
-  public function addTransaction($orderId, $paymentMethodName, $transactionId, $subscriptionTransactionId, $isSubscription, $status, $selectedBillingId, $context): void
-  {
-    $tableNmiId = Uuid::randomHex();
-    $this->nmiTransactionRepository->upsert([
-      [
+    public function addTransaction($orderId, $paymentMethodName, $transactionId, $subscriptionTransactionId, $isSubscription, $status, $selectedBillingId, $context): void
+    {
+        $tableNmiId = Uuid::randomHex();
+        $this->nmiTransactionRepository->upsert([
+        [
         'id' => $tableNmiId,
         'orderId' => $orderId,
         'paymentMethodName' => $paymentMethodName,
@@ -70,12 +73,12 @@ class NmiTransactionService
         'status' => $status,
         'selectedBillingId' => $selectedBillingId,
         'createdAt' => (new \DateTime())->format('Y-m-d H:i:s')
-      ]
-    ], $context);
+        ]
+        ], $context);
 
-    $this->orderRepository->upsert([[
-      'id' => $orderId,
-      'nmiTransaction' => [
+        $this->orderRepository->upsert([[
+        'id' => $orderId,
+        'nmiTransaction' => [
         'data' => [
           'id' => $tableNmiId,
           'nmiTransactionId' => $transactionId,
@@ -84,42 +87,40 @@ class NmiTransactionService
           'paymentMethodName' => $paymentMethodName,
           'status' => $status,
         ]
-      ]
-    ]], $context);
-
-  }
-
-  public function getTransactionByOrderId(string $orderId, Context $context): null|Entity
-  {
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-    try {
-      return $this->nmiTransactionRepository->search($criteria, $context)->last();
-    } catch (\Exception $e) {
-      return null;
+        ]
+        ]], $context);
     }
-  }
 
-  public function getOrderByTransactionId(string $transactionId, Context $context): null|Entity
-  {
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('id', $transactionId));
-    try {
-      return $this->orderTransactionRepository->search($criteria, $context)->last();
-    } catch (\Exception $e) {
-      return null;
+    public function getTransactionByOrderId(string $orderId, Context $context): null|Entity
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
+        try {
+            return $this->nmiTransactionRepository->search($criteria, $context)->last();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
-  }
 
-  public function getTransactionByTransactionId(string $transactionId, Context $context): null|Entity
-  {
-    $criteria = new Criteria();
-    $criteria->addFilter(new EqualsFilter('transactionId', $transactionId));
-    try {
-      return $this->nmiTransactionRepository->search($criteria, $context)->last();
-    } catch (\Exception $e) {
-      return null;
+    public function getOrderByTransactionId(string $transactionId, Context $context): null|Entity
+    {
+        $criteria = new Criteria();
+        $criteria->setIds([$transactionId]);
+        try {
+            return $this->orderTransactionRepository->search($criteria, $context)->last();
+        } catch (\Exception $e) {
+            return null;
+        }
     }
-  }
 
+    public function getTransactionByTransactionId(string $transactionId, Context $context): null|Entity
+    {
+        $criteria = new Criteria();
+        $criteria->addFilter(new EqualsFilter('transactionId', $transactionId));
+        try {
+            return $this->nmiTransactionRepository->search($criteria, $context)->last();
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
 }

@@ -19,9 +19,6 @@
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
             </call>
-            <call method="setTwig">
-                <argument type="service" id="twig"/>
-            </call>
              <argument type="service" id="NMIPayment\Service\NMIConfigService" />
          </service>
 
@@ -36,9 +33,6 @@
         <service id="NMIPayment\Storefront\Controller\NMIPaymentController" public="true">
             <call method="setContainer">
                 <argument type="service" id="service_container"/>
-            </call>
-            <call method="setTwig">
-                <argument type="service" id="twig"/>
             </call>
             <argument type="service" id="NMIPayment\Validations\PaymentValidation"/>
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
@@ -58,22 +52,26 @@
 
         <!-- End Controller -->
 
+        <service id="NMIPayment\Gateways\AchEcheck">
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="shopware.payment.method"/>
+        </service>
+
 
         <!-- Gateways -->
         <service id="NMIPayment\Gateways\CreditCard">
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment.logger"/>
-            <tag name="shopware.payment.method.sync"/>
-        </service>
-
-        <service id="NMIPayment\Gateways\AchEcheck">
-            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
-            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment.logger"/>
-            <tag name="shopware.payment.method.sync"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
+            <tag name="shopware.payment.method"/>
         </service>
 
         <!-- End Gateways -->
