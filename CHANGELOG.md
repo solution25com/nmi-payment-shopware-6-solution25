@@ -2,11 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2026/04/24
+
+### Fixed
+- **Pay button issue**  
+  Fixed an issue where the pay button prevented customers from completing the payment process in the new version of shopware.
+
+- **Terms and conditions validation**  
+  Improved validation to ensure payments cannot proceed unless the terms and conditions are properly selected.
+
+---
 ## [1.1.2] - 2025-12-19
 
 ### Fixes
 - Added compatibility with Shopware 6.7.x
-- 
 ---
 
 ## [1.1.1] - 2025-12-19
