@@ -22,6 +22,7 @@ export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
         this.amount = this.parentAchWrapper.getAttribute('data-amount');
         this.configs = JSON.parse(this.parentAchWrapper.getAttribute('data-configs') || '{}');
         this.confirmOrderForm = document.forms[this.options.confirmFormId];
+        this.isFinalizingSubmit = false;
     }
 
     _registerEvents() {
@@ -29,7 +30,16 @@ export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
     }
 
     async _onPayButtonClick(event) {
+        if (this.isFinalizingSubmit) {
+            this.isFinalizingSubmit = false;
+            return;
+        }
+
         event.preventDefault();
+
+        if (!this._validateConfirmOrderForm()) {
+            return;
+        }
 
         await CollectJsLoader.loadCollectJS(
             this.options.collectJsUrl,
@@ -43,13 +53,29 @@ export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
             }
         );
 
-        if (!this.confirmOrderForm.checkValidity()) {
-            return;
-        }
-
         if (typeof CollectJS !== 'undefined') {
             CollectJS.startPaymentRequest();
         }
+    }
+
+    _validateConfirmOrderForm() {
+        if (!this.confirmOrderForm.checkValidity()) {
+            this.confirmOrderForm.reportValidity();
+            return false;
+        }
+
+        return true;
+    }
+
+    _submitConfirmOrderForm() {
+        this.isFinalizingSubmit = true;
+
+        if (typeof this.confirmOrderForm.requestSubmit === 'function') {
+            this.confirmOrderForm.requestSubmit();
+            return;
+        }
+
+        this.confirmOrderForm.submit();
     }
 
     submitPayment(response) {
@@ -117,7 +143,7 @@ export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
                     if (transactionId) {
                         document.getElementById('nmi-transaction-id').value = transactionId;
                     }
-                    document.getElementById('confirmOrderForm').submit();
+                    this._submitConfirmOrderForm();
                 } else {
                     const errors = response.errors || [response.message || 'An unknown error occurred'];
                     this.displayErrors(errors);
@@ -131,5 +157,4 @@ export default class NmiAchEcheckPlugin extends window.PluginBaseClass {
             });
     }
 }
-
 

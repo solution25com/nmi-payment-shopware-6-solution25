@@ -63,6 +63,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     this.billingLastName = this.parentCreditCardWrapper.getAttribute('data-billing-last-name');
     this.billingCity = this.parentCreditCardWrapper.getAttribute('data-billing-city');
     this.confirmOrderForm = document.forms[this.options.confirmFormId];
+    this.isFinalizingSubmit = false;
     this.cards = JSON.parse(this.dropdownCards);
   }
 
@@ -98,7 +99,17 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
   }
 
   async _onPayButtonClick(event) {
+    if (this.isFinalizingSubmit) {
+      this.isFinalizingSubmit = false;
+      return;
+    }
+
     event.preventDefault();
+
+    if (!this._validateConfirmOrderForm()) {
+      return;
+    }
+
     this._showLoading(true);
 
     try {
@@ -108,10 +119,6 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
           this.options.paymentType,
           {}
       );
-
-    if (!this.confirmOrderForm.checkValidity()) {
-      return;
-    }
 
       if (this.isSavedCardBackend) {
         this.submitVaultedPayment();
@@ -130,6 +137,11 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
   async _onPayWithNewCard(event) {
     event.preventDefault();
+
+    if (!this._validateConfirmOrderForm()) {
+      return;
+    }
+
     this._showLoading(true);
 
     try {
@@ -166,6 +178,12 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
   async _onAddCardButtonClick(event) {
     event.preventDefault();
+
+    if (!this._validateConfirmOrderForm()) {
+      this.displayErrors(['Please complete all required fields before adding a card.']);
+      return;
+    }
+
     this._showLoading(true);
 
     try {
@@ -180,11 +198,6 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
             buttonText: 'Add New Credit Card'
           }
       );
-
-      if (!this.confirmOrderForm.checkValidity()) {
-        this.displayErrors(['Please complete all required fields before adding a card.']);
-        return;
-      }
 
       if (typeof CollectJS !== 'undefined') {
         CollectJS.startPaymentRequest();
@@ -203,6 +216,26 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     if (loader) {
       loader.style.display = isLoading ? 'inline-block' : 'none';
     }
+  }
+
+  _validateConfirmOrderForm() {
+    if (!this.confirmOrderForm.checkValidity()) {
+      this.confirmOrderForm.reportValidity();
+      return false;
+    }
+
+    return true;
+  }
+
+  _submitConfirmOrderForm() {
+    this.isFinalizingSubmit = true;
+
+    if (typeof this.confirmOrderForm.requestSubmit === 'function') {
+      this.confirmOrderForm.requestSubmit();
+      return;
+    }
+
+    this.confirmOrderForm.submit();
   }
 
   submitPayment(response) {
@@ -353,7 +386,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
     if (flow === 'order_payment') {
       document.getElementById('nmiPaymentData').value = JSON.stringify(paymentData);
-      document.getElementById('confirmOrderForm').submit();
+      this._submitConfirmOrderForm();
     } else {
       if (threeDSActivate) {
         const script = document.createElement('script');
@@ -419,7 +452,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
     if (flow === 'order_payment') {
       document.getElementById('nmiPaymentData').value = JSON.stringify(vaultedPaymentData);
-      document.getElementById('confirmOrderForm').submit();
+      this._submitConfirmOrderForm();
     } else {
       const paymentUrl = this.options.paymentUrls.vaulted;
       this.submitToPaymentService(paymentUrl, vaultedPaymentData, true);
@@ -471,7 +504,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
             document.getElementById('nmi-is-subscription').value = isSubscription ?? null;
             document.getElementById('nmi-selected-billing-id').value = selectedCardId ?? null;
           }
-          document.getElementById('confirmOrderForm').submit();
+          this._submitConfirmOrderForm();
 
         } else {
           const errors = response.errors || [response.message || 'An unknown error occurred'];
