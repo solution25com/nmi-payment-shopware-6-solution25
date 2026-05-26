@@ -86,6 +86,9 @@ The plugin includes advanced configuration options, such as API key management f
 - **Dealer Customer Groups**: Select the dealer customer groups for invoice generation and Net-30 order processing.
 - **Skip Sent Filter for Net-30**: When enabled, invoice emails are re-sent even if they were previously flagged as sent (useful for testing or resending invoices).
 
+<img width="2936" height="1464" alt="image" src="https://github.com/user-attachments/assets/f20949f9-a31d-479d-acac-2de01bb6eea0" />
+
+
 Once the plugin is installed and configured, NMI payments options will be available in the storefront.
 
 ## Features & Usage
@@ -243,6 +246,8 @@ Net-30 allows eligible customers to place an order without paying immediately. A
 - After placing the order, a payment link is emailed to the customer with an expiration date.
 - The customer can pay the invoice from their account's **Invoices** page using any of their saved cards.
 - Expired Net-30 payments are automatically detected and handled by a background scheduled task.
+
+<img width="2518" height="1180" alt="image" src="https://github.com/user-attachments/assets/98b327b3-fdca-4e18-936a-ddd32dffb7fa" />
 
 **Customer Group Access:**
 - Access to the Net-30 payment method is controlled by customer group. Only customers assigned to a configured group will see this option at checkout.
