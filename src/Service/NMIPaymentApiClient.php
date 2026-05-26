@@ -84,6 +84,45 @@ class NMIPaymentApiClient extends Endpoints
         return $parsedResponse;
     }
 
+    /**
+     * Queries NMI for a transaction by ID and returns key fields for server-side verification.
+     * Returns null if the request fails or the response cannot be parsed.
+     *
+     * @return array{condition: string, amount: string, order_id: string}|null
+     */
+    public function queryTransaction(string $transactionId): ?array
+    {
+        $this->assertInitialized();
+
+        $options = [
+            'headers' => ['Accept' => 'application/xml'],
+            'form_params' => [
+                'security_key'   => $this->privateKey,
+                'transaction_id' => $transactionId,
+            ],
+        ];
+
+        $response = $this->request(self::getEndpoint(self::QUERY), $options);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $xml = @simplexml_load_string($response->getBody()->getContents());
+
+        if ($xml === false || !isset($xml->transaction)) {
+            return null;
+        }
+
+        $traslateFromXML = $xml->transaction;
+
+        return [
+            'condition' => (string) ($traslateFromXML->condition ?? ''),
+            'amount'    => (string) ($traslateFromXML->action->amount ?? ''),
+            'order_id'  => (string) ($traslateFromXML->order_id ?? ''),
+        ];
+    }
+
     public function testConnection(string $salesChannelId): bool
     {
         try {

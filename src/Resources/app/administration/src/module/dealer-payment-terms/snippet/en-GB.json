@@ -1,0 +1,39 @@
+{
+    "dealer-payment-terms": {
+        "card": {
+            "title": "Net 30 Payment Management"
+        },
+        "detail": {
+            "paymentLink": "Payment Link",
+            "viewLink": "View Payment Link",
+            "expiresAt": "Expires At",
+            "alternateDueDate": "Alternate Due Date",
+            "paymentStatus": "Payment Status",
+            "resendCount": "Resend Count",
+            "lastResentAt": "Last Resent At"
+        },
+        "status": {
+            "paid": "Paid",
+            "failed": "Failed",
+            "overdue": "Overdue",
+            "pending": "Pending"
+        },
+        "field": {
+            "alternateDueDate": "Alternate Due Date",
+            "alternateDueDateHelp": "Set an alternate due date for this order. This will be used when resending the payment link."
+        },
+        "button": {
+            "setAlternateDate": "Set Alternate Due Date",
+            "resendLink": "Resend Payment Link"
+        },
+        "notification": {
+            "successTitle": "Success",
+            "errorTitle": "Error",
+            "loadError": "Failed to load Net 30 order details",
+            "resendSuccess": "Payment link has been resent successfully",
+            "resendError": "Failed to resend payment link",
+            "alternateDateSet": "Alternate due date has been set successfully",
+            "setDateError": "Failed to set alternate due date"
+        }
+    }
+}

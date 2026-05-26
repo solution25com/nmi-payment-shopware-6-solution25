@@ -7,6 +7,8 @@ namespace NMIPayment\EventSubscriber;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use NMIPayment\Gateways\CreditCard;
 use NMIPayment\Gateways\AchEcheck;
+use NMIPayment\Gateways\Net30;
+use NMIPayment\Service\DealerConfigService;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\VaultedCustomerService;
 use NMIPayment\Storefront\Struct\CheckoutTemplateCustomData;
@@ -21,10 +23,16 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
 
     private NMIConfigService $configService;
 
-    public function __construct(VaultedCustomerService $vaultedCustomerService, NMIConfigService $configService)
-    {
+    private DealerConfigService $dealerConfigService;
+
+    public function __construct(
+        VaultedCustomerService $vaultedCustomerService,
+        NMIConfigService $configService,
+        DealerConfigService $dealerConfigService
+    ) {
         $this->vaultedCustomerService = $vaultedCustomerService;
         $this->configService = $configService;
+        $this->dealerConfigService = $dealerConfigService;
     }
 
   /**
@@ -67,6 +75,31 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         if ($selectedPaymentGateway->getHandlerIdentifier() === AchEcheck::class) {
             $this->addPaymentMethodExtension($templateVariables, $pageObject, 'achEcheck', $flow, $amount, $threeDS, $isGuest, $shippingError, $context, $salesChannelContext);
         }
+
+        $this->filterNet30ByCustomerGroup($event);
+    }
+
+    private function filterNet30ByCustomerGroup(CheckoutConfirmPageLoadedEvent $event): void
+    {
+        $salesChannelContext = $event->getSalesChannelContext();
+        $salesChannelId = $salesChannelContext->getSalesChannelId();
+        $customer = $salesChannelContext->getCustomer();
+
+        $customerGroupId = $customer?->getGroupId();
+
+        $allowed = $customerGroupId !== null
+            ? $this->dealerConfigService->isCustomerGroupAllowedForNet30($customerGroupId, $salesChannelId)
+            : empty($this->dealerConfigService->getNet30CustomerGroups($salesChannelId));
+
+        if ($allowed) {
+            return;
+        }
+
+        $pageObject = $event->getPage();
+        $filtered = $pageObject->getPaymentMethods()->filter(
+            static fn(PaymentMethodEntity $pm) => $pm->getHandlerIdentifier() !== Net30::class
+        );
+        $pageObject->setPaymentMethods($filtered);
     }
 
     private function addPaymentMethodExtension(

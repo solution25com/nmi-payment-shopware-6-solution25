@@ -5,6 +5,8 @@
 
   <import resource="../../Storefront/Controller/*Controller.php" type="attribute" />
 
-      <import resource="../../Controller/*Controller.php" type="attribute" />
+  <import resource="../../Controller/*Controller.php" type="attribute" />
+
+  <import resource="../../Controller/Admin/*Controller.php" type="attribute" />
 
 </routes>

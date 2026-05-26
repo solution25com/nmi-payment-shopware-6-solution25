@@ -20,4 +20,9 @@ interface PaymentMethodInterface
      * Return the payment handler of a plugin.
      */
     public function getPaymentHandler(): string;
+
+    /**
+     * Return the technical name for the payment method (used as DB technicalName).
+     */
+    public function getTechnicalName(): string;
 }

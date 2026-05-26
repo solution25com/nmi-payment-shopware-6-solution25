@@ -1,4 +1,6 @@
 import './component/nmi-api-test';
+import './module/dealer-payment-terms';
+import './init/api-service.init';
 
 import NmiApiTestService from './service/nmi-api-test.service';
 

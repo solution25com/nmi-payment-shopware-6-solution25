@@ -131,7 +131,10 @@ class NMIPaymentDataRequestService
         }
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-        $this->logger->info('Payment Response -> ' . json_encode($response));
+        $this->logger->info('NMI payment response received', [
+            'transaction_id' => $response['transactionid'] ?? null,
+            'response_code'  => $response['response'] ?? null,
+        ]);
 
         $processedResponse = $this->handleNMIResponse($response);
 

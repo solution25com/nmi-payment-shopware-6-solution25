@@ -1,0 +1,284 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_main %}
+<style>
+    .npt-wrap   { max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+    .npt-card   { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.1); overflow: hidden; margin-bottom: 20px; }
+    .npt-ch     { background: #1f4f8a; color: #fff; padding: 13px 18px; font-weight: 600; font-size: .9rem; display:flex; align-items:center; justify-content:space-between; }
+    .npt-cb     { padding: 18px; }
+    .npt-grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media(max-width:600px){ .npt-grid { grid-template-columns: 1fr; } }
+    .npt-label  { display:block; font-size:.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#6b7280; margin-bottom:5px; }
+    .npt-input  { width:100%; padding:7px 11px; border:1px solid #d1d5db; border-radius:6px; font-size:.85rem; font-family:inherit; }
+    .npt-input:focus { outline:none; border-color:#1f4f8a; box-shadow:0 0 0 3px rgba(31,79,138,.12); }
+    textarea.npt-input { height:110px; resize:vertical; font-family:monospace; font-size:.8rem; }
+    .npt-btn    { display:inline-flex; align-items:center; gap:8px; padding:11px 24px; background:#1f4f8a; color:#fff; border:none; border-radius:8px; font-size:.9rem; font-weight:600; cursor:pointer; transition:background .15s; }
+    .npt-btn:hover { background:#1a4275; }
+    .npt-btn:disabled { opacity:.55; cursor:not-allowed; }
+    .npt-btn-sm { padding:6px 14px; font-size:.8rem; background:#3f8fcd; border-radius:6px; }
+    .npt-response { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:14px 16px; font-family:monospace; font-size:.78rem; line-height:1.7; white-space:pre-wrap; word-break:break-all; min-height:60px; }
+    .npt-err    { padding:10px 14px; background:#fef2f2; color:#dc2626; border:1px solid #fca5a5; border-radius:8px; font-size:.85rem; }
+    .npt-hint   { font-size:.75rem; color:#9ca3af; margin-top:6px; }
+    .npt-tag    { background:rgba(255,255,255,.18); font-size:.7rem; padding:2px 8px; border-radius:20px; }
+</style>
+
+<div class="npt-wrap">
+    <h1 style="color:#1f4f8a;font-size:1.4rem;margin-bottom:4px;">NMI CollectJS — Popup Style Tester</h1>
+    <p style="color:#6b7280;font-size:.85rem;margin-bottom:24px;">
+        Edit any CSS value below, click <strong>Apply &amp; Open Popup</strong> — changes take effect immediately.<br>
+        Key: <code style="font-size:.8rem;">{{ nmiConfigs.publicKey ? nmiConfigs.publicKey[:8] ~ '…' : 'NOT SET — check plugin config' }}</code>
+    </p>
+
+    {# ── Chrome (modal wrapper) ──────────────────────────────────────────── #}
+    <div class="npt-card">
+        <div class="npt-ch">
+            Modal chrome
+            <span class="npt-tag">NMI-controlled — limited to color + theme</span>
+        </div>
+        <div class="npt-cb">
+            <div class="npt-grid">
+                <div>
+                    <label class="npt-label" for="cfg-primary-color">primaryColor (header + button bg)</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="color" id="cfg-primary-color-picker" value="#1f4f8a" style="width:38px;height:34px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;padding:2px;">
+                        <input type="text"  id="cfg-primary-color" class="npt-input" value="#1f4f8a">
+                    </div>
+                </div>
+                <div>
+                    <label class="npt-label" for="cfg-secondary-color">secondaryColor (accents)</label>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input type="color" id="cfg-secondary-color-picker" value="#3f8fcd" style="width:38px;height:34px;border:1px solid #d1d5db;border-radius:6px;cursor:pointer;padding:2px;">
+                        <input type="text"  id="cfg-secondary-color" class="npt-input" value="#3f8fcd">
+                    </div>
+                </div>
+                <div>
+                    <label class="npt-label" for="cfg-button-text">buttonText</label>
+                    <input type="text" id="cfg-button-text" class="npt-input" value="Pay Securely">
+                </div>
+                <div>
+                    <label class="npt-label" for="cfg-theme">theme</label>
+                    <select id="cfg-theme" class="npt-input">
+                        <option value="bootstrap" selected>bootstrap</option>
+                        <option value="default">default</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="npt-label" for="cfg-payment-type">paymentType</label>
+                    <select id="cfg-payment-type" class="npt-input">
+                        <option value="cc" selected>cc — Credit Card</option>
+                        <option value="ck">ck — ACH / eCheck</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ── Field CSS (injected into iframe) ────────────────────────────────── #}
+    <div class="npt-card">
+        <div class="npt-ch">
+            Field CSS <span style="font-weight:400;font-size:.8rem;opacity:.8;">— injected directly into the hosted-field iframes</span>
+        </div>
+        <div class="npt-cb">
+            <div class="npt-grid">
+                <div>
+                    <label class="npt-label" for="css-custom">customCss (default / idle state)</label>
+                    <textarea id="css-custom" class="npt-input">{
+  "color": "#1f2937",
+  "font-size": "14px",
+  "padding": "10px 14px",
+  "border": "1px solid #d1d5db",
+  "border-radius": "8px",
+  "background-color": "#ffffff",
+  "width": "100%",
+  "height": "100%",
+  "box-sizing": "border-box",
+  "line-height": "1.5"
+}</textarea>
+                </div>
+                <div>
+                    <label class="npt-label" for="css-focus">focusCss (on focus)</label>
+                    <textarea id="css-focus" class="npt-input">{
+  "border-color": "#1f4f8a",
+  "box-shadow": "0 0 0 3px rgba(31,79,138,0.15)",
+  "outline": "0"
+}</textarea>
+                </div>
+                <div>
+                    <label class="npt-label" for="css-invalid">invalidCss (validation error)</label>
+                    <textarea id="css-invalid" class="npt-input">{
+  "color": "#dc2626",
+  "border-color": "#fca5a5",
+  "background-color": "#fef2f2"
+}</textarea>
+                </div>
+                <div>
+                    <label class="npt-label" for="css-valid">validCss (field accepted)</label>
+                    <textarea id="css-valid" class="npt-input">{
+  "color": "#1f2937",
+  "border-color": "#86efac",
+  "background-color": "#f0fdf4"
+}</textarea>
+                </div>
+            </div>
+            <p class="npt-hint">Supported CSS properties: color, font-family, font-size, font-weight, padding, border, border-color, border-radius, background-color, box-shadow, outline, width, height, line-height, box-sizing, transition, text-align, letter-spacing</p>
+        </div>
+    </div>
+
+    {# ── Actions ─────────────────────────────────────────────────────────── #}
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <button id="nmi-popup-trigger" type="button" class="npt-btn">
+            Apply &amp; Open Popup
+        </button>
+        <button id="nmi-copy-btn" type="button" class="npt-btn npt-btn-sm">
+            Copy config as JS
+        </button>
+    </div>
+
+    {# ── Parse / submit errors ────────────────────────────────────────────── #}
+    <div id="npt-err" style="display:none;" class="npt-err" style="margin-top:12px;"></div>
+
+    {# ── Token response ──────────────────────────────────────────────────── #}
+    <div id="npt-response" style="display:none;margin-top:20px;">
+        <div class="npt-card">
+            <div class="npt-ch">Token Response</div>
+            <div class="npt-cb" style="padding:0;">
+                <div class="npt-response" id="npt-response-text"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var PUBLIC_KEY = {{ nmiConfigs.publicKey|json_encode|raw }};
+
+    var btn       = document.getElementById('nmi-popup-trigger');
+    var copyBtn   = document.getElementById('nmi-copy-btn');
+    var errBox    = document.getElementById('npt-err');
+    var respCard  = document.getElementById('npt-response');
+    var respText  = document.getElementById('npt-response-text');
+    var collectJsReady = false;
+
+    // ── Sync color pickers ↔ text inputs ─────────────────────────────────
+    function syncPicker(pickerId, inputId) {
+        var picker = document.getElementById(pickerId);
+        var input  = document.getElementById(inputId);
+        picker.addEventListener('input', function () { input.value = picker.value; });
+        input.addEventListener('input', function () {
+            if (/^#[0-9a-fA-F]{6}$/.test(input.value)) picker.value = input.value;
+        });
+    }
+    syncPicker('cfg-primary-color-picker',   'cfg-primary-color');
+    syncPicker('cfg-secondary-color-picker', 'cfg-secondary-color');
+
+    // ── Parse JSON textarea safely ────────────────────────────────────────
+    function parseJson(id) {
+        var raw = document.getElementById(id).value.trim();
+        try { return JSON.parse(raw); }
+        catch (e) { throw new Error('JSON error in "' + id + '": ' + e.message); }
+    }
+
+    // ── Build config from form ────────────────────────────────────────────
+    function buildConfig(callback) {
+        try {
+            var cfg = {
+                paymentType:    document.getElementById('cfg-payment-type').value,
+                theme:          document.getElementById('cfg-theme').value,
+                googleFont:     'Inter',
+                primaryColor:   document.getElementById('cfg-primary-color').value,
+                secondaryColor: document.getElementById('cfg-secondary-color').value,
+                buttonText:     document.getElementById('cfg-button-text').value || 'Pay',
+                customCss:      parseJson('css-custom'),
+                focusCss:       parseJson('css-focus'),
+                invalidCss:     parseJson('css-invalid'),
+                validCss:       parseJson('css-valid'),
+                callback: function (response) {
+                    showResponse(response);
+                    btn.disabled = false;
+                    btn.textContent = 'Apply & Open Popup';
+                }
+            };
+            errBox.style.display = 'none';
+            callback(cfg);
+        } catch (e) {
+            showErr(e.message);
+        }
+    }
+
+    // ── Load CollectJS once ───────────────────────────────────────────────
+    function ensureCollectJS(callback) {
+        if (collectJsReady && typeof CollectJS !== 'undefined') { callback(); return; }
+        var existing = document.getElementById('nmi-cjs');
+        if (existing) existing.remove();
+        collectJsReady = false;
+        var s = document.createElement('script');
+        s.id  = 'nmi-cjs';
+        s.src = 'https://secure.nmi.com/token/Collect.js';
+        s.setAttribute('data-tokenization-key', PUBLIC_KEY);
+        s.onload  = function () { collectJsReady = true; callback(); };
+        s.onerror = function () { showErr('Failed to load CollectJS from NMI servers. Check your key.'); btn.disabled = false; btn.textContent = 'Apply & Open Popup'; };
+        document.head.appendChild(s);
+    }
+
+    // ── Open popup ────────────────────────────────────────────────────────
+    btn.addEventListener('click', function () {
+        errBox.style.display = 'none';
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+
+        buildConfig(function (cfg) {
+            ensureCollectJS(function () {
+                CollectJS.configure(cfg);
+                btn.disabled = false;
+                btn.textContent = 'Apply & Open Popup';
+                CollectJS.startPaymentRequest();
+            });
+        });
+    });
+
+    // ── Copy as JS ───────────────────────────────────────────────────────
+    copyBtn.addEventListener('click', function () {
+        buildConfig(function (cfg) {
+            var out = cfg;
+            delete out.callback;
+            var text = 'CollectJS.configure(' + JSON.stringify(out, null, 4) + ');';
+            navigator.clipboard.writeText(text).then(function () {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(function () { copyBtn.textContent = 'Copy config as JS'; }, 2000);
+            });
+        });
+    });
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function showErr(msg) {
+        errBox.textContent = msg;
+        errBox.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Apply & Open Popup';
+    }
+
+    function showResponse(response) {
+        var lines = '';
+        if (response.error) {
+            lines = '// Error\nerror: ' + JSON.stringify(response.error);
+        } else {
+            lines  = '// Token Response\n';
+            lines += 'token:       ' + response.token + '\n';
+            if (response.card) {
+                lines += 'card.number: ' + response.card.number + '\n';
+                lines += 'card.exp:    ' + response.card.exp    + '\n';
+                lines += 'card.type:   ' + response.card.type   + '\n';
+            }
+            if (response.check) {
+                lines += 'check.name:    ' + response.check.name    + '\n';
+                lines += 'check.aba:     ' + response.check.aba     + '\n';
+                lines += 'check.account: ' + response.check.account + '\n';
+            }
+        }
+        respText.textContent = lines;
+        respCard.style.display = 'block';
+        respCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+})();
+</script>
+{% endblock %}

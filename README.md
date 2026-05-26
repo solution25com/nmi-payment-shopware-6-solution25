@@ -15,11 +15,13 @@ The NMI plugin allows Shopware stores to securely process payments using the NMI
 - **Refunds**: Easily process full or partial refunds for orders, providing a smooth customer service experience.
 - **Mixed Cards**: Supports customers purchasing both standard products and subscription items using a single card.
 - **Save Card Feature**: Enables customers to securely store their credit card information for faster future purchases.
+- **Net-30 Payment Method**: Integrated buy-now, pay-later functionality allowing eligible customers (by customer group) to receive an invoice and pay within 30 days using their saved cards.
+- **NMI Saved Cards Management Page**: Dedicated storefront page where logged-in customers can add new cards or delete existing ones directly from their account.
 
 The plugin includes advanced configuration options, such as API key management for live and sandbox environments, webhook signing, and 3D Secure verification for added payment security.
 
 ## Compatibility
-- ✅ Shopware 6.6.x && 6.7.x 
+- ✅ Shopware 6.6.x && 6.7.x
 
 ## Get Started
 
@@ -57,7 +59,7 @@ The plugin includes advanced configuration options, such as API key management f
 
 - After activation, you will see NMI in the list of installed plugins.
 - The plugin name, version, and installation date should appear as shown in the screenshot below.
-![2](https://github.com/user-attachments/assets/af23fd9d-db7f-410f-8c79-050ec32f4262)
+  ![2](https://github.com/user-attachments/assets/af23fd9d-db7f-410f-8c79-050ec32f4262)
 
 ## Plugin Configuration
 
@@ -74,8 +76,15 @@ The plugin includes advanced configuration options, such as API key management f
 - **API Public Key Sandbox**: Public key for authentication in sandbox mode.
 - **Signing Key**: Used for secure webhook communication.
 - **Authorize and Capture**: When enabled, transactions must be manually approved before funds are captured.
-![3](https://github.com/user-attachments/assets/b9977302-565a-41f0-9e98-f2172f283b29)
-![4](https://github.com/user-attachments/assets/acb7ee7a-d3f7-44b2-8cb0-d6cc12aaa300)
+  ![3](https://github.com/user-attachments/assets/b9977302-565a-41f0-9e98-f2172f283b29)
+  ![4](https://github.com/user-attachments/assets/acb7ee7a-d3f7-44b2-8cb0-d6cc12aaa300)
+
+3. **Net-30 Settings**
+
+   Configure Net-30 payment behaviour:
+- **Net-30 Customer Groups**: Select the customer groups that should have access to the Net-30 payment method. Only customers belonging to a selected group will see Net-30 at checkout.
+- **Dealer Customer Groups**: Select the dealer customer groups for invoice generation and Net-30 order processing.
+- **Skip Sent Filter for Net-30**: When enabled, invoice emails are re-sent even if they were previously flagged as sent (useful for testing or resending invoices).
 
 Once the plugin is installed and configured, NMI payments options will be available in the storefront.
 
@@ -95,8 +104,8 @@ This feature allows customers to complete transactions via NMI’s payment gatew
 2. Click **"Pay."**
 3. Enter credit card details into the PCI-compliant NMI form.
 4. Submit payment.
-![5](https://github.com/user-attachments/assets/22c41d90-db3b-47e8-8aa0-19f2247a4cc6)
-![6](https://github.com/user-attachments/assets/ff1af19a-2ab8-4944-a8da-80202c0e6ad6)
+   ![5](https://github.com/user-attachments/assets/22c41d90-db3b-47e8-8aa0-19f2247a4cc6)
+   ![6](https://github.com/user-attachments/assets/ff1af19a-2ab8-4944-a8da-80202c0e6ad6)
 
 #### 2. ACH Capture
 
@@ -123,8 +132,8 @@ This feature allows payment authorization and capture in two stages. The payment
 1. Enable the **"Authorize and Capture"** feature in plugin settings.
 2. New orders will show as **"Authorized."**
 3. Navigate to **Admin Panel → Orders**, and change the payment status to **"Paid"** or **"Cancelled."**
-![7](https://github.com/user-attachments/assets/bfa3f4c0-3c46-499d-a4a0-fddf3262c3f4)
-![8](https://github.com/user-attachments/assets/a0871d2a-1717-4b1c-a823-2710d89fadc0)
+   ![7](https://github.com/user-attachments/assets/bfa3f4c0-3c46-499d-a4a0-fddf3262c3f4)
+   ![8](https://github.com/user-attachments/assets/a0871d2a-1717-4b1c-a823-2710d89fadc0)
 
 #### 4. COLI (Cancel Order by Line Item)
 
@@ -139,9 +148,9 @@ COLI allows admins to cancel specific items in an order without affecting the en
 2. Click **"Delete"** to remove the item(s).
 3. Save the updated order.
 4. Change the payment status from **"Authorized"** to **"Paid."**
-![9](https://github.com/user-attachments/assets/6d2cb70d-d343-4aba-9219-26b0088a725f)
-![10](https://github.com/user-attachments/assets/1ce9627e-0477-45b6-955e-1fd42b4424ac)
-![11](https://github.com/user-attachments/assets/35bdbb64-9848-492d-b617-580d8dfae0b3)
+   ![9](https://github.com/user-attachments/assets/6d2cb70d-d343-4aba-9219-26b0088a725f)
+   ![10](https://github.com/user-attachments/assets/1ce9627e-0477-45b6-955e-1fd42b4424ac)
+   ![11](https://github.com/user-attachments/assets/35bdbb64-9848-492d-b617-580d8dfae0b3)
 
 _The Coli feature is designed to work exclusively with iPaaS (Integration Platform as a Service) solutions and similar platforms._
 
@@ -183,9 +192,9 @@ Supports full and partial refunds through NMI.
 4. Save the order.
 5. Create a partial refund.
 6. Update the order status to **"In Progress"**.
-![15](https://github.com/user-attachments/assets/5784401c-08f3-47e8-9626-1d6e3232ab1e)
-![16](https://github.com/user-attachments/assets/9e6df8c0-f31f-484e-bf3d-747f7b361683)
-![17](https://github.com/user-attachments/assets/3baa353f-6987-48dc-84c7-104025324f58)
+   ![15](https://github.com/user-attachments/assets/5784401c-08f3-47e8-9626-1d6e3232ab1e)
+   ![16](https://github.com/user-attachments/assets/9e6df8c0-f31f-484e-bf3d-747f7b361683)
+   ![17](https://github.com/user-attachments/assets/3baa353f-6987-48dc-84c7-104025324f58)
 
 #### 5. Mixed Card
 
@@ -199,7 +208,7 @@ The Mixed Card feature enables customers to purchase both regular products and s
 1. Add regular and subscription products to the cart.
 2. Proceed to checkout.
 3. Pay with a single credit card.
-![18](https://github.com/user-attachments/assets/82ccae30-8933-406e-aa70-4f4ad0149671)
+   ![18](https://github.com/user-attachments/assets/82ccae30-8933-406e-aa70-4f4ad0149671)
 
 #### 6. Save Card Feature
 
@@ -218,12 +227,51 @@ Allows customers to securely save their card details for future transactions.
 **Managing Saved Cards:**
 - **Delete Card**: Removes saved card details from NMI.
 - **Add Card**: Allows adding a new card for future transactions.
-![19](https://github.com/user-attachments/assets/fd28783b-68a0-43e7-8525-7733774f43e8)
-![20](https://github.com/user-attachments/assets/6b4b21fb-569e-4e38-aaca-7ef8d0c5953c)
-![21](https://github.com/user-attachments/assets/32198116-6be6-4f42-82ff-791c52c92faa)
-![22](https://github.com/user-attachments/assets/6f9dbbc2-6019-4193-ba1b-31b690982f28)
+  ![19](https://github.com/user-attachments/assets/fd28783b-68a0-43e7-8525-7733774f43e8)
+  ![20](https://github.com/user-attachments/assets/6b4b21fb-569e-4e38-aaca-7ef8d0c5953c)
+  ![21](https://github.com/user-attachments/assets/32198116-6be6-4f42-82ff-791c52c92faa)
+  ![22](https://github.com/user-attachments/assets/6f9dbbc2-6019-4193-ba1b-31b690982f28)
 
 _Only registered users can save a card. Guest users do not have the option to save a card._
+
+#### 7. Net-30 Payment Method
+
+Net-30 allows eligible customers to place an order without paying immediately. An invoice is generated and the customer receives a payment link via email. They can pay the outstanding invoice within 30 days using any of their saved cards.
+
+**How It Works:**
+- At checkout, eligible customers see **NMI Net-30** as a payment option.
+- After placing the order, a payment link is emailed to the customer with an expiration date.
+- The customer can pay the invoice from their account's **Invoices** page using any of their saved cards.
+- Expired Net-30 payments are automatically detected and handled by a background scheduled task.
+
+**Customer Group Access:**
+- Access to the Net-30 payment method is controlled by customer group. Only customers assigned to a configured group will see this option at checkout.
+- Configure eligible groups under **Settings → Plugins → NMI → Net-30 Settings → Net-30 Customer Groups**.
+
+**Paying a Net-30 Invoice (Single or Bulk):**
+1. Log in and navigate to **Account → Invoices**.
+2. Select one or more outstanding invoices.
+3. Choose a saved card to pay with.
+4. Click **Pay** to process the payment.
+
+**Admin Management:**
+- Administrators can view Net-30 orders and their payment status directly in the order detail view in the Shopware Admin panel.
+
+#### 8. NMI Saved Cards Management Page
+
+A dedicated storefront page lets logged-in customers manage their NMI saved payment methods without going through checkout.
+
+**How It Works:**
+- Customers access the saved cards page via their account sidebar (**Account → NMI Saved Cards**).
+- From this page they can add a new card or delete an existing card directly in NMI.
+
+**How to Use:**
+1. Log in and navigate to **Account → NMI Saved Cards**.
+2. To add a card: click **Add Card**, fill in the card details, and submit.
+3. To delete a card: click **Delete** next to the card you want to remove.
+4. To set a card as default: click **Set as Default** next to the desired card.
+
+_This page is only accessible to logged-in customers._
 
 
 ## NMI Plugin - API Documentation
@@ -354,7 +402,10 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 #### 7. Test in Sandbox Mode
 - Use **Sandbox API Keys** to test all payment methods before going live.
 
-#### 8. Stay Updated
+#### 8. Configure Net-30 Customer Groups
+- Assign the correct customer groups to Net-30 in the plugin settings so only eligible customers see this payment option at checkout.
+
+#### 9. Stay Updated
 - Keep the plugin updated to ensure compatibility and security.
 
 
@@ -386,6 +437,16 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 - Confirm that both regular and subscription products are added to the cart before checking out.
 - Make sure the system correctly differentiates between one-time and subscription payments.
 
+#### Net-30 Not Appearing at Checkout
+- Verify that the customer’s account belongs to a customer group configured under **Net-30 Customer Groups** in the plugin settings.
+- Ensure the Net-30 payment method is activated in **Settings → Payment Methods**.
+- Clear the Shopware cache after any configuration changes.
+
+#### Net-30 Invoice Payment Not Processing
+- Confirm the customer has at least one saved card in their account.
+- Check that the payment link has not expired. Expired links will show an error page directing the customer to contact support.
+- Ensure the customer is logged in when accessing the invoices page.
+
 ### FAQ
 
 #### 1. **How do I configure the API keys?**
@@ -414,6 +475,16 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 
 #### 9. **How do I troubleshoot payment issues?**
 - Check your API credentials, ensure the plugin is active, and verify payment statuses in the **Admin Panel**. Clear the cache if settings don’t save.
+
+#### 10. **What is the Net-30 payment method?**
+- Net-30 lets eligible customers place an order without paying immediately. They receive a payment link by email and can pay the invoice within 30 days using any of their saved cards from the Invoices page in their account.
+
+#### 11. **How do I restrict Net-30 to specific customers?**
+
+- Go to **Settings → Plugins → NMI → Net-30 Settings** and select the customer groups that should have access to Net-30 at checkout.
+
+#### 12. **Can customers manage their saved cards without going through checkout?**
+- Yes. Logged-in customers can add or delete saved cards at any time from **Account → NMI Saved Cards** in the storefront.
 
 ## Wiki Documentation
 Read more about the plugin configuration on our [Wiki](https://github.com/solution25com/nmi-payment-shopware-6-solution25/wiki).

@@ -1,0 +1,21 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_body %}
+    {#
+        STYLES MIGRATED ─────────────────────────────────────────────────────────
+        Inline style attributes replaced with CSS classes:
+          .payment-link-error-wrapper  → scss/net-thirty/_payment-link.scss
+          .payment-link-error-alert    → scss/net-thirty/_payment-link.scss
+        Original inline styles preserved in comments below for traceability.
+    #}
+    <div class="payment-link-error-wrapper">
+        {# original: style="text-align: center; padding: 50px; max-width: 600px; margin: 0 auto;" #}
+        <h2>Payment Link Error</h2>
+        <div class="payment-link-error-alert">
+            {# original: style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin: 20px 0;" #}
+            <p>{{ error }}</p>
+        </div>
+        <p>If you continue to experience issues, please contact customer service.</p>
+        <a href="{{ path('frontend.home.page') }}" class="btn btn-primary">Return to Home</a>
+    </div>
+{% endblock %}

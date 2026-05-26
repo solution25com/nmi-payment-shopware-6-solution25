@@ -106,7 +106,10 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
                         'void_reason' => 'fraud'
                         ];
                         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-                        $this->logger->info(json_encode($response));
+                        $this->logger->info('NMI void response', [
+                            'transaction_id' => $response['transactionid'] ?? null,
+                            'response_code'  => $response['response'] ?? null,
+                        ]);
                         try {
                             $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
                         } catch (\Exception $exception) {
@@ -203,7 +206,10 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
 
 
                         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-                        $this->logger->info(json_encode($response));
+                        $this->logger->info('NMI capture response', [
+                            'transaction_id' => $response['transactionid'] ?? null,
+                            'response_code'  => $response['response'] ?? null,
+                        ]);
 
                         $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
                     }

@@ -2,6 +2,7 @@
 
 namespace NMIPayment\Gateways;
 
+use RuntimeException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\Framework\Uuid\Uuid;
 use NMIPayment\Library\Constants\TransactionStatuses;
@@ -90,8 +91,35 @@ class CreditCard extends AbstractPaymentHandler
         $nmiTransactionId = $request->getPayload()->get('nmi_transaction_id');
         $selectedBillingId = $request->getPayload()->get('nmi_selected_billing_id') ?? null;
 
-        $orderId = $orderTransaction->getOrder()->getId();
+        $order = $orderTransaction->getOrder();
+        $orderId = $order->getId();
         $paymentMethodName = $orderTransaction->getPaymentMethod()->getName();
+
+        $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
+        $verified = $this->nmiPaymentApiClient->queryTransaction((string) $nmiTransactionId);
+
+        if ($verified === null) {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException('NMI transaction verification failed: could not query transaction.');
+        }
+
+        $allowedConditions = ['complete', 'pendingsettlement'];
+        if (!in_array($verified['condition'], $allowedConditions, true)) {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException(sprintf('NMI transaction not in a successful state: %s', $verified['condition']));
+        }
+
+        $expectedAmount = $orderTransaction->getAmount()->getTotalPrice();
+        $actualAmount = (float) $verified['amount'];
+        if (abs($actualAmount - $expectedAmount) > 0.01) {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException(sprintf('NMI transaction amount mismatch: expected %.2f, got %.2f', $expectedAmount, $actualAmount));
+        }
+
+        if ($verified['order_id'] !== '' && $verified['order_id'] !== $order->getOrderNumber()) {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException('NMI transaction order ID mismatch.');
+        }
 
         $this->transactionStateHandler->{$handlerMethod}($transaction->getOrderTransactionId(), $context);
         $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName, $nmiTransactionId, null, false, $status, $selectedBillingId, $context);
@@ -139,6 +167,7 @@ class CreditCard extends AbstractPaymentHandler
         'amount'           => $orderTransaction->getAmount()->getTotalPrice(),
         'currency'         => $mode == "sandbox" ? 'USD' : $order->getCurrency()->getIsoCode(),
         'type'             => $authorizeOnly ? 'auth' : 'sale',
+        'orderid'          => $order->getOrderNumber(),
         'first_name'       => $billingAddress->getFirstName(),
         'last_name'        => $billingAddress->getLastName(),
         'address1'         => $billingAddress->getStreet(),

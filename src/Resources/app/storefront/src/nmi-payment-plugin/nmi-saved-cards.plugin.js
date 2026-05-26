@@ -4,6 +4,12 @@ export default class NmiSavedCardsPlugin extends window.PluginBaseClass {
         this.paymentForm = document.getElementById('paymentForm');
         this.payButton = document.getElementById('payButton');
 
+        // Read configs for lazy CollectJS loading (publicKey stored in #plugin-configs)
+        const configsEl = document.getElementById('plugin-configs');
+        this._configs = configsEl ? JSON.parse(configsEl.dataset.pluginConfigs || '{}') : {};
+        this._collectJsUrl = 'https://secure.nmi.com/token/Collect.js';
+        this._collectJsLoadPromise = null;
+
         if (this.addCardButton) {
             this.addCardButton.addEventListener('click', this.toggleForm.bind(this));
         }
@@ -17,7 +23,23 @@ export default class NmiSavedCardsPlugin extends window.PluginBaseClass {
         this.initCardActions();
     }
 
-    toggleForm() {
+    _ensureCollectJsLoaded() {
+        if (typeof CollectJS !== 'undefined') return Promise.resolve();
+        if (this._collectJsLoadPromise) return this._collectJsLoadPromise;
+
+        this._collectJsLoadPromise = new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = this._collectJsUrl;
+            script.setAttribute('data-tokenization-key', this._configs.publicKey || '');
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Failed to load CollectJS'));
+            document.head.appendChild(script);
+        });
+
+        return this._collectJsLoadPromise;
+    }
+
+    async toggleForm() {
         try {
             const isFormVisible = this.paymentForm.style.display === 'block';
 
@@ -27,6 +49,8 @@ export default class NmiSavedCardsPlugin extends window.PluginBaseClass {
             } else {
                 this.paymentForm.style.display = 'block';
                 this.addCardButton.textContent = '- Remove Card';
+
+                await this._ensureCollectJsLoaded();
 
                 CollectJS.configure({
                     callback: async (response) => {

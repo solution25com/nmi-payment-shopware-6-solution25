@@ -1,0 +1,234 @@
+{% sw_extends '@Storefront/storefront/page/account/order-history/index.html.twig' %}
+
+{% block base_head %}
+    {{ parent() }}
+    {#
+        STYLES MIGRATED ─────────────────────────────────────────────────────────
+        All CSS originally defined in this block's <style> tag has been moved to:
+          Resources/app/storefront/src/scss/net-thirty/_invoices.scss
+        Compiled via base.scss → storefront bundle.
+        The original inline <style> block is preserved below, commented out,
+        for migration traceability.
+
+    <style>
+        :root {
+            --invoice-primary: #2563eb;
+            --invoice-primary-hover: #1d4ed8;
+            --invoice-success: #10b981;
+            --invoice-warning: #f59e0b;
+            --invoice-danger: #ef4444;
+            --invoice-gray-50: #f9fafb;
+            --invoice-gray-100: #f3f4f6;
+            --invoice-gray-200: #e5e7eb;
+            --invoice-gray-300: #d1d5db;
+            --invoice-gray-500: #6b7280;
+            --invoice-gray-600: #4b5563;
+            --invoice-gray-700: #374151;
+            --invoice-gray-800: #1f2937;
+            --invoice-gray-900: #111827;
+            --invoice-shadow-sm: 0 1px 2px 0 rgba(0,0,0,.05);
+            --invoice-shadow: 0 1px 3px 0 rgba(0,0,0,.1),0 1px 2px 0 rgba(0,0,0,.06);
+            --invoice-shadow-md: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06);
+            --invoice-shadow-lg: 0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -2px rgba(0,0,0,.05);
+            --invoice-shadow-xl: 0 20px 25px -5px rgba(0,0,0,.1),0 10px 10px -5px rgba(0,0,0,.04);
+            --invoice-radius: 12px;
+            --invoice-radius-sm: 8px;
+            --invoice-transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        ... (full content preserved in _invoices.scss)
+    </style>
+    #}
+{% endblock %}
+
+{% block page_account_orders_welcome_headline %}
+    <h1>Invoices</h1>
+{% endblock %}
+
+{% block page_account_orders_welcome_intro %}
+    <p>View and manage your Net 30 payment invoices</p>
+
+    {% if app.request.query.get('net30Error') %}
+        <div class="alert alert-danger mt-3" role="alert" style="border-left: 4px solid #dc3545; background-color: #f8d7da; border-color: #f5c2c7; border-radius: 8px;">
+            <strong>Payment notice:</strong> {{ app.request.query.get('net30Error') }}
+        </div>
+    {% endif %}
+
+    {% block page_account_invoices_filter %}
+        <div class="account-invoices-filter mb-4 mt-3">
+            <div class="btn-group" role="group" aria-label="Filter invoices">
+                <a href="{{ path('frontend.account.invoices.page', { filter: 'all' }) }}"
+                   class="btn btn-outline-primary {{ filter == 'all' ? 'active' : '' }}">
+                    All
+                </a>
+                <a href="{{ path('frontend.account.invoices.page', { filter: 'unpaid' }) }}"
+                   class="btn btn-outline-primary {{ filter == 'unpaid' ? 'active' : '' }}">
+                    Unpaid Only
+                </a>
+            </div>
+        </div>
+    {% endblock %}
+{% endblock %}
+
+{% block page_account_orders_info_empty %}
+    <div class="account-invoices-empty">
+        <div class="alert alert-info">
+            {% if filter == 'unpaid' %}
+                You don't have any unpaid invoices.
+            {% else %}
+                You don't have any invoices yet.
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block page_account_orders_overview %}
+    {% if page.orders.total > 0 %}
+        {#
+            JS PLUGIN ROOT ─────────────────────────────────────────────────────────
+            NetThirtyInvoicesPlugin (net-thirty-plugin/net-thirty-invoices.plugin.js)
+            is scoped to this wrapper. data-bulk-payment-url passes the Shopware-
+            generated route URL so the plugin can redirect without any inline JS.
+        #}
+        <div data-net-thirty-invoices-plugin
+             data-bulk-payment-url="{{ path('frontend.account.invoices.bulk-payment') }}">
+
+            {% if filter == 'unpaid' %}
+                <div class="account-invoices-selection-info mb-4">
+                    <div class="alert alert-info d-flex align-items-center" role="alert" style="border-left: 4px solid #0dcaf0; background-color: #e7f3ff; border-color: #0dcaf0; border-radius: 8px; padding: 1.25rem 1.5rem;">
+                        <div style="flex: 1;">
+                            <p class="mb-0" style="color: #055160; margin: 0;">
+                                <strong> · Select one or more invoices</strong> using the checkboxes below, then click <strong>"Pay Selected Orders"</strong> to process your payment.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="account-invoices-bulk-actions mb-3" id="bulkActionsContainer" style="display: none;">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="selected-count-text">
+                                <strong id="selectedCount">0</strong> order(s) selected
+                            </span>
+                            <span class="selected-total-text">
+                                Total: <strong id="selectedTotal">$0.00</strong>
+                            </span>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-lg" id="paySelectedBtn">
+                            <span>Pay Selected Orders</span>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+
+            <div class="account-invoices-table-container">
+                <table class="table account-invoices-table">
+                    <thead>
+                        <tr>
+                            {% if filter == 'unpaid' %}
+                                <th style="width: 50px;">
+                                    <input type="checkbox"
+                                           id="selectAllCheckbox"
+                                           class="form-check-input invoice-checkbox">
+                                    <label for="selectAllCheckbox" class="visually-hidden">Select all orders</label>
+                                </th>
+                            {% endif %}
+                            <th>Order Number</th>
+                            <th>Order Date</th>
+                            <th>Due Date</th>
+                            <th>Invoice Total</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in page.orders %}
+                            {% set net30 = order.extensions.dealerNet30 ?? null %}
+                            {% set orderDate = order.orderDateTime|date('m/d/Y') %}
+                            {% set dueDate = net30.dueDate ? net30.dueDate|date('m/d/Y') : '-' %}
+                            {% set isOverdue = net30.isOverdue ?? false %}
+                            {% set isPaid = net30.isPaid ?? false %}
+                            {% set orderAmount = 0 %}
+                            {% if order.price is not null and order.price.totalPrice is defined %}
+                                {% set orderAmount = (order.price.totalPrice * 100)|round %}
+                            {% endif %}
+
+                            <tr class="account-invoice-row {% if isOverdue %}invoice-overdue{% endif %} {% if isPaid %}invoice-paid{% endif %}"
+                                data-order-id="{{ order.id }}"
+                                data-order-number="{{ order.orderNumber }}"
+                                data-order-amount="{{ orderAmount }}"
+                                data-deep-link="{{ order.deepLinkCode }}">
+                                {% if filter == 'unpaid' %}
+                                    <td class="invoice-checkbox-cell">
+                                        {% if not isPaid %}
+                                            <input type="checkbox"
+                                                   class="form-check-input invoice-checkbox order-checkbox"
+                                                   value="{{ order.id }}"
+                                                   data-order-number="{{ order.orderNumber }}"
+                                                   data-order-amount="{{ orderAmount }}"
+                                                   data-currency="{{ order.currency.isoCode }}"
+                                                   data-deep-link="{{ order.deepLinkCode }}">
+                                        {% else %}
+                                            <span class="text-muted" style="font-size: 0.75rem;">Paid</span>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                                <td class="invoice-order-number">
+                                    <strong>{{ order.orderNumber }}</strong>
+                                </td>
+                                <td class="invoice-order-date">{{ orderDate }}</td>
+                                <td class="invoice-due-date {% if isOverdue %}text-danger{% endif %}">
+                                    {% if net30.dueDate %}
+                                        <strong>{{ dueDate }}</strong>
+                                        {% if isOverdue %}
+                                            <span class="badge bg-danger ms-2">Overdue</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td class="invoice-amount">
+                                    <strong>{{ order.amountTotal|currency(order.currency.isoCode) }}</strong>
+                                </td>
+                                <td class="invoice-status">
+                                    {% if isPaid %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elseif isOverdue %}
+                                        <span class="badge bg-danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td class="invoice-action">
+                                    <a href="{{ path('frontend.account.order.single.page', { deepLinkCode: order.deepLinkCode }) }}"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View Order
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>{# end data-net-thirty-invoices-plugin #}
+    {% endif %}
+{% endblock %}
+
+{% block base_body %}
+    {{ parent() }}
+    {#
+        SCRIPT MIGRATED ─────────────────────────────────────────────────────────
+        All JavaScript originally in this block's <script> tag has been moved to:
+          Resources/app/storefront/src/net-thirty-plugin/net-thirty-invoices.plugin.js
+        Registered in main.js as NetThirtyInvoicesPlugin on [data-net-thirty-invoices-plugin].
+        The original inline <script> block is preserved below, commented out,
+        for migration traceability.
+
+    <script>
+    (function () {
+        var bulkPaymentUrl = '{{ path('frontend.account.invoices.bulk-payment') }}';
+        // ... full logic preserved in net-thirty-invoices.plugin.js
+    }());
+    </script>
+    #}
+{% endblock %}

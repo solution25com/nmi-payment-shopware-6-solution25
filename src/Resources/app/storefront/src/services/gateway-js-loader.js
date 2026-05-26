@@ -1,4 +1,3 @@
-// services/gateway-js-loader.js
 export default class GatewayJsLoader {
   static loadGatewayJS(gatewayJsUrl) {
     return new Promise((resolve, reject) => {

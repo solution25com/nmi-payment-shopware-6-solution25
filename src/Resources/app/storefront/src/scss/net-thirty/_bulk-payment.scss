@@ -1,0 +1,285 @@
+// Net-Thirty bulk payment form styles
+// Migrated from inline <style> in views/storefront/page/account/bulk-payment-form.html.twig
+
+// ── Hero banner ────────────────────────────────────────────────────────────────
+
+.bulk-pay-hero {
+    color: #fff;
+    border-radius: 18px;
+    padding: 28px 32px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+    margin-bottom: 24px;
+
+    h1 {
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 0;
+    }
+
+    p {
+        margin: 8px 0 0;
+        opacity: 0.92;
+    }
+}
+
+// ── Card container ─────────────────────────────────────────────────────────────
+
+.bulk-card {
+    border: 0;
+    border-radius: 16px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+    overflow: hidden;
+
+    .card-header {
+        padding: 14px 18px;
+    }
+
+    .card-body {
+        padding: 18px;
+    }
+}
+
+// ── Order summary table ────────────────────────────────────────────────────────
+
+.bulk-summary-table {
+    th, td {
+        vertical-align: middle;
+    }
+
+    .table-active {
+        background: #f0f6ff;
+        font-weight: 700;
+    }
+}
+
+// ── Badges & pills ─────────────────────────────────────────────────────────────
+
+.badge-pill {
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.payment-pill {
+    background: #e8f3ff;
+    color: #1f4f8a;
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────────
+
+.bulk-payment-form .btn-primary {
+    background: linear-gradient(135deg, #1f4f8a, #3f8fcd);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 700;
+    box-shadow: 0 10px 20px rgba(63, 143, 205, 0.35);
+}
+
+.bulk-payment-form .btn-secondary {
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 600;
+}
+
+// ── Loading spinner ────────────────────────────────────────────────────────────
+
+#loaderWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.bulk-payment-loader {
+    height: 80px;
+    width: 80px;
+    padding: 8px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #2b66a9;
+    --_m: conic-gradient(#0000 10%, #000), linear-gradient(#000 0 0) content-box;
+    -webkit-mask: var(--_m);
+    mask: var(--_m);
+    -webkit-mask-composite: source-out;
+    mask-composite: subtract;
+    animation: bulk-loader-spin 1s infinite linear;
+}
+
+@keyframes bulk-loader-spin {
+    to { transform: rotate(1turn); }
+}
+
+// ── Saved card visual tiles ────────────────────────────────────────────────────
+// Mirrors the saved-card tiles on /account/nmi-saved-cards
+
+#creditCardSection .cards-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin: 4px 0 14px;
+}
+
+#creditCardSection .credit-card {
+    width: 300px;
+    height: 178px;
+    border-radius: 14px;
+    padding: 18px 20px;
+    position: relative;
+    color: #fff;
+    font-family: 'Arial', sans-serif;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border 0.12s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 100%);
+    border: 3px solid transparent;
+    user-select: none;
+
+    // Chip decoration
+    &::before {
+        content: "";
+        width: 46px;
+        height: 32px;
+        background: linear-gradient(90deg, #b5b5b5, #e0e0e0, #b5b5b5);
+        border-radius: 5px;
+        position: absolute;
+        top: 14px;
+        right: 18px;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.25);
+    }
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.22);
+    }
+
+    &.selected {
+        border-color: #3f8fcd;
+        box-shadow: 0 0 0 3px rgba(63,143,205,0.45), 0 8px 22px rgba(0,0,0,0.18);
+        transform: translateY(-4px);
+    }
+
+    // Card-type colour variants
+    &.visa        { background: linear-gradient(135deg, #1427a5 0%, #001f67 100%); }
+    &.mastercard  { background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%); }
+    &.amex        { background: linear-gradient(135deg, #016fd0 0%, #00a4e4 100%); }
+    &.discover    { background: linear-gradient(135deg, #ff6600 0%, #ff9900 100%); }
+    &.diners      { background: linear-gradient(135deg, #005f7f 0%, #0088a8 100%); }
+    &.jcb         { background: linear-gradient(135deg, #0073ce 0%, #0040a5 100%); }
+    &.unionpay,
+    &.cup         { background: linear-gradient(135deg, #da251c 0%, #0073cc 100%); }
+    &.maestro     { background: linear-gradient(135deg, #cc0000 0%, #0099cc 100%); }
+    &.electron    { background: linear-gradient(135deg, #0078d7 0%, #005bac 100%); }
+    &.dankort     { background: linear-gradient(135deg, #cc0000 0%, #990000 100%); }
+    &.interpayment{ background: linear-gradient(135deg, #222 0%, #666 100%); }
+
+    &.is-default {
+        border-color: gold;
+        box-shadow: 0 0 14px rgba(255,215,0,0.55);
+    }
+
+    .card-chip-area { display: none; }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .card-type {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .card-icon {
+        max-width: 32px;
+        object-fit: contain;
+    }
+
+    .default-badge {
+        background: gold;
+        color: #000;
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .card-number {
+        font-size: 18px;
+        letter-spacing: 3px;
+        font-weight: 700;
+        margin: 6px 0 0;
+    }
+
+    .card-details {
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .card-selected-mark {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(255,255,255,0.25);
+        border-radius: 50%;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 700;
+        transition: opacity 0.15s;
+    }
+}
+
+// ── Payment method sections ────────────────────────────────────────────────────
+
+.payment-method-section {
+    min-height: 40px;
+}
+
+// ── ACH form ───────────────────────────────────────────────────────────────────
+
+#ach-payment-form-container {
+    min-height: 150px;
+
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+}
+
+#achSection .mb-3:has(#ach-payment-form-container) {
+    display: none;
+}
+
+// ── Hidden radio for payment method ───────────────────────────────────────────
+
+.nmi-radio-hidden {
+    display: none;
+}

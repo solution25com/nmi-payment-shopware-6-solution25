@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Routing\RouterInterface;
 
-#[Route(defaults: ['_routeScope' => ['api']])]
+#[Route(defaults: ['_routeScope' => ['api'], '_acl' => ['system_config:read']])]
 class TestApiConnectionController extends StorefrontController
 {
     private NMIPaymentApiClient $nmiApiClient;

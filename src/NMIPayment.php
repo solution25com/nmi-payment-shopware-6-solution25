@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NMIPayment;
 
 use Doctrine\DBAL\Connection;
+use NMIPayment\Installer\OrderStateInstaller;
 use NMIPayment\PaymentMethods\PaymentMethodInterface;
 use NMIPayment\PaymentMethods\PaymentMethods;
 use Shopware\Core\Framework\Context;
@@ -22,15 +23,17 @@ class NMIPayment extends Plugin
 {
     public function install(InstallContext $installContext): void
     {
+        $this->runInstallers($installContext->getContext());
+
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->addPaymentMethod(new $paymentMethod(), $installContext->getContext());
+            $this->addPaymentMethod($this->createPaymentMethodInstance($paymentMethod), $installContext->getContext());
         }
     }
 
     public function uninstall(UninstallContext $uninstallContext): void
     {
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), new $paymentMethod());
+            $this->setPaymentMethodIsActive(false, $uninstallContext->getContext(), $this->createPaymentMethodInstance($paymentMethod));
         }
 
         if (!$uninstallContext->keepUserData()) {
@@ -41,7 +44,7 @@ class NMIPayment extends Plugin
             $connection->executeStatement(
                 'DELETE FROM `migration` WHERE `class` LIKE :migrationPattern;',
                 [
-                'migrationPattern' => 'NMIPayment\Migration\%',
+                    'migrationPattern' => 'NMIPayment\Migration\%',
                 ]
             );
         }
@@ -52,16 +55,20 @@ class NMIPayment extends Plugin
     public function activate(ActivateContext $activateContext): void
     {
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->addPaymentMethod(new $paymentMethod(), $activateContext->getContext());
-            $this->setPaymentMethodIsActive(true, $activateContext->getContext(), new $paymentMethod());
+            $instance = $this->createPaymentMethodInstance($paymentMethod);
+            $this->addPaymentMethod($instance, $activateContext->getContext());
+            $this->setPaymentMethodIsActive(true, $activateContext->getContext(), $instance);
         }
         parent::activate($activateContext);
     }
 
     public function update(UpdateContext $updateContext): void
     {
+        $this->runInstallers($updateContext->getContext());
+        $this->migrateNet30HandlerIdentifier($updateContext->getContext());
+
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->addPaymentMethod(new $paymentMethod(), $updateContext->getContext());
+            $this->addPaymentMethod($this->createPaymentMethodInstance($paymentMethod), $updateContext->getContext());
         }
         parent::update($updateContext);
     }
@@ -69,7 +76,7 @@ class NMIPayment extends Plugin
     public function deactivate(DeactivateContext $deactivateContext): void
     {
         foreach (PaymentMethods::PAYMENT_METHODS as $paymentMethod) {
-            $this->setPaymentMethodIsActive(false, $deactivateContext->getContext(), new $paymentMethod());
+            $this->setPaymentMethodIsActive(false, $deactivateContext->getContext(), $this->createPaymentMethodInstance($paymentMethod));
         }
         parent::deactivate($deactivateContext);
     }
@@ -77,6 +84,51 @@ class NMIPayment extends Plugin
     public function getDependency($name): mixed
     {
         return $this->container->get($name);
+    }
+
+    private function runInstallers(Context $context): void
+    {
+        $installer = new OrderStateInstaller(
+            $this->getDependency('state_machine.repository'),
+            $this->getDependency('state_machine_state.repository'),
+            $this->getDependency('state_machine_transition.repository')
+        );
+        $installer->install($context);
+    }
+
+    private function migrateNet30HandlerIdentifier(Context $context): void
+    {
+        $paymentRepository = $this->getDependency('payment_method.repository');
+        $criteria = (new Criteria())->addFilter(new EqualsFilter(
+            'handlerIdentifier',
+            'NMIPayment\\Payment\\NetThirtyPaymentHandler'
+        ));
+        $ids = $paymentRepository->searchIds($criteria, $context);
+
+        if ($ids->getTotal() === 0) {
+            return;
+        }
+
+        $updates = array_map(
+            fn (string $id) => [
+                'id' => $id,
+                'handlerIdentifier' => \NMIPayment\Gateways\Net30::class,
+            ],
+            $ids->getIds()
+        );
+
+        $paymentRepository->update($updates, $context);
+    }
+
+    private function createPaymentMethodInstance(string $paymentMethodClass): PaymentMethodInterface
+    {
+        if (!is_subclass_of($paymentMethodClass, PaymentMethodInterface::class)) {
+            throw new \InvalidArgumentException(
+                sprintf('Class %s must implement %s', $paymentMethodClass, PaymentMethodInterface::class)
+            );
+        }
+
+        return new $paymentMethodClass();
     }
 
     private function addPaymentMethod(PaymentMethodInterface $paymentMethod, Context $context): void
@@ -99,7 +151,7 @@ class NMIPayment extends Plugin
             'handlerIdentifier' => $paymentMethod->getPaymentHandler(),
             'name' => $paymentMethod->getName(),
             'description' => $paymentMethod->getDescription(),
-            'technicalName' => $paymentMethod->getName(),
+            'technicalName' => $paymentMethod->getTechnicalName(),
             'pluginId' => $pluginId,
             'afterOrderEnabled' => true,
         ];

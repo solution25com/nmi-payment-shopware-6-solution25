@@ -128,4 +128,68 @@
         </input-field>
     </card>
 
+    <card>
+        <title>NET 30 Payment Method Visibility</title>
+        <title lang="de-DE">NET 30 Zahlungsmethode Sichtbarkeit</title>
+
+        <component name="sw-entity-multi-id-select">
+            <name>net30CustomerGroups</name>
+            <label>Allowed customer groups for NET 30</label>
+            <label lang="de-DE">Erlaubte Kundengruppen für NET 30</label>
+            <helpText>Only customers belonging to these groups will see NET 30 as a payment option at checkout. Leave empty to show NET 30 to all customers.</helpText>
+            <helpText lang="de-DE">Nur Kunden, die zu diesen Gruppen gehören, sehen NET 30 als Zahlungsoption beim Checkout. Leer lassen, um NET 30 allen Kunden anzuzeigen.</helpText>
+            <entity>customer_group</entity>
+        </component>
+    </card>
+
+    <card>
+        <title>Dealer Payment Terms</title>
+        <title lang="de-DE">Händler-Zahlungsbedingungen</title>
+
+        <component name="sw-entity-multi-id-select">
+            <name>dealerCustomerGroups</name>
+            <label>Dealer customer groups</label>
+            <label lang="de-DE">Händler-Kundengruppen</label>
+            <helpText>Select the customer groups that should have access to the NET 30 payment option.</helpText>
+            <helpText lang="de-DE">Wählen Sie die Kundengruppen aus, die Zugang zur NET 30 Zahlungsoption haben sollen.</helpText>
+            <entity>customer_group</entity>
+        </component>
+
+        <input-field type="bool">
+            <name>disableCreditCardPayment</name>
+            <label>Disable Credit Card Payment for dealers</label>
+            <label lang="de-DE">Kreditkartenzahlung für Händler deaktivieren</label>
+            <helpText>When enabled, credit card payment will be hidden for dealer customers and only ACH/eCheck payment will be available.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, wird die Kreditkartenzahlung für Händlerkunden ausgeblendet und nur ACH/eCheck-Zahlung ist verfügbar.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="bool">
+            <name>autoGenerateInvoice</name>
+            <label>Auto-generate invoice for NET 30 orders</label>
+            <label lang="de-DE">Rechnung für NET 30 Bestellungen automatisch erstellen</label>
+            <helpText>When enabled, an invoice document will be automatically generated when an order transitions to the NET 30 invoicing pending or overdue state.</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, wird automatisch ein Rechnungsdokument erstellt, wenn eine Bestellung in den NET 30 ausstehenden oder überfälligen Status wechselt.</helpText>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="bool">
+            <name>skipSentFilterForDealers</name>
+            <label>Show invoices without "sent" status for dealers</label>
+            <label lang="de-DE">Rechnungen ohne "Gesendet"-Status für Händler anzeigen</label>
+            <helpText>When enabled, dealer customers will see invoice documents in their account even if the document has not been marked as "sent".</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, sehen Händlerkunden Rechnungsdokumente in ihrem Konto, auch wenn das Dokument nicht als "Gesendet" markiert wurde.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="bool">
+            <name>skipSentFilterForNet30</name>
+            <label>Show invoices without "sent" status for NET 30 orders</label>
+            <label lang="de-DE">Rechnungen ohne "Gesendet"-Status für NET 30 Bestellungen anzeigen</label>
+            <helpText>When enabled, all customers will see invoice documents for NET 30 orders even if the document has not been marked as "sent".</helpText>
+            <helpText lang="de-DE">Wenn aktiviert, sehen alle Kunden Rechnungsdokumente für NET 30 Bestellungen, auch wenn das Dokument nicht als "Gesendet" markiert wurde.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+    </card>
+
 </config>

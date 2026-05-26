@@ -40,6 +40,7 @@
             <argument type="service" id="NMIPayment\Service\NMIVaultedCustomerService" />
             <argument type="service" id="NMIPayment\Service\NMIACHPaymentDataRequestService" />
             <argument type="service" id="NMIPayment.logger"/>
+            <argument type="service" id="NMIPayment\Validations\VaultOwnershipGuard"/>
         </service>
 
         <service id="NMIPayment\Storefront\Controller\NMIWebhookController" public="true">
@@ -57,6 +58,7 @@
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
             <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method"/>
         </service>
@@ -71,6 +73,16 @@
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
+            <tag name="shopware.payment.method"/>
+        </service>
+
+        <service id="NMIPayment\Gateways\Net30">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyPaymentLinkService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyOrderLifecycleService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyPaymentOrchestrator"/>
+            <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method"/>
         </service>
 
@@ -92,6 +104,7 @@
         <service id="NMIPayment\EventSubscriber\CheckoutConfirmEventSubscriber">
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -117,16 +130,177 @@
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="kernel.event_subscriber"/>
         </service>
+        <service id="NMIPayment\EventSubscriber\NetThirty\NetThirtyOrderTransactionSubscriber">
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyPaymentLinkService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyOrderLifecycleService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyPaymentOrchestrator"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\NetThirty\NetThirtyInvoiceGenerationSubscriber">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentGenerator"/>
+            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\NetThirty\AccountOrderPageSubscriber">
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\NetThirty\AccountInvoicesPageSubscriber">
+            <argument type="service" id="NMIPayment.logger"/>
+            <argument type="service" id="NMIPayment\Service\DealerDocumentCriteriaService"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\NetThirty\CheckoutPaymentDebugSubscriber">
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
         <!--        End Event Subscribers-->
 
         <!--        Validations-->
         <service id="NMIPayment\Validations\PaymentValidation">
             <argument id="Symfony\Component\Validator\Validator\ValidatorInterface" type="service"/>
         </service>
+
+        <service id="NMIPayment\Validations\VaultOwnershipGuard">
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
         <!--        End Validations-->
 
 
         <!-- services -->
+
+        <service id="NMIPayment\Service\NetThirtyFields"/>
+
+        <service id="NMIPayment\Service\NetThirtyOrderLifecycleService">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyEmailService">
+            <argument type="service" id="Shopware\Core\Content\Mail\Service\MailService" />
+            <argument type="service" id="sales_channel.repository"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="router"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyPaymentOrchestrator">
+            <argument type="service" id="Shopware\Core\System\StateMachine\StateMachineRegistry"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyEmailService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyOrderLifecycleService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyPaymentLinkService">
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="router"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyOrderAuthorizationService">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyBulkPaymentProcessor">
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyACHBulkPaymentProcessor">
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="NMIPayment\Service\NMIACHPaymentDataRequestService"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Service\NetThirtyBulkPaymentService">
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyBulkPaymentProcessor"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyACHBulkPaymentProcessor"/>
+        </service>
+
+        <service id="NMIPayment\Service\DealerConfigService">
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+        </service>
+
+        <service id="NMIPayment\Service\DealerDocumentCriteriaService">
+            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
+        </service>
+
+        <!-- Net30 Controllers -->
+        <service id="NMIPayment\Controller\AccountInvoicesController" public="true">
+            <argument type="service" id="Shopware\Storefront\Page\Account\Order\AccountOrderPageLoader"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyBulkPaymentService"/>
+            <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="Shopware\Core\System\SystemConfig\SystemConfigService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyOrderAuthorizationService"/>
+            <argument type="service" id="NMIPayment\Service\NMIVaultedCustomerService"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="NMIPayment\Controller\NetThirtyPaymentLinkController" public="true">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <service id="NMIPayment\Controller\Admin\NetThirtyOrderController" public="true">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyPaymentLinkService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyEmailService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <!-- Net30 Scheduled Task -->
+        <service id="NMIPayment\ScheduledTask\CheckExpiredNetThirtyPaymentsTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="NMIPayment\ScheduledTask\CheckExpiredNetThirtyPaymentsTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="order_transaction.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
+            <argument type="service" id="Shopware\Core\System\StateMachine\StateMachineRegistry"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="messenger.message_handler"/>
+        </service>
+
+        <!-- Net30 Command -->
+        <service id="NMIPayment\Command\GenerateDealerInvoicesCommand">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="Shopware\Core\Checkout\Document\Service\DocumentGenerator"/>
+            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
+            <tag name="console.command"/>
+        </service>
 
         <service id="NMIPayment\Service\NmiTransactionService">
             <argument type="service" id="nmi_transaction.repository"/>

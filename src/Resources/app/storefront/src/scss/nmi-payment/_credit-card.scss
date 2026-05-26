@@ -423,8 +423,8 @@
 }
 #orderProcessingLoader1{
   display: none;
-  top: 50%;
-  left: 22%;
+  top: 55%;   // ACH template uses 55% / 20%; CC template lets JS override as needed
+  left: 20%;
   transform: translateY(-50%);
 }
 .loader{

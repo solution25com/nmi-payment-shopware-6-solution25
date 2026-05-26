@@ -22,4 +22,9 @@ class ACHPaymentMethod implements PaymentMethodInterface
     {
         return AchEcheck::class;
     }
+
+    public function getTechnicalName(): string
+    {
+        return 'nmi_ach_echeck';
+    }
 }

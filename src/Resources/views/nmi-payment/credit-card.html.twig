@@ -130,5 +130,14 @@
 {% endblock %}
 
 {% block nmi_payment_credit_card_scripts %}
+    {#
+        SCRIPT MIGRATED ─────────────────────────────────────────────────────────
+        Gateway.js is loaded on demand by NmiCreditCardPlugin (submitNormalPayment)
+        via a dynamic script injection when 3-D Secure is activated.
+        GatewayJsLoader (services/gateway-js-loader.js) wraps the Gateway SDK.
+        Pre-loading here is no longer necessary.
+        Original tag preserved below, commented out, for migration traceability.
+
     <script src="https://secure.nmi.com/js/v1/Gateway.js"></script>
+    #}
 {% endblock %}

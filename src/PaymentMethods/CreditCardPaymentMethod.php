@@ -22,4 +22,9 @@ class CreditCardPaymentMethod implements PaymentMethodInterface
     {
         return CreditCard::class;
     }
+
+    public function getTechnicalName(): string
+    {
+        return 'nmi_credit_card';
+    }
 }

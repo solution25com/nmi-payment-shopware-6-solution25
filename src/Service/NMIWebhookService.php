@@ -69,14 +69,12 @@ class NMIWebhookService
         $transactionId = $eventBody['transaction_id'] ?? null;
 
         if (!$eventType || !$transactionId) {
-            $this->logger->warning('NMI Webhook: Missing required fields', ['data' => $webhookData]);
+            $this->logger->warning('NMI Webhook: Missing required fields', [
+                'event_type'     => $eventType,
+                'transaction_id' => $transactionId,
+            ]);
             return;
         }
-
-        $this->logger->info('NMI Webhook received', [
-            'event_type' => $eventType,
-            'transaction_id' => $transactionId,
-        ]);
 
         if (TransactionEvents::isVoidEvent($eventType) && TransactionEvents::isSuccessfulEvent($eventType)) {
             $this->handleVoidEvent($webhookData);
@@ -91,7 +89,7 @@ class NMIWebhookService
         $transactionId = $eventBody['transaction_id'] ?? null;
 
         if (!$transactionId) {
-            $this->logger->warning('NMI Webhook: Missing transaction ID in void event', ['data' => $webhookData]);
+            $this->logger->warning('NMI Webhook: Missing transaction ID in void event');
             return;
         }
 
@@ -129,7 +127,7 @@ class NMIWebhookService
         $refundAmount = abs((float)($action['amount'] ?? 0));
 
         if (!$transactionId) {
-            $this->logger->warning('NMI Webhook: Missing transaction ID in refund event', ['data' => $webhookData]);
+            $this->logger->warning('NMI Webhook: Missing transaction ID in refund event');
             return;
         }
 

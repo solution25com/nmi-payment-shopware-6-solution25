@@ -1,0 +1,28 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{% block base_content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h1 class="mb-4">
+                    {% if status == 'paid' %}
+                        Payment received
+                    {% elseif status == 'failed' %}
+                        Payment failed
+                    {% elseif status == 'expired' %}
+                        Payment link expired
+                    {% else %}
+                        Payment pending
+                    {% endif %}
+                </h1>
+                <p class="lead">{{ message }}</p>
+                <p>Order number: {{ order.orderNumber }}</p>
+                <p>Amount: {{ order.price.totalPrice|currency(order.currency.isoCode) }}</p>
+                {% if status == 'failed' or status == 'expired' %}
+                    <a class="btn btn-primary mt-3" href="{{ path('dealer_payment_terms.payment_link', {'orderId': order.id}) }}">Try again</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+

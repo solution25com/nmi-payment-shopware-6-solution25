@@ -1,12 +1,25 @@
 {% sw_extends '@Storefront/storefront/page/account/sidebar.html.twig' %}
 {% block page_account_sidebar_menu_inner %}
     {{ parent() }}
-    
+
     {% block page_account_sidebar_link_nmi_saved_cards %}
         <a href="{{ path('frontend.account.nmi-saved-cards.page') }}"
            title="{{ 'account.nmiSavedCards'|trans|striptags }}"
            class="list-group-item list-group-item-action account-aside-item{% if activeRoute is same as('frontend.account.nmi-saved-cards.page') %} is-active{% endif %}">
-            {{ 'NMI.sidebar.saved-cards-title' | trans }}
+            Saved Cards
         </a>
     {% endblock %}
+
+    {% set dealerGroups = config('NMIPayment.config.dealerCustomerGroups') ?? [] %}
+    {% set hasDealerGroupsConfig = dealerGroups is not empty %}
+    {% set isDealer = context.customer and (not hasDealerGroupsConfig or context.customer.groupId in dealerGroups) %}
+
+    {% if isDealer %}
+        <a href="{{ path('frontend.account.invoices.page') }}"
+           title="Invoices"
+           class="list-group-item list-group-item-action account-aside-item{% if activeRoute is same as('frontend.account.invoices.page') %} is-active{% endif %}"
+           {% if activeRoute is same as('frontend.account.invoices.page') %} aria-current="page"{% endif %}>
+            Invoices
+        </a>
+    {% endif %}
 {% endblock %}

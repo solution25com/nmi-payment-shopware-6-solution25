@@ -96,9 +96,9 @@ class RefundEventSubscriber implements EventSubscriberInterface
                 }
             }
         } catch (\Exception $e) {
-            $this->logger->log('Refund processing failed due to: ', $e, [
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
+            $this->logger->error('Refund processing failed', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
             ]);
         }
     }

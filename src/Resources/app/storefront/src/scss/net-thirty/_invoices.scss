@@ -1,0 +1,443 @@
+// Net-Thirty account invoices page styles
+// Migrated from inline <style> in views/storefront/page/account/invoices.html.twig
+
+:root {
+    --invoice-primary:          #2563eb;
+    --invoice-primary-hover:    #1d4ed8;
+    --invoice-success:          #10b981;
+    --invoice-warning:          #f59e0b;
+    --invoice-danger:           #ef4444;
+    --invoice-gray-50:          #f9fafb;
+    --invoice-gray-100:         #f3f4f6;
+    --invoice-gray-200:         #e5e7eb;
+    --invoice-gray-300:         #d1d5db;
+    --invoice-gray-500:         #6b7280;
+    --invoice-gray-600:         #4b5563;
+    --invoice-gray-700:         #374151;
+    --invoice-gray-800:         #1f2937;
+    --invoice-gray-900:         #111827;
+    --invoice-shadow-sm:        0 1px 2px 0 rgba(0,0,0,.05);
+    --invoice-shadow:           0 1px 3px 0 rgba(0,0,0,.1), 0 1px 2px 0 rgba(0,0,0,.06);
+    --invoice-shadow-md:        0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+    --invoice-shadow-lg:        0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
+    --invoice-shadow-xl:        0 20px 25px -5px rgba(0,0,0,.1), 0 10px 10px -5px rgba(0,0,0,.04);
+    --invoice-radius:           12px;
+    --invoice-radius-sm:        8px;
+    --invoice-transition:       all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// ── Table container ────────────────────────────────────────────────────────────
+
+.account-invoices-table-container {
+    background: #fff;
+    border-radius: var(--invoice-radius);
+    box-shadow: var(--invoice-shadow-lg);
+    overflow: hidden;
+    margin-top: 2rem;
+    border: 1px solid var(--invoice-gray-200);
+    transition: var(--invoice-transition);
+
+    &:hover {
+        box-shadow: var(--invoice-shadow-xl);
+    }
+}
+
+// ── Table ──────────────────────────────────────────────────────────────────────
+
+.account-invoices-table {
+    margin-bottom: 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+
+    thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-bottom: none;
+
+        th {
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: #21409a;
+            text-transform: uppercase;
+            font-size: .75rem;
+            letter-spacing: 1px;
+            border: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+            &:first-child { border-top-left-radius: var(--invoice-radius); }
+            &:last-child  { border-top-right-radius: var(--invoice-radius); }
+        }
+    }
+
+    tbody {
+        tr {
+            transition: var(--invoice-transition);
+            border-bottom: 1px solid var(--invoice-gray-200);
+            background: #fff;
+            position: relative;
+
+            &:last-child { border-bottom: none; }
+
+            &:hover {
+                background: linear-gradient(90deg, #f8fafc 0%, #fff 100%);
+                transform: scale(1.001);
+                box-shadow: 0 4px 12px rgba(0,0,0,.08);
+                z-index: 1;
+
+                td { color: var(--invoice-gray-800); }
+            }
+
+            &.invoice-overdue {
+                background: linear-gradient(90deg, #fef2f2 0%, #fff 100%);
+                border-left: 4px solid var(--invoice-danger);
+
+                &:hover {
+                    background: linear-gradient(90deg, #fee2e2 0%, #fef2f2 100%);
+                    border-left-color: #dc2626;
+                }
+            }
+
+            &.invoice-paid {
+                background: linear-gradient(90deg, #f0fdf4 0%, #fff 100%);
+                opacity: .95;
+
+                &:hover {
+                    background: linear-gradient(90deg, #dcfce7 0%, #f0fdf4 100%);
+                    opacity: 1;
+                }
+            }
+
+            &.selected {
+                background: linear-gradient(90deg, #eff6ff 0%, #fff 100%) !important;
+                border-left: 4px solid var(--invoice-primary);
+
+                &:hover {
+                    background: linear-gradient(90deg, #dbeafe 0%, #eff6ff 100%) !important;
+                }
+            }
+        }
+
+        td {
+            padding: 1.5rem;
+            vertical-align: middle;
+            border: none;
+            font-size: .9375rem;
+            line-height: 1.5;
+        }
+    }
+}
+
+// ── Cell helpers ───────────────────────────────────────────────────────────────
+
+.invoice-order-number {
+    font-size: 1rem;
+    color: var(--invoice-gray-900);
+    font-weight: 600;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    letter-spacing: .025em;
+}
+
+.invoice-order-date,
+.invoice-due-date {
+    font-size: .9375rem;
+    color: var(--invoice-gray-600);
+    font-weight: 500;
+}
+
+.invoice-due-date.text-danger {
+    color: var(--invoice-danger) !important;
+    font-weight: 600;
+
+    strong {
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--invoice-danger);
+            border-radius: 2px;
+        }
+    }
+}
+
+.invoice-amount {
+    font-size: 1.125rem;
+    color: var(--invoice-gray-900);
+    font-weight: 700;
+
+    strong {
+        background: linear-gradient(135deg, var(--invoice-gray-800) 0%, var(--invoice-gray-600) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+}
+
+.invoice-status .badge {
+    font-size: .75rem;
+    padding: .5rem .875rem;
+    font-weight: 600;
+    letter-spacing: .025em;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    box-shadow: var(--invoice-shadow-sm);
+    transition: var(--invoice-transition);
+
+    &.bg-success {
+        background: linear-gradient(135deg, var(--invoice-success) 0%, #059669 100%) !important;
+        color: #fff;
+    }
+
+    &.bg-danger {
+        background: linear-gradient(135deg, var(--invoice-danger) 0%, #dc2626 100%) !important;
+        color: #fff;
+        animation: invoice-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    &.bg-warning {
+        background: linear-gradient(135deg, var(--invoice-warning) 0%, #d97706 100%) !important;
+        color: #fff;
+    }
+}
+
+@keyframes invoice-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .8; }
+}
+
+.invoice-action .btn {
+    padding: .625rem 1.25rem;
+    font-size: .875rem;
+    border-radius: var(--invoice-radius-sm);
+    transition: var(--invoice-transition);
+    font-weight: 600;
+    letter-spacing: .025em;
+    border: 2px solid var(--invoice-primary);
+    background: #fff;
+    color: var(--invoice-primary);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.3), transparent);
+        transition: left .5s;
+    }
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(37,99,235,.3);
+        background: var(--invoice-primary);
+        color: #fff;
+        border-color: var(--invoice-primary);
+
+        &::before { left: 100%; }
+    }
+
+    &:active { transform: translateY(0); }
+}
+
+// ── Filter bar ─────────────────────────────────────────────────────────────────
+
+.account-invoices-filter {
+    margin-bottom: 2rem;
+
+    .btn-group {
+        box-shadow: var(--invoice-shadow-md);
+        border-radius: var(--invoice-radius-sm);
+        overflow: hidden;
+        display: inline-flex;
+        background: #fff;
+        border: 1px solid var(--invoice-gray-200);
+    }
+
+    .btn {
+        padding: .75rem 1.75rem;
+        font-weight: 600;
+        transition: var(--invoice-transition);
+        border: none;
+        background: transparent;
+        color: var(--invoice-gray-600);
+        position: relative;
+        font-size: .9375rem;
+
+        &:not(:last-child) { border-right: 1px solid var(--invoice-gray-200); }
+
+        &.active {
+            background: linear-gradient(135deg, var(--invoice-primary) 0%, var(--invoice-primary-hover) 100%);
+            color: #fff;
+            box-shadow: var(--invoice-shadow);
+
+            &::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: rgba(255,255,255,.5);
+                border-radius: 3px 3px 0 0;
+            }
+        }
+
+        &:not(.active):hover {
+            background: var(--invoice-gray-50);
+            color: var(--invoice-gray-900);
+        }
+    }
+}
+
+// ── Welcome headline ───────────────────────────────────────────────────────────
+
+.account-welcome h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--invoice-gray-900);
+    margin-bottom: .5rem;
+    background: linear-gradient(135deg, var(--invoice-gray-900) 0%, var(--invoice-gray-600) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.account-welcome p {
+    color: var(--invoice-gray-600);
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+// ── Empty state ────────────────────────────────────────────────────────────────
+
+.account-invoices-empty .alert {
+    border-radius: var(--invoice-radius-sm);
+    border: 1px solid var(--invoice-gray-200);
+    box-shadow: var(--invoice-shadow-sm);
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #eff6ff 0%, #fff 100%);
+}
+
+// ── Bulk actions bar ───────────────────────────────────────────────────────────
+
+.account-invoices-selection-info { margin-bottom: 1.5rem; }
+
+.account-invoices-bulk-actions {
+    background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
+    border: 2px solid var(--invoice-primary);
+    border-radius: var(--invoice-radius-sm);
+    padding: 1.25rem 1.5rem;
+    box-shadow: var(--invoice-shadow-md);
+    position: sticky;
+    top: 20px;
+    z-index: 10;
+    animation: invoice-slide-down .3s ease-out;
+}
+
+@keyframes invoice-slide-down {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.selected-count-text,
+.selected-total-text {
+    font-size: .9375rem;
+    color: var(--invoice-gray-700);
+
+    strong {
+        color: var(--invoice-primary);
+        font-size: 1.125rem;
+    }
+}
+
+#paySelectedBtn {
+    padding: .75rem 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: var(--invoice-radius-sm);
+    box-shadow: var(--invoice-shadow-md);
+    transition: var(--invoice-transition);
+    background: linear-gradient(135deg, var(--invoice-primary) 0%, var(--invoice-primary-hover) 100%);
+    border: none;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--invoice-shadow-lg);
+    }
+
+    &:disabled {
+        opacity: .5;
+        cursor: not-allowed;
+        transform: none;
+    }
+}
+
+// ── Checkbox ───────────────────────────────────────────────────────────────────
+
+.invoice-checkbox-cell {
+    text-align: center;
+    padding: 1.5rem 1rem !important;
+}
+
+.invoice-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border: 2px solid var(--invoice-gray-300);
+    border-radius: 4px;
+    transition: var(--invoice-transition);
+
+    &:hover {
+        border-color: var(--invoice-primary);
+        transform: scale(1.1);
+    }
+
+    &:checked {
+        background-color: var(--invoice-primary);
+        border-color: var(--invoice-primary);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e");
+    }
+}
+
+// ── Responsive ─────────────────────────────────────────────────────────────────
+
+@include media-breakpoint-down(md) {
+    .account-invoices-table-container {
+        overflow-x: auto;
+        border-radius: var(--invoice-radius-sm);
+        margin-top: 1.5rem;
+    }
+
+    .account-invoices-table { min-width: 800px; }
+
+    .account-invoices-table thead th,
+    .account-invoices-table tbody td {
+        padding: 1rem 1.25rem;
+        font-size: .875rem;
+    }
+
+    .account-invoices-filter .btn-group {
+        width: 100%;
+        display: flex;
+    }
+
+    .account-invoices-filter .btn {
+        flex: 1;
+        padding: .625rem 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}

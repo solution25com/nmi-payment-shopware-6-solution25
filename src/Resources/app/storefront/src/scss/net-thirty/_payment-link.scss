@@ -1,0 +1,17 @@
+// Net-Thirty payment link page styles
+// Migrated from inline style attributes in views/storefront/page/payment-link-error.html.twig
+
+.payment-link-error-wrapper {
+    text-align: center;
+    padding: 50px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.payment-link-error-alert {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 5px;
+    margin: 20px 0;
+}

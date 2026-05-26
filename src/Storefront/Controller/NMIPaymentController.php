@@ -8,6 +8,8 @@ use NMIPayment\Service\NMIPaymentDataRequestService;
 use NMIPayment\Service\NMIACHPaymentDataRequestService;
 use NMIPayment\Service\NMIVaultedCustomerService;
 use NMIPayment\Service\VaultedCustomerService;
+use NMIPayment\Validations\PaymentValidation;
+use NMIPayment\Validations\VaultOwnershipGuard;
 use Shopware\Core\Checkout\Cart\Cart;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Storefront\Controller\StorefrontController;
@@ -16,7 +18,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
-use NMIPayment\Validations\PaymentValidation;
 
 #[Route(defaults: ['_routeScope' => ['storefront'], "_loginRequired" => true, "_loginRequiredAllowGuest" => true])]
 class NMIPaymentController extends StorefrontController
@@ -27,6 +28,7 @@ class NMIPaymentController extends StorefrontController
     private NMIVaultedCustomerService $nmiVaultedCustomerService;
     private NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService;
     private readonly LoggerInterface $logger;
+    private readonly VaultOwnershipGuard $vaultOwnershipGuard;
 
     public function __construct(
         PaymentValidation $validator,
@@ -34,7 +36,8 @@ class NMIPaymentController extends StorefrontController
         NMIPaymentDataRequestService $nmiPaymentDataRequestService,
         NMIVaultedCustomerService $nmiVaultedCustomerService,
         NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        VaultOwnershipGuard $vaultOwnershipGuard
     ) {
         $this->validator = $validator;
         $this->vaultedCustomerService = $vaultedCustomerService;
@@ -42,6 +45,7 @@ class NMIPaymentController extends StorefrontController
         $this->nmiVaultedCustomerService = $nmiVaultedCustomerService;
         $this->nmiACHPaymentDataRequestService = $nmiACHPaymentDataRequestService;
         $this->logger = $logger;
+        $this->vaultOwnershipGuard = $vaultOwnershipGuard;
     }
 
     #[Route(
@@ -109,6 +113,12 @@ class NMIPaymentController extends StorefrontController
         if (!empty($validationErrors)) {
             return $this->createErrorResponse('Invalid request data.', $validationErrors, Response::HTTP_BAD_REQUEST);
         }
+
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) ($data['customer_vault_id'] ?? ''), $context);
+        if ($ownershipError !== null) {
+            return $ownershipError;
+        }
+
         try {
             $paymentResponse = $this->nmiVaultedCustomerService->vaultedCapture($data, $cart, $context);
             return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
@@ -155,6 +165,11 @@ class NMIPaymentController extends StorefrontController
             return $this->createErrorResponse('Missing customer vault ID', [], Response::HTTP_BAD_REQUEST);
         }
 
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) $data['customer_vault_id'], $context);
+        if ($ownershipError !== null) {
+            return $ownershipError;
+        }
+
         try {
             $response = $this->nmiVaultedCustomerService->deleteVaultedCustomerData($data['customer_vault_id'], $context);
 
@@ -178,6 +193,11 @@ class NMIPaymentController extends StorefrontController
     public function addMultipleCards(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
+
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) ($data['vaulted_customer_id'] ?? ''), $context);
+        if ($ownershipError !== null) {
+            return $ownershipError;
+        }
 
         try {
             $paymentResponse = $this->nmiVaultedCustomerService->addMultipleCards($data, $context);

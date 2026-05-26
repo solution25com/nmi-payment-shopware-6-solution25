@@ -15,7 +15,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Shopware\Storefront\Controller\StorefrontController;
 use Symfony\Component\HttpFoundation\Request;
 
-#[Route(defaults: ['_routeScope' => ['storefront']])]
+#[Route(defaults: ['_routeScope' => ['storefront'], '_loginRequired' => true])]
 class NMISavedCardsController extends StorefrontController
 {
     private EntityRepository $vaultedCustomerRepository;
@@ -96,7 +96,11 @@ class NMISavedCardsController extends StorefrontController
             );
         }
 
-        $customerId = $context->getCustomer()->getId();
+        $customerId = $context->getCustomer()?->getId();
+        if ($customerId === null) {
+            return new JsonResponse('Authentication required.', Response::HTTP_FORBIDDEN);
+        }
+
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('vaultedCustomerId', $data['vaulted_customer_id']));
         $criteria->addFilter(new EqualsFilter('customerId', $customerId));
@@ -136,7 +140,11 @@ class NMISavedCardsController extends StorefrontController
             );
         }
 
-        $customerId = $context->getCustomer()->getId();
+        $customerId = $context->getCustomer()?->getId();
+        if ($customerId === null) {
+            return new JsonResponse('Authentication required.', Response::HTTP_FORBIDDEN);
+        }
+
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('vaultedCustomerId', $data['vaulted_customer_id']));
         $criteria->addFilter(new EqualsFilter('customerId', $customerId));

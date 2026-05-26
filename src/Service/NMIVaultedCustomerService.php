@@ -138,6 +138,78 @@ class NMIVaultedCustomerService
         ];
     }
 
+    public function saveNewCardToVault(string $token, array $cardData, SalesChannelContext $context): array
+    {
+        $securityKey = $this->getSecurityKey($context);
+        $billingId = Uuid::randomHex();
+        $customer = $context->getCustomer();
+        $customerId = $customer->getId();
+
+        $existingVaultId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId(
+            $context->getContext(),
+            $customerId
+        );
+
+        $postData = [
+            'security_key'  => $securityKey,
+            'billing_id'    => $billingId,
+            'payment_token' => $token,
+            'first_name'    => $cardData['first_name'] ?? $customer->getFirstName(),
+            'last_name'     => $cardData['last_name'] ?? $customer->getLastName(),
+        ];
+
+        if ($existingVaultId === null) {
+            $postData['customer_vault'] = 'add_customer';
+        } else {
+            $postData['customer_vault'] = 'add_billing';
+            $postData['customer_vault_id'] = $existingVaultId;
+        }
+
+        $this->nmiPaymentApiClient->initializeForSalesChannel($context->getSalesChannel()->getId());
+        $response = $this->nmiPaymentApiClient->createTransaction($postData);
+        $this->logger->info('[VAULT] saveNewCardToVault response: ' . json_encode($response));
+
+        if (($response['response'] ?? '') !== '1') {
+            return [
+                'success' => false,
+                'message' => 'Failed to save card to vault: ' . ($response['responsetext'] ?? 'Unknown error'),
+            ];
+        }
+
+        $vaultedCustomerId = $existingVaultId ?? ($response['customer_vault_id'] ?? null);
+
+        if (!$vaultedCustomerId) {
+            return ['success' => false, 'message' => 'No vault ID returned from NMI'];
+        }
+
+        $existingRecord = $this->vaultedCustomerService->getBillingIdByVaultedId(
+            $context->getContext(),
+            $vaultedCustomerId
+        );
+        $existingJson = $existingRecord ? $existingRecord->getBillingId() : null;
+        $billingArray = !empty($existingJson) ? (json_decode($existingJson, true) ?? []) : [];
+        if (!is_array($billingArray)) {
+            $billingArray = [];
+        }
+
+        $billingArray[] = [
+            'billingId'  => $billingId,
+            'cardType'   => $cardData['card_type'] ?? null,
+            'firstName'  => $cardData['first_name'] ?? $customer->getFirstName(),
+            'lastName'   => $cardData['last_name'] ?? $customer->getLastName(),
+            'lastDigits' => $cardData['ccnumber'] ?? null,
+            'ccexp'      => $cardData['ccexp'] ?? null,
+        ];
+
+        $this->vaultedCustomerService->store($context, $vaultedCustomerId, 'null', json_encode($billingArray));
+
+        return [
+            'success'           => true,
+            'customer_vault_id' => $vaultedCustomerId,
+            'billing_id'        => $billingId,
+        ];
+    }
+
     public function addMultipleCards(array $data, SalesChannelContext $context): array
     {
         $billingId = UUID::randomHex();

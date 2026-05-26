@@ -21,7 +21,7 @@
         'JCB': 'https://files.readme.io/e076aed-JCB.png',
         'MASTERCARD': 'https://files.readme.io/5b7b3de-Mastercard.png',
         'VISA': 'https://files.readme.io/9018c4f-Visa.png',
-        'MAESTRO': 'https://files.readme.io/79d7723-Maestro.png',
+        'MAESTRO': 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 50 32%27%3E%3Ccircle cx=%2718%27 cy=%2716%27 r=%2213%27 fill=%27%23EB001B%27/%3E%3Ccircle cx=%2732%27 cy=%2716%27 r=%2213%27 fill=%27%2300A2E5%27/%3E%3Cpath d=%27M25 5.2a13 13 0 0 1 0 21.6 13 13 0 0 1 0-21.6z%27 fill=%27%237673C0%27/%3E%3C/svg%3E',
         'UNIONPAY': 'https://files.readme.io/92c35c7-UnionPay.png',
         'ELECTRON': 'https://files.readme.io/def3490-Electron.png',
         'DANKORT': 'https://files.readme.io/ff5319d-Dankort.png',
@@ -97,5 +97,13 @@
     </div>
   </div>
 
+  {#
+      SCRIPT MIGRATED ─────────────────────────────────────────────────────────
+      CollectJS is now loaded lazily by NmiSavedCardsPlugin when the user opens
+      the add-card form. The plugin reads configs.publicKey from #plugin-configs
+      (data-plugin-configs attribute) which is already rendered above.
+      Original tag preserved below, commented out, for migration traceability.
+
   <script src="https://secure.nmi.com/token/Collect.js" data-tokenization-key="{{ configs.publicKey }}"></script>
+  #}
 {% endblock %}

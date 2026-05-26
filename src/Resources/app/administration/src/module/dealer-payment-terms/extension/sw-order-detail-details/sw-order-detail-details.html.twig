@@ -1,0 +1,104 @@
+{% block sw_order_detail_details_payment_method_select %}
+    {% parent %}
+
+    {% block sw_order_detail_details_net_30_payment_management %}
+    <div v-if="isNet30Payment && order" class="sw-order-detail-net30" style="margin-top: 30px; clear: both;">
+        <sw-card
+            :title="$tc('dealer-payment-terms.card.title')"
+            :isLoading="isLoadingNet30"
+        >
+            <template #grid>
+                <sw-container columns="repeat(auto-fit, minmax(250px, 1fr))" gap="0 30px">
+                    {% block sw_order_detail_details_net_30_info %}
+                    <div class="sw-order-detail-net30__info">
+                        <sw-description-list>
+                            <dt>{{ $tc('dealer-payment-terms.detail.paymentLink') }}</dt>
+                            <dd>
+                                <sw-external-link
+                                    v-if="net30OrderDetails && net30OrderDetails.paymentLink"
+                                    :href="net30OrderDetails.paymentLink"
+                                    target="_blank"
+                                >
+                                    {{ $tc('dealer-payment-terms.detail.viewLink') }}
+                                </sw-external-link>
+                                <span v-else>-</span>
+                            </dd>
+
+                            <dt>{{ $tc('dealer-payment-terms.detail.expiresAt') }}</dt>
+                            <dd>
+                                <span v-if="net30OrderDetails && net30OrderDetails.expiresAt">
+                                    {{ formatDate(net30OrderDetails.expiresAt) }}
+                                </span>
+                                <span v-else>-</span>
+                            </dd>
+
+                            <dt>{{ $tc('dealer-payment-terms.detail.alternateDueDate') }}</dt>
+                            <dd>
+                                <span v-if="net30OrderDetails && net30OrderDetails.alternateDueDate">
+                                    {{ formatDate(net30OrderDetails.alternateDueDate) }}
+                                </span>
+                                <span v-else>-</span>
+                            </dd>
+
+                            <dt>{{ $tc('dealer-payment-terms.detail.paymentStatus') }}</dt>
+                            <dd>
+                                <sw-badge v-if="net30OrderDetails && net30OrderDetails.paymentCompleted" variant="success">
+                                    {{ $tc('dealer-payment-terms.status.paid') }}
+                                </sw-badge>
+                                <sw-badge v-else-if="net30OrderDetails && net30OrderDetails.paymentFailed" variant="danger">
+                                    {{ $tc('dealer-payment-terms.status.failed') }}
+                                </sw-badge>
+                                <sw-badge v-else-if="net30OrderDetails && net30OrderDetails.paymentOverdue" variant="warning">
+                                    {{ $tc('dealer-payment-terms.status.overdue') }}
+                                </sw-badge>
+                                <sw-badge v-else variant="info">
+                                    {{ $tc('dealer-payment-terms.status.pending') }}
+                                </sw-badge>
+                            </dd>
+
+                            <dt>{{ $tc('dealer-payment-terms.detail.resendCount') }}</dt>
+                            <dd>{{ (net30OrderDetails && net30OrderDetails.resendCount) || 0 }}</dd>
+
+                            <template v-if="net30OrderDetails && net30OrderDetails.lastResentAt">
+                                <dt>{{ $tc('dealer-payment-terms.detail.lastResentAt') }}</dt>
+                                <dd>{{ formatDate(net30OrderDetails.lastResentAt) }}</dd>
+                            </template>
+                        </sw-description-list>
+                    </div>
+                    {% endblock %}
+
+                    {% block sw_order_detail_details_net_30_actions %}
+                    <div class="sw-order-detail-net30__actions">
+                        <sw-field
+                            v-model="alternateDueDate"
+                            type="date"
+                            :label="$tc('dealer-payment-terms.field.alternateDueDate')"
+                            :helpText="$tc('dealer-payment-terms.field.alternateDueDateHelp')"
+                        />
+
+                        <sw-button
+                            variant="primary"
+                            size="small"
+                            :disabled="isLoadingNet30"
+                            @click="setAlternateDueDate"
+                        >
+                            {{ $tc('dealer-payment-terms.button.setAlternateDate') }}
+                        </sw-button>
+
+                        <sw-button
+                            v-if="canResendLink"
+                            variant="primary"
+                            size="small"
+                            :disabled="isResendingLink || isLoadingNet30"
+                            @click="resendPaymentLink"
+                        >
+                            {{ $tc('dealer-payment-terms.button.resendLink') }}
+                        </sw-button>
+                    </div>
+                    {% endblock %}
+                </sw-container>
+            </template>
+        </sw-card>
+    </div>
+    {% endblock %}
+{% endblock %}

@@ -8,6 +8,7 @@ abstract class Endpoints
 {
     protected const TRANSACTION = 'TRANSACTION';
     protected const VAULTEDCUSTOMER = 'VAULTEDCUSTOMER';
+    protected const QUERY = 'QUERY';
 
     private static array $endpoints = [
         self::TRANSACTION => [
@@ -15,6 +16,10 @@ abstract class Endpoints
             'url' => '/api/transact.php',
         ],
         self::VAULTEDCUSTOMER => [
+            'method' => 'POST',
+            'url' => '/api/query.php',
+        ],
+        self::QUERY => [
             'method' => 'POST',
             'url' => '/api/query.php',
         ],
