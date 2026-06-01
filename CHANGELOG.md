@@ -16,17 +16,18 @@ All notable changes to this project will be documented in this file.
 - **Net-30 Admin Panel Integration**: Administrators can view and manage Net-30 orders directly from the Shopware admin order detail view.
 
 ### Security
-- **Vault IDOR Protection**: Added `VaultOwnershipGuard` ownership verification to all vault mutation routes (view vaulted customer, delete vaulted customer, add card). Prevents a logged-in customer from accessing or modifying another customer's saved payment methods.
-- **Transaction Verification (Credit Card)**: Browser-submitted `nmi_transaction_id` is now server-verified via `queryTransaction()` checking condition, amount, and order_id before any payment state transition.
-- **Transaction Verification (ACH)**: Applied the same `queryTransaction()` server-side verification to the ACH payment flow.
-- **Secure Webhook Logging**: Webhook events now log only `event_type` and `transaction_id` instead of the full provider payload. All other sensitive log points across `NMIWebhookService`, `NMIPaymentDataRequestService`, `OrderVoidNmiPayment`, and `RefundEventSubscriber` have been replaced with structured, redacted log entries.
-- **Login and ACL Enforcement**: Added `_loginRequired: true` to `NMISavedCardsController` and `AccountInvoicesController`. Added `system_config:read` ACL restriction to the admin test-connection API endpoint.
+
+- Strengthened access controls across saved payment method operations to ensure users can only manage their own data.
+- Improved server-side verification of payment transactions before processing state changes, covering both card and ACH flows.
+- Tightened webhook logging to emit only the minimum necessary identifiers; removed verbose payload capture across payment services.
+- Enforced authentication requirements on additional controllers and restricted sensitive admin endpoints to authorized roles only.
+
 
 ### Fixed
-- Removed a duplicate log entry in `NMIWebhookService` that was generating two identical entries per webhook event.
-- Fixed `AchEcheck::pay()` to pass `$salesChannelId` when calling `getConfig('authorizeAndCapture')`.
-- Fixed `RefundEventSubscriber` logger call signature to use `logger->error()` with structured context instead of broken `logger->log()`.
-
+- Resolved a duplicate log entry that was generating two identical entries per webhook event.
+- Fixed ACH payment configuration to correctly pass the sales channel context.
+- Fixed refund event logger to use structured error logging with context.
+  
 ---
 
 ## [1.1.3] - 2026/04/24
