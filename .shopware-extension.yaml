@@ -1,3 +1,9 @@
 validation:
   ignore:
     - message: 'Internal error: Class PartialDelivery'
+
+build:
+  zip:
+    assets:
+      enabled: true
+      enable_asset_caching: true
