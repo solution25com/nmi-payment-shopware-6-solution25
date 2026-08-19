@@ -10,7 +10,8 @@
         </a>
     {% endblock %}
 
-    {% set dealerGroups = config('NMIPayment.config.dealerCustomerGroups') ?? [] %}
+    {% set configuredDealerGroups = config('NMIPayment.config.dealerCustomerGroups') %}
+    {% set dealerGroups = configuredDealerGroups is iterable ? configuredDealerGroups : [] %}
     {% set hasDealerGroupsConfig = dealerGroups is not empty %}
     {% set isDealer = context.customer and (not hasDealerGroupsConfig or context.customer.groupId in dealerGroups) %}
 

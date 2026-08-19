@@ -65,7 +65,7 @@
                         </div>
 
                         <div class="position-relative d-inline-block w-100">
-                            <input type="submit" value="{{ 'NMI.credit-card.fields.pay'|trans }} {{ page.cart.price.totalPrice|currency }}"
+                            <input type="submit" value="{{ 'NMI.credit-card.fields.pay'|trans }} {% if page.order %}{{ page.order.price.totalPrice | currency }}{% else %}{{ page.cart.price.totalPrice | currency }}{% endif %}"
                                    class="btn btn-primary btn-block w-100 nmiConfirmFormSubmit nmiConfirmFormSubmit2"
                                     {% if page.extensions.nmi_payment.shippingError %} disabled {% endif %}>
 

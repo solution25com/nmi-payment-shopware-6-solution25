@@ -77,7 +77,9 @@ class AccountInvoicesController extends StorefrontController
         }
 
         $filteredCollection = new OrderCollection($invoiceOrders);
-        $storefrontResult = new EntitySearchResult(
+        /** @var class-string<EntitySearchResult<OrderCollection>> $resultClass */
+        $resultClass = $originalOrders::class;
+        $storefrontResult = new $resultClass(
             OrderEntity::class,
             count($invoiceOrders),
             $filteredCollection,

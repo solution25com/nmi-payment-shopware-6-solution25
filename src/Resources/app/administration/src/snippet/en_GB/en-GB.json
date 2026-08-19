@@ -1,4 +1,11 @@
 {
+  "sw-privileges": {
+    "permissions": {
+      "nmi_net30_approval": {
+        "label": "NET 30 approval"
+      }
+    }
+  },
   "NMI": {
     "apiTest": {
       "connection": {

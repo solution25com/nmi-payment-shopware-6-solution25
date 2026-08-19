@@ -6,6 +6,8 @@ namespace NMIPayment\Service;
 
 final class NetThirtyFields
 {
+    public const CUSTOMER_APPROVED = 'nmi_net30_approved';
+
     public const DEALER_PAYMENT_TYPE = 'dealer_payment_type';
     public const DEALER_PAYMENT_TYPE_NET30 = 'net_30';
 

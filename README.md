@@ -15,7 +15,7 @@ The NMI plugin allows Shopware stores to securely process payments using the NMI
 - **Refunds**: Easily process full or partial refunds for orders, providing a smooth customer service experience.
 - **Mixed Cards**: Supports customers purchasing both standard products and subscription items using a single card.
 - **Save Card Feature**: Enables customers to securely store their credit card information for faster future purchases.
-- **Net-30 Payment Method**: Integrated buy-now, pay-later functionality allowing eligible customers (by customer group) to receive an invoice and pay within 30 days using their saved cards.
+- **Net-30 Payment Method**: Integrated buy-now, pay-later functionality allowing approved customers to receive an invoice and pay within 30 days using their saved cards.
 - **NMI Saved Cards Management Page**: Dedicated storefront page where logged-in customers can add new cards or delete existing ones directly from their account.
 
 The plugin includes advanced configuration options, such as API key management for live and sandbox environments, webhook signing, and 3D Secure verification for added payment security.
@@ -82,9 +82,15 @@ The plugin includes advanced configuration options, such as API key management f
 3. **Net-30 Settings**
 
    Configure Net-30 payment behaviour:
-- **Net-30 Customer Groups**: Select the customer groups that should have access to the Net-30 payment method. Only customers belonging to a selected group will see Net-30 at checkout.
+- **Net-30 Customer Groups**: Optional extra restriction for approved Net-30 customers. Leave empty to allow any approved customer to see Net-30 at checkout.
 - **Dealer Customer Groups**: Select the dealer customer groups for invoice generation and Net-30 order processing.
 - **Skip Sent Filter for Net-30**: When enabled, invoice emails are re-sent even if they were previously flagged as sent (useful for testing or resending invoices).
+
+4. **Net-30 Customer Approval**
+
+- Grant the **NET 30 approval** permission to trusted admin roles under **Settings → System → Users & Permissions → Roles**.
+- Open a customer in the Shopware Administration and enable **NET 30 Approval → Approved for NET 30**.
+- Only approved, logged-in customers can see and use Net-30 at checkout.
 
 <img width="2936" height="1464" alt="image" src="https://github.com/user-attachments/assets/f20949f9-a31d-479d-acac-2de01bb6eea0" />
 
@@ -239,19 +245,20 @@ _Only registered users can save a card. Guest users do not have the option to sa
 
 #### 7. Net-30 Payment Method
 
-Net-30 allows eligible customers to place an order without paying immediately. An invoice is generated and the customer receives a payment link via email. They can pay the outstanding invoice within 30 days using any of their saved cards.
+Net-30 allows approved customers to place an order without paying immediately. An invoice is generated and the customer receives a payment link via email. They can pay the outstanding invoice within 30 days using any of their saved cards.
 
 **How It Works:**
-- At checkout, eligible customers see **NMI Net-30** as a payment option.
+- At checkout, approved customers see **NMI Net-30** as a payment option.
 - After placing the order, a payment link is emailed to the customer with an expiration date.
 - The customer can pay the invoice from their account's **Invoices** page using any of their saved cards.
 - Expired Net-30 payments are automatically detected and handled by a background scheduled task.
 
 <img width="2518" height="1180" alt="image" src="https://github.com/user-attachments/assets/98b327b3-fdca-4e18-936a-ddd32dffb7fa" />
 
-**Customer Group Access:**
-- Access to the Net-30 payment method is controlled by customer group. Only customers assigned to a configured group will see this option at checkout.
-- Configure eligible groups under **Settings → Plugins → NMI → Net-30 Settings → Net-30 Customer Groups**.
+**Customer Approval Access:**
+- Access to the Net-30 payment method is controlled by customer approval in the Shopware Administration.
+- Only admins with the **NET 30 approval** permission can approve or revoke customer access.
+- Configure customer groups under **Settings → Plugins → NMI → Net-30 Settings → Net-30 Customer Groups** only when approved customers should also be limited to selected groups.
 
 **Paying a Net-30 Invoice (Single or Bulk):**
 1. Log in and navigate to **Account → Invoices**.
@@ -261,6 +268,7 @@ Net-30 allows eligible customers to place an order without paying immediately. A
 
 **Admin Management:**
 - Administrators can view Net-30 orders and their payment status directly in the order detail view in the Shopware Admin panel.
+- Authorized administrators can approve customers for Net-30 from the customer detail page.
 
 #### 8. NMI Saved Cards Management Page
 
@@ -407,8 +415,10 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 #### 7. Test in Sandbox Mode
 - Use **Sandbox API Keys** to test all payment methods before going live.
 
-#### 8. Configure Net-30 Customer Groups
-- Assign the correct customer groups to Net-30 in the plugin settings so only eligible customers see this payment option at checkout.
+#### 8. Configure Net-30 Customer Approval
+- Grant the **NET 30 approval** permission only to administrators who may approve customer accounts.
+- Approve customers from the customer detail page before they can see Net-30 at checkout.
+- Optionally configure **Net-30 Customer Groups** as an additional restriction for approved customers.
 
 #### 9. Stay Updated
 - Keep the plugin updated to ensure compatibility and security.
@@ -443,7 +453,8 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 - Make sure the system correctly differentiates between one-time and subscription payments.
 
 #### Net-30 Not Appearing at Checkout
-- Verify that the customer’s account belongs to a customer group configured under **Net-30 Customer Groups** in the plugin settings.
+- Verify that the customer is logged in and has **Approved for NET 30** enabled in the customer detail page.
+- If **Net-30 Customer Groups** are configured, verify that the approved customer also belongs to one of those groups.
 - Ensure the Net-30 payment method is activated in **Settings → Payment Methods**.
 - Clear the Shopware cache after any configuration changes.
 
@@ -482,16 +493,14 @@ Sends a query request to the NMI gateway to retrieve transaction details. Useful
 - Check your API credentials, ensure the plugin is active, and verify payment statuses in the **Admin Panel**. Clear the cache if settings don’t save.
 
 #### 10. **What is the Net-30 payment method?**
-- Net-30 lets eligible customers place an order without paying immediately. They receive a payment link by email and can pay the invoice within 30 days using any of their saved cards from the Invoices page in their account.
+- Net-30 lets approved customers place an order without paying immediately. They receive a payment link by email and can pay the invoice within 30 days using any of their saved cards from the Invoices page in their account.
 
 #### 11. **How do I restrict Net-30 to specific customers?**
 
-- Go to **Settings → Plugins → NMI → Net-30 Settings** and select the customer groups that should have access to Net-30 at checkout.
+- Grant the **NET 30 approval** permission only to trusted administrators, then approve individual customers from the customer detail page. Use **Net-30 Customer Groups** only as an optional extra restriction.
 
 #### 12. **Can customers manage their saved cards without going through checkout?**
 - Yes. Logged-in customers can add or delete saved cards at any time from **Account → NMI Saved Cards** in the storefront.
 
 ## Wiki Documentation
 Read more about the plugin configuration on our [Wiki](https://github.com/solution25com/nmi-payment-shopware-6-solution25/wiki).
-
-

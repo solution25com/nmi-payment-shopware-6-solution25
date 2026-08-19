@@ -1,0 +1,11 @@
+{
+    "dealer-payment-terms": {
+        "customerApproval": {
+            "cardTitle": "NET 30 Freigabe",
+            "approvedLabel": "Für NET 30 freigegeben",
+            "approvedHelpText": "Freigegebene Kunden können NET 30 im Checkout sehen und verwenden.",
+            "saveSuccess": "NET 30 Freigabe wurde aktualisiert.",
+            "saveError": "NET 30 Freigabe konnte nicht aktualisiert werden."
+        }
+    }
+}

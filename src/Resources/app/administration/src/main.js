@@ -1,3 +1,4 @@
+import './acl/net30-approval.acl';
 import './component/nmi-api-test';
 import './module/dealer-payment-terms';
 import './init/api-service.init';

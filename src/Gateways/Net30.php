@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NMIPayment\Gateways;
 
 use NMIPayment\Installer\OrderStateInstaller;
+use NMIPayment\Service\NetThirtyCustomerEligibilityService;
 use NMIPayment\Service\NetThirtyFields;
 use NMIPayment\Service\NetThirtyOrderLifecycleService;
 use NMIPayment\Service\NetThirtyPaymentOrchestrator;
@@ -36,6 +37,7 @@ class Net30 extends AbstractPaymentHandler
         private readonly NetThirtyPaymentLinkService $paymentLinkService,
         private readonly NetThirtyOrderLifecycleService $orderLifecycleService,
         private readonly NetThirtyPaymentOrchestrator $paymentOrchestrator,
+        private readonly NetThirtyCustomerEligibilityService $customerEligibilityService,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -79,6 +81,24 @@ class Net30 extends AbstractPaymentHandler
                 'order_transaction_id' => $transaction->getOrderTransactionId(),
             ]);
             throw PaymentException::invalidOrder('Order or order ID not found!');
+        }
+
+        $customerId = $order->getOrderCustomer()?->getCustomerId();
+        if (
+            $customerId === null
+            || !$this->customerEligibilityService->isCustomerIdEligible($customerId, $order->getSalesChannelId(), $context)
+        ) {
+            $this->logger->warning('[NET30] Unauthorized NET30 checkout attempt blocked', [
+                'order_id' => $orderId,
+                'order_number' => $order->getOrderNumber(),
+                'customer_id' => $customerId,
+                'sales_channel_id' => $order->getSalesChannelId(),
+            ]);
+
+            throw PaymentException::syncProcessInterrupted(
+                $transaction->getOrderTransactionId(),
+                'NET 30 is only available for approved customer accounts.'
+            );
         }
 
         try {

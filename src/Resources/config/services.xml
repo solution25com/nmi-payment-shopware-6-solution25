@@ -82,6 +82,7 @@
             <argument type="service" id="NMIPayment\Service\NetThirtyPaymentLinkService"/>
             <argument type="service" id="NMIPayment\Service\NetThirtyOrderLifecycleService"/>
             <argument type="service" id="NMIPayment\Service\NetThirtyPaymentOrchestrator"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyCustomerEligibilityService"/>
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method"/>
         </service>
@@ -104,7 +105,7 @@
         <service id="NMIPayment\EventSubscriber\CheckoutConfirmEventSubscriber">
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
-            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
+            <argument type="service" id="NMIPayment\Service\NetThirtyCustomerEligibilityService"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -163,6 +164,11 @@
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="kernel.event_subscriber"/>
         </service>
+
+        <service id="NMIPayment\EventSubscriber\NetThirty\NetThirtyCustomerApprovalWriteSubscriber">
+            <argument type="service" id="customer.repository"/>
+            <tag name="kernel.event_subscriber"/>
+        </service>
         <!--        End Event Subscribers-->
 
         <!--        Validations-->
@@ -180,6 +186,11 @@
         <!-- services -->
 
         <service id="NMIPayment\Service\NetThirtyFields"/>
+
+        <service id="NMIPayment\Service\NetThirtyCustomerEligibilityService">
+            <argument type="service" id="NMIPayment\Service\DealerConfigService"/>
+            <argument type="service" id="customer.repository"/>
+        </service>
 
         <service id="NMIPayment\Service\NetThirtyOrderLifecycleService">
             <argument type="service" id="order.repository"/>
@@ -276,6 +287,14 @@
             <argument type="service" id="NMIPayment\Service\NetThirtyPaymentLinkService"/>
             <argument type="service" id="NMIPayment\Service\NetThirtyEmailService"/>
             <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\Controller\Admin\NetThirtyCustomerApprovalController" public="true">
+            <argument type="service" id="customer.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
         </service>
 
         <!-- Net30 Scheduled Task -->

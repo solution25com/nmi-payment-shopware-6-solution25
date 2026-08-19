@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/page/account/order/index.html.twig' %}
+
+{% block page_checkout_confirm_form_submit %}
+    {% if page.extensions.nmi_payment %}
+        <input type="hidden" id="nmiPaymentData" name="nmiPaymentData" value="">
+        <input type="hidden" id="nmi-transaction-id" name="nmi_transaction_id" value="">
+        <input type="hidden" id="nmi-is-subscription" name="nmi_is_subscription" value="">
+        <input type="hidden" id="nmi-selected-billing-id" name="nmi_selected_billing_id" value="">
+    {% endif %}
+
+    {% if page.extensions.nmi_payment and (page.extensions.nmi_payment.gateway === 'creditCard' or page.extensions.nmi_payment.gateway === 'achEcheck') %}
+        {% sw_include page.extensions.nmi_payment.template %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

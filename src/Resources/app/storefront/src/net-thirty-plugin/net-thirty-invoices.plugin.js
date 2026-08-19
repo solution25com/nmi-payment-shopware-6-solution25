@@ -98,11 +98,23 @@ export default class NetThirtyInvoicesPlugin extends window.PluginBaseClass {
         this._updateBulkActions();
     }
 
+    _displayError(message) {
+        const errorDiv = this.el.querySelector('#invoices-error-message');
+        if (!errorDiv) {
+            return;
+        }
+
+        const errorAlert = errorDiv.querySelector('.error-alert');
+        if (errorAlert) errorAlert.textContent = message;
+        errorDiv.classList.remove('d-none');
+        errorDiv.classList.add('d-block');
+    }
+
     _paySelectedOrders() {
         const checkedBoxes = this.el.querySelectorAll('.order-checkbox:checked');
 
         if (checkedBoxes.length === 0) {
-            alert('Please select at least one order to pay.');
+            this._displayError('Please select at least one order to pay.');
             return;
         }
 
@@ -119,7 +131,7 @@ export default class NetThirtyInvoicesPlugin extends window.PluginBaseClass {
         });
 
         if (invalidOrders.length > 0) {
-            alert(
+            this._displayError(
                 'The following orders cannot be paid as they are already paid: '
                 + invalidOrders.join(', ')
                 + '\n\nPlease unselect these orders and try again.'
@@ -128,7 +140,7 @@ export default class NetThirtyInvoicesPlugin extends window.PluginBaseClass {
         }
 
         if (orderIds.length === 0) {
-            alert('No valid unpaid orders selected. Please select unpaid orders only.');
+            this._displayError('No valid unpaid orders selected. Please select unpaid orders only.');
             return;
         }
 

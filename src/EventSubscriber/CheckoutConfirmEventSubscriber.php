@@ -8,12 +8,13 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use NMIPayment\Gateways\CreditCard;
 use NMIPayment\Gateways\AchEcheck;
 use NMIPayment\Gateways\Net30;
-use NMIPayment\Service\DealerConfigService;
+use NMIPayment\Service\NetThirtyCustomerEligibilityService;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\VaultedCustomerService;
 use NMIPayment\Storefront\Struct\CheckoutTemplateCustomData;
 use Shopware\Core\Checkout\Cart\Address\Error\ShippingAddressBlockedError;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
+use Shopware\Storefront\Page\Account\Order\AccountEditOrderPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
@@ -23,16 +24,16 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
 
     private NMIConfigService $configService;
 
-    private DealerConfigService $dealerConfigService;
+    private NetThirtyCustomerEligibilityService $netThirtyEligibilityService;
 
     public function __construct(
         VaultedCustomerService $vaultedCustomerService,
         NMIConfigService $configService,
-        DealerConfigService $dealerConfigService
+        NetThirtyCustomerEligibilityService $netThirtyEligibilityService
     ) {
         $this->vaultedCustomerService = $vaultedCustomerService;
         $this->configService = $configService;
-        $this->dealerConfigService = $dealerConfigService;
+        $this->netThirtyEligibilityService = $netThirtyEligibilityService;
     }
 
   /**
@@ -41,7 +42,8 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-        CheckoutConfirmPageLoadedEvent::class => 'addPaymentMethodSpecificFormFields',
+            CheckoutConfirmPageLoadedEvent::class => 'addPaymentMethodSpecificFormFields',
+            AccountEditOrderPageLoadedEvent::class => 'addPaymentMethodSpecificToAccountOrder',
         ];
     }
 
@@ -79,19 +81,42 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         $this->filterNet30ByCustomerGroup($event);
     }
 
-    private function filterNet30ByCustomerGroup(CheckoutConfirmPageLoadedEvent $event): void
+    public function addPaymentMethodSpecificToAccountOrder(AccountEditOrderPageLoadedEvent $event): void
+    {
+        $context = $event->getContext();
+        $pageObject = $event->getPage();
+        $salesChannelContext = $event->getSalesChannelContext();
+        $selectedPaymentGateway = $salesChannelContext->getPaymentMethod();
+        $customer = $salesChannelContext->getCustomer();
+
+        if ($customer === null) {
+            return;
+        }
+
+        $templateVariables = new CheckoutTemplateCustomData();
+        $flow = (string)$this->configService->getConfig('flow', $salesChannelContext->getSalesChannelId());
+        $threeDS = $this->configService->getConfig('threeDS', $salesChannelContext->getSalesChannelId());
+        $amount = $pageObject->getOrder()->getPrice()?->getTotalPrice() ?? $pageObject->getOrder()->getAmountTotal();
+        $isGuest = $customer->getGuest();
+
+        if ($selectedPaymentGateway->getHandlerIdentifier() === CreditCard::class) {
+            $this->addPaymentMethodExtension($templateVariables, $pageObject, 'creditCard', $flow, $amount, $threeDS, $isGuest, false, $context, $salesChannelContext);
+        }
+
+        if ($selectedPaymentGateway->getHandlerIdentifier() === AchEcheck::class) {
+            $this->addPaymentMethodExtension($templateVariables, $pageObject, 'achEcheck', $flow, $amount, $threeDS, $isGuest, false, $context, $salesChannelContext);
+        }
+
+        $this->filterNet30ByCustomerGroup($event);
+    }
+
+    private function filterNet30ByCustomerGroup(CheckoutConfirmPageLoadedEvent|AccountEditOrderPageLoadedEvent $event): void
     {
         $salesChannelContext = $event->getSalesChannelContext();
         $salesChannelId = $salesChannelContext->getSalesChannelId();
         $customer = $salesChannelContext->getCustomer();
 
-        $customerGroupId = $customer?->getGroupId();
-
-        $allowed = $customerGroupId !== null
-            ? $this->dealerConfigService->isCustomerGroupAllowedForNet30($customerGroupId, $salesChannelId)
-            : empty($this->dealerConfigService->getNet30CustomerGroups($salesChannelId));
-
-        if ($allowed) {
+        if ($customer !== null && $this->netThirtyEligibilityService->isCustomerEligible($customer, $salesChannelId)) {
             return;
         }
 

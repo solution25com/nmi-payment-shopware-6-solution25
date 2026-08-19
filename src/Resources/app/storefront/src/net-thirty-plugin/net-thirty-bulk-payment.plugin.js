@@ -220,7 +220,7 @@ export default class NetThirtyBulkPaymentPlugin extends window.PluginBaseClass {
 
         const selectedMethod = this.el.querySelector('input[name="paymentMethod"]:checked');
         if (!selectedMethod) {
-            alert('Please select a saved credit card to proceed with payment.');
+            this._displayError('Please select a saved credit card to proceed with payment.');
             return;
         }
 
@@ -228,7 +228,7 @@ export default class NetThirtyBulkPaymentPlugin extends window.PluginBaseClass {
         const billingId = selectedMethod.getAttribute('data-billing-id');
 
         if (!vaultId || !billingId) {
-            alert('Invalid payment method selected. Please select a valid saved card.');
+            this._displayError('Invalid payment method selected. Please select a valid saved card.');
             return;
         }
 
@@ -485,29 +485,33 @@ export default class NetThirtyBulkPaymentPlugin extends window.PluginBaseClass {
 
     _displayACHError(message) {
         const errorDiv = this.el.querySelector('#ach-error-message');
-        if (errorDiv) {
-            const errorAlert = errorDiv.querySelector('.error-alert');
-            if (errorAlert) errorAlert.textContent = message;
-            errorDiv.classList.remove('d-none');
-            errorDiv.classList.add('d-block');
-        } else {
-            alert(message);
+        if (!errorDiv) {
+            return;
         }
+
+        const errorAlert = errorDiv.querySelector('.error-alert');
+        if (errorAlert) errorAlert.textContent = message;
+        errorDiv.classList.remove('d-none');
+        errorDiv.classList.add('d-block');
+    }
+
+    _displayError(message) {
+        this._displayACHError(message);
     }
 
     _processCreditCardPayment(paymentData) {
         if (!this._enableCreditCardPayment) {
-            alert('Credit card payment is not available. Please use ACH/eCheck payment.');
+            this._displayError('Credit card payment is not available. Please use ACH/eCheck payment.');
             return;
         }
 
         if (!paymentData?.customer_vault_id || !paymentData?.billing_id) {
-            alert('Invalid payment data. Please select a valid saved card.');
+            this._displayError('Invalid payment data. Please select a valid saved card.');
             return;
         }
 
         if (!this._orderIds || this._orderIds.length === 0) {
-            alert('No orders selected. Please try again.');
+            this._displayError('No orders selected. Please try again.');
             return;
         }
 
@@ -535,7 +539,7 @@ export default class NetThirtyBulkPaymentPlugin extends window.PluginBaseClass {
                     window.location.href = data.redirectUrl || this._urlInvoices;
                 } else {
                     const msg = data.message || 'Payment failed. Please try again.';
-                    alert(msg);
+                    this._displayError(msg);
                     if (data.redirectUrl) {
                         setTimeout(() => { window.location.href = data.redirectUrl; }, 2000);
                     }
@@ -545,7 +549,7 @@ export default class NetThirtyBulkPaymentPlugin extends window.PluginBaseClass {
                 console.error('Credit card payment error:', err);
                 if (this._loaderWrapper) this._loaderWrapper.style.display = 'none';
                 if (this._payButton) this._payButton.disabled = false;
-                alert('An error occurred while processing your payment: ' + (err.message || 'Unknown error') + '. Please try again or contact support if the problem persists.');
+                this._displayError('An error occurred while processing your payment: ' + (err.message || 'Unknown error') + '. Please try again or contact support if the problem persists.');
             });
     }
 }

@@ -1,4 +1,5 @@
 import './extension/sw-order-detail-details';
+import './extension/sw-customer-detail-base';
 
 const { Module } = Shopware;
 

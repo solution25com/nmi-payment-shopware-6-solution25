@@ -1,0 +1,36 @@
+{% block sw_customer_detail_base_default_addresses_card %}
+    {% parent %}
+
+    {% block sw_customer_detail_base_net30_approval_card %}
+    <mt-card
+        v-if="customer"
+        position-identifier="sw-customer-detail-base-net30-approval"
+        :title="$tc('dealer-payment-terms.customerApproval.cardTitle')"
+        :is-loading="customer.isLoading || isSavingNet30Approval"
+    >
+        <mt-switch
+            :model-value="net30Approved"
+            :label="$tc('dealer-payment-terms.customerApproval.approvedLabel')"
+            :help-text="$tc('dealer-payment-terms.customerApproval.approvedHelpText')"
+            :disabled="!canEditNet30Approval || isSavingNet30Approval"
+            bordered
+            @update:model-value="onNet30ApprovalChange"
+        />
+    </mt-card>
+    {% endblock %}
+{% endblock %}
+
+{% block sw_customer_detail_custom_field_sets %}
+<mt-card
+    v-if="!!visibleCustomerCustomFieldSets && visibleCustomerCustomFieldSets.length > 0"
+    position-identifier="sw-customer-detail-base-custom-field-sets"
+    :title="$t('sw-settings-custom-field.general.mainMenuItemGeneral')"
+    :is-loading="customer.isLoading"
+>
+    <sw-custom-field-set-renderer
+        :entity="customer"
+        :disabled="!customerEditMode"
+        :sets="visibleCustomerCustomFieldSets"
+    />
+</mt-card>
+{% endblock %}
