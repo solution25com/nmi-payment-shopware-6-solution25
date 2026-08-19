@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-08-19
+
+### Fixed
+- Customers can now complete payment from the account order page using NMI Credit Card or ACH/eCheck.
+- Net-30 is now hidden from unapproved customers when they retry or edit payment from their account order page.
+
+### Added
+- Added approved-customer access control for the Net-30 payment method.
+- Added a customer-detail administration toggle for approving customers for Net-30.
+- Added a dedicated administration permission so only authorized administrators can manage Net-30 approvals.
+
+### Changed
+- Net-30 is now shown at checkout only for approved customer accounts.
+
+
 ## [1.1.5] - 2026-05-26
 
 ### Added
