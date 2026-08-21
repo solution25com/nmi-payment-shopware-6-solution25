@@ -59,8 +59,22 @@ class NmiTransactionService
         ]], $context);
     }
 
-    public function addTransaction($orderId, $paymentMethodName, $transactionId, $subscriptionTransactionId, $isSubscription, $status, $selectedBillingId, $context): void
+    public function addTransaction(
+        $orderId,
+        $paymentMethodName,
+        $transactionId,
+        $subscriptionTransactionId,
+        $isSubscription,
+        $status,
+        $selectedBillingId,
+        $context,
+        ?float $authAmount = null
+    ): void
     {
+        if (trim((string) $transactionId) === '') {
+            throw new \InvalidArgumentException('NMI transaction ID must not be empty.');
+        }
+
         $tableNmiId = Uuid::randomHex();
         $this->nmiTransactionRepository->upsert([
         [
@@ -72,6 +86,7 @@ class NmiTransactionService
         'isSubscription' => $isSubscription,
         'status' => $status,
         'selectedBillingId' => $selectedBillingId,
+        'authAmount' => $authAmount,
         'createdAt' => (new \DateTime())->format('Y-m-d H:i:s')
         ]
         ], $context);

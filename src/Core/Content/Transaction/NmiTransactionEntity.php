@@ -11,13 +11,14 @@ class NmiTransactionEntity extends Entity
 {
     use EntityIdTrait;
 
-    protected string $orderId;
-    protected string $paymentMethodName;
-    protected string $transactionId;
-    protected string $status;
-    protected bool $isSubscription;
-    protected string $subscriptionTransactionId;
-    protected string $selectedBillingId;
+    protected string $orderId = '';
+    protected string $paymentMethodName = '';
+    protected string $transactionId = '';
+    protected string $status = '';
+    protected bool $isSubscription = false;
+    protected string $subscriptionTransactionId = '';
+    protected string $selectedBillingId = '';
+    protected ?float $authAmount = null;
 
     public function getOrderId(): string
     {
@@ -26,7 +27,7 @@ class NmiTransactionEntity extends Entity
 
     public function setOrderId(?string $orderId): void
     {
-        $this->orderId = $orderId;
+        $this->orderId = $orderId ?? '';
     }
 
     public function getPaymentMethodName(): string
@@ -86,5 +87,15 @@ class NmiTransactionEntity extends Entity
     public function setSelectedBillingId(string $selectedBillingId): void
     {
         $this->selectedBillingId = $selectedBillingId;
+    }
+
+    public function getAuthAmount(): ?float
+    {
+        return $this->authAmount;
+    }
+
+    public function setAuthAmount(?float $authAmount): void
+    {
+        $this->authAmount = $authAmount;
     }
 }

@@ -192,4 +192,30 @@
         </input-field>
     </card>
 
+    <card>
+        <title>Card velocity guard</title>
+        <title lang="de-DE">Kartengeschwindigkeitskontrolle</title>
+
+        <input-field type="bool">
+            <name>cardVelocityEnabled</name>
+            <label>Enable card velocity guard</label>
+            <label lang="de-DE">Kartengeschwindigkeitskontrolle aktivieren</label>
+            <defaultValue>true</defaultValue>
+        </input-field>
+
+        <input-field type="int">
+            <name>cardVelocityMaxDistinctCards</name>
+            <label>Maximum distinct cards</label>
+            <label lang="de-DE">Maximale Anzahl verschiedener Karten</label>
+            <defaultValue>3</defaultValue>
+        </input-field>
+
+        <input-field type="int">
+            <name>cardVelocityWindowHours</name>
+            <label>Rolling window in hours</label>
+            <label lang="de-DE">Zeitfenster in Stunden</label>
+            <defaultValue>24</defaultValue>
+        </input-field>
+    </card>
+
 </config>

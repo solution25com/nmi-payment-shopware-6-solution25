@@ -8,6 +8,7 @@ use NMIPayment\Service\NMIPaymentDataRequestService;
 use NMIPayment\Service\NMIACHPaymentDataRequestService;
 use NMIPayment\Service\NMIVaultedCustomerService;
 use NMIPayment\Service\VaultedCustomerService;
+use NMIPayment\Service\CardVelocityService;
 use NMIPayment\Validations\PaymentValidation;
 use NMIPayment\Validations\VaultOwnershipGuard;
 use Shopware\Core\Checkout\Cart\Cart;
@@ -29,6 +30,7 @@ class NMIPaymentController extends StorefrontController
     private NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService;
     private readonly LoggerInterface $logger;
     private readonly VaultOwnershipGuard $vaultOwnershipGuard;
+    private readonly CardVelocityService $cardVelocityService;
 
     public function __construct(
         PaymentValidation $validator,
@@ -37,7 +39,8 @@ class NMIPaymentController extends StorefrontController
         NMIVaultedCustomerService $nmiVaultedCustomerService,
         NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService,
         LoggerInterface $logger,
-        VaultOwnershipGuard $vaultOwnershipGuard
+        VaultOwnershipGuard $vaultOwnershipGuard,
+        CardVelocityService $cardVelocityService
     ) {
         $this->validator = $validator;
         $this->vaultedCustomerService = $vaultedCustomerService;
@@ -46,6 +49,7 @@ class NMIPaymentController extends StorefrontController
         $this->nmiACHPaymentDataRequestService = $nmiACHPaymentDataRequestService;
         $this->logger = $logger;
         $this->vaultOwnershipGuard = $vaultOwnershipGuard;
+        $this->cardVelocityService = $cardVelocityService;
     }
 
     #[Route(
@@ -60,6 +64,11 @@ class NMIPaymentController extends StorefrontController
 
         if (!empty($validationErrors)) {
             return $this->createErrorResponse('Invalid request data.', $validationErrors, Response::HTTP_BAD_REQUEST);
+        }
+
+        $velocityDenial = $this->denyIfTooManyDistinctCards($data, $context);
+        if ($velocityDenial !== null) {
+            return $velocityDenial;
         }
 
         try {
@@ -263,5 +272,57 @@ class NMIPaymentController extends StorefrontController
             ],
             $statusCode
         );
+    }
+
+    private function denyIfTooManyDistinctCards(array $data, SalesChannelContext $context): ?JsonResponse
+    {
+        $customer = $context->getCustomer();
+        if ($customer === null) {
+            return null;
+        }
+
+        try {
+            if (!$this->cardVelocityService->isEnabled($context->getSalesChannelId())) {
+                return null;
+            }
+
+            $lastFour = $this->cardLastFour($data['ccnumber'] ?? null);
+            $expiry = preg_replace('/[^0-9]/', '', (string) ($data['ccexp'] ?? ''));
+            if ($lastFour === '' || $expiry === '') {
+                return null;
+            }
+
+            $allowed = $this->cardVelocityService->registerAttempt(
+                $customer->getId(),
+                $context->getSalesChannelId(),
+                $lastFour . '|' . $expiry,
+                $context->getContext()
+            );
+        } catch (\Throwable $exception) {
+            $this->logger->error('[card-velocity] guard failure, failing open', [
+                'error' => $exception->getMessage(),
+                'customerId' => $customer->getId(),
+                'salesChannelId' => $context->getSalesChannelId(),
+            ]);
+
+            return null;
+        }
+
+        if ($allowed) {
+            return null;
+        }
+
+        return $this->createErrorResponse(
+            'We are unable to process your payment right now. Please contact customer service.',
+            [],
+            Response::HTTP_BAD_REQUEST
+        );
+    }
+
+    private function cardLastFour(?string $cardNumber): string
+    {
+        $normalized = preg_replace('/[^A-Za-z0-9]/', '', (string) $cardNumber);
+
+        return $normalized ? substr($normalized, -4) : '';
     }
 }

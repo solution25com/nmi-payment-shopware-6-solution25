@@ -20,18 +20,30 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
   };
 
   _configurationError() {
-    const paymentMethodId = document.getElementById(this.options.parentCreditCardWrapperId).getAttribute('data-payment-method-id')
+    const paymentWrapper = document.getElementById(this.options.parentCreditCardWrapperId);
+    if (!paymentWrapper) {
+      return;
+    }
+
+    const paymentMethodId = paymentWrapper.getAttribute('data-payment-method-id')
     const input = document.getElementById("paymentMethod" + paymentMethodId);
-    const parentGroup = input.parentElement.parentElement;
+    if (!input) {
+      return;
+    }
+
+    const parentGroup = input.parentElement?.parentElement;
     input.disabled = true;
     const error = document.createElement("div");
     error.className = "payment-error";
     error.textContent = "Configuration Error";
     error.style.color = "red";
     error.style.marginTop = "5px";
-    parentGroup.appendChild(error);
-    document.getElementsByClassName('nmiConfirmFormSubmit')[0].disabled = true;
-    document.getElementById('pay-with-new-card').disabled = true;
+    parentGroup?.appendChild(error);
+
+    const submitButton = document.getElementsByClassName('nmiConfirmFormSubmit')[0];
+    const payWithNewCardButton = document.getElementById('pay-with-new-card');
+    if (submitButton) submitButton.disabled = true;
+    if (payWithNewCardButton) payWithNewCardButton.disabled = true;
   }
 
   init() {
@@ -47,6 +59,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
   }
 
   _registerElements() {
+    this._paymentInProgress = false;
     this.parentCreditCardWrapper = document.getElementById(this.options.parentCreditCardWrapperId);
     this.vaultedId = this.parentCreditCardWrapper.getAttribute('data-vaulted-customer-id');
     this.billingId = this.parentCreditCardWrapper.getAttribute('data-billing-customer-id');
@@ -300,8 +313,8 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
        await PaymentService.fetchCustomerData(paymentUrl, vaultedPaymentData)
        window.location.reload();
      }
-     catch (err){
-       this.displayErrors(error)
+     catch (error){
+       this.displayErrors([error.message || 'Failed to delete saved card.'])
        this._showLoading(false);
      }
   }
@@ -330,6 +343,10 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
   fillDropdown(defaultCard) {
 
     const cardSelect = document.getElementById('cardSelect');
+    if (!cardSelect) {
+      return;
+    }
+
     cardSelect.innerHTML = '';
     if (this.cards.length > 0) {
       this.cards.forEach((card) => {
@@ -354,19 +371,26 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
     const {first_name, last_name, cc_number, cc_type} = data;
 
-    const last4 = cc_number.slice(-4);
+    const last4 = String(cc_number || '').slice(-4);
     const maskedCC = '**** **** **** ' + last4;
 
-    document.getElementById('vaulted-first-name').innerText = first_name;
-    document.getElementById('vaulted-last-name').innerText = last_name;
-    document.getElementById('vaulted-last-four-digits').innerText = maskedCC;
-    document.getElementById('vaulted-card-type').innerText = cc_type;
+    const firstNameElement = document.getElementById('vaulted-first-name');
+    const lastNameElement = document.getElementById('vaulted-last-name');
+    const lastFourElement = document.getElementById('vaulted-last-four-digits');
+    const cardTypeElement = document.getElementById('vaulted-card-type');
+
+    if (firstNameElement) firstNameElement.innerText = first_name || '';
+    if (lastNameElement) lastNameElement.innerText = last_name || '';
+    if (lastFourElement) lastFourElement.innerText = maskedCC;
+    if (cardTypeElement) cardTypeElement.innerText = cc_type || '';
   }
 
 
   submitNormalPayment(response) {
     const flow = document.getElementById('nmi-credit-card').getAttribute('data-flow');
-    const threeDSActivate = this.threeDSConfig; // till activate
+    const threeDSActivate = this.threeDSConfig === '1'
+      || this.threeDSConfig === 'true'
+      || this.threeDSConfig === true;
 
     let gateway, threeDS;
     const paymentData = {
@@ -447,7 +471,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
       customer_vault_id: this.vaultedId,
       first_name: vaultedName,
       last_name: vaultedLast,
-      billing_id: cardSelect.value ?? null
+      billing_id: cardSelect?.value ?? this.billingId ?? null
     };
 
     if (flow === 'order_payment') {
@@ -461,12 +485,18 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
   displayErrors(errors) {
     const errorMessageDiv = document.getElementById('error-message');
-    const errorAlertDiv = errorMessageDiv.querySelector('.error-alert');
+    const errorAlertDiv = errorMessageDiv?.querySelector('.error-alert');
+
+    if (!errorMessageDiv || !errorAlertDiv) {
+      return;
+    }
+
+    const messages = Array.isArray(errors) ? errors : [errors].filter(Boolean);
 
     errorAlertDiv.innerHTML = '';
 
-    if (errors.length > 0) {
-      errorAlertDiv.textContent = errors.join(' ');
+    if (messages.length > 0) {
+      errorAlertDiv.textContent = messages.join(' ');
 
       errorMessageDiv.classList.remove('d-none');
       errorMessageDiv.classList.add('d-block');
@@ -478,6 +508,12 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
 
   submitToPaymentService(paymentUrl, paymentData, isVaultedPayment = false) {
+    if (this._paymentInProgress) {
+      return;
+    }
+
+    this._paymentInProgress = true;
+
     const loaderOverlay = document.getElementById('orderProcessingLoader1');
     const loaderOverlay2 = document.getElementById('orderProcessingLoader2');
     const nmiSubmitButton = document.querySelector('.nmiConfirmFormSubmit1');
@@ -494,19 +530,32 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
       .then((response) => {
 
         if (response.success) {
-          let transactionId = response.responses.payment.transaction_id;
-          let isSubscription = response.responses.payment.isSubscriptionCart
+          const paymentResponse = response.responses?.payment;
+          const transactionId = paymentResponse?.transaction_id;
+          const isSubscription = paymentResponse?.isSubscriptionCart;
           const cardSelect = document.getElementById('cardSelect');
           const selectedCardId = cardSelect ? cardSelect.value : null;
 
-          if (transactionId) {
-            document.getElementById('nmi-transaction-id').value = transactionId ?? null;
-            document.getElementById('nmi-is-subscription').value = isSubscription ?? null;
-            document.getElementById('nmi-selected-billing-id').value = selectedCardId ?? null;
+          if (!transactionId) {
+            this._paymentInProgress = false;
+            this.displayErrors(['Payment could not be confirmed because no transaction reference was returned. Please try again.']);
+            if (loaderOverlay) loaderOverlay.style.display = 'none';
+            if (loaderOverlay2) loaderOverlay2.style.display = 'none';
+            return;
           }
+
+          const transactionIdInput = document.getElementById('nmi-transaction-id');
+          const subscriptionInput = document.getElementById('nmi-is-subscription');
+          const selectedBillingInput = document.getElementById('nmi-selected-billing-id');
+
+          if (transactionIdInput) transactionIdInput.value = transactionId;
+          if (subscriptionInput) subscriptionInput.value = isSubscription ?? '';
+          if (selectedBillingInput) selectedBillingInput.value = selectedCardId ?? '';
+
           this._submitConfirmOrderForm();
 
         } else {
+          this._paymentInProgress = false;
           const errors = response.errors || [response.message || 'An unknown error occurred'];
           this.displayErrors(errors);
           if (loaderOverlay) loaderOverlay.style.display = 'none';
@@ -515,6 +564,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
         }
       })
       .catch((error) => {
+        this._paymentInProgress = false;
         this.displayErrors([error.message || 'Unexpected error occurred. Please try again later.']);
         if (loaderOverlay) loaderOverlay.style.display = 'none';
         if (loaderOverlay2) loaderOverlay2.style.display = 'none';
@@ -526,8 +576,8 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     try{
       await PaymentService.addBillingToCustomerData(paymentUrl, paymentData)
       window.location.reload();
-    }catch (err){
-      this.displayErrors(error)
+    }catch (error){
+      this.displayErrors([error.message || 'Failed to add saved card.'])
       this._showLoading(false);
     }
   }

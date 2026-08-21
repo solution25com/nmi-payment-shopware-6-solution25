@@ -2,7 +2,7 @@
   "name": "solution25/nmi-payment",
   "description": "NMI Payment - Shopware 6",
   "type": "shopware-platform-plugin",
-  "version": "2.0.0",
+  "version": "2.0.3",
   "license": "MIT",
   "authors": [
     {
@@ -50,6 +50,7 @@
     }
   },
   "require-dev": {
+    "phpunit/phpunit": "^10.5 || ^11.5",
     "squizlabs/php_codesniffer": "^4.0"
   }
 }

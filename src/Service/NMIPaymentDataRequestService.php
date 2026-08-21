@@ -132,11 +132,11 @@ class NMIPaymentDataRequestService
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
         $this->logger->info('NMI payment response received', [
-            'transaction_id' => $response['transactionid'] ?? null,
-            'response_code'  => $response['response'] ?? null,
+            'transaction_id' => ($response ?? [])['transactionid'] ?? null,
+            'response_code'  => ($response ?? [])['response'] ?? null,
         ]);
 
-        $processedResponse = $this->handleNMIResponse($response);
+        $processedResponse = $this->handleNMIResponse($response ?? []);
 
         if (!empty($processedResponse['customer_vault_id'])) {
             $customerVaultId = $processedResponse['customer_vault_id'];
@@ -161,7 +161,8 @@ class NMIPaymentDataRequestService
 
     public function handleNMIResponse(array $response): array
     {
-        if (isset($response['response']) && $response['response'] === '1') {
+        if (isset($response['response']) && $response['response'] === '1'
+            && trim((string) ($response['transactionid'] ?? '')) !== '') {
             return [
             'success' => true,
             'message' => 'Payment successful!',

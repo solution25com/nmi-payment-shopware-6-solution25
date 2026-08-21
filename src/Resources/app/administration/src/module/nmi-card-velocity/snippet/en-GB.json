@@ -1,0 +1,42 @@
+{
+    "nmi-card-velocity": {
+        "general": {
+            "mainMenuItemGeneral": "Blocked Payments",
+            "description": "Customers blocked after trying too many different cards."
+        },
+        "list": {
+            "title": "Blocked Payments",
+            "refresh": "Refresh",
+            "customer": "Customer",
+            "email": "Email",
+            "customerType": "Customer type",
+            "guest": "Guest",
+            "registered": "Registered",
+            "salesChannel": "Sales channel",
+            "cards": "Cards tried",
+            "attempts": "Blocked attempts",
+            "lastBlocked": "Last blocked",
+            "status": "Status",
+            "active": "Active",
+            "inactive": "Inactive",
+            "empty": "No blocked customers",
+            "emptySubline": "Customers blocked by the distinct-card limit will appear here.",
+            "reset": "Reset",
+            "deactivate": "Deactivate",
+            "resetTitle": "Reset payment block",
+            "resetText": "Clear attempted cards and unblock {name}?",
+            "deactivateTitle": "Deactivate customer",
+            "deactivateText": "Deactivate the account for {name}?",
+            "loadError": "Blocked payments could not be loaded.",
+            "resetSuccess": "Payment block cleared for {name}.",
+            "resetError": "Payment block could not be cleared.",
+            "deactivateSuccess": "Customer {name} was deactivated.",
+            "deactivateError": "Customer could not be deactivated."
+        }
+    },
+    "sw-privileges": {
+        "permissions": {
+            "nmi_card_velocity": { "label": "NMI Payment: Blocked Payments" }
+        }
+    }
+}

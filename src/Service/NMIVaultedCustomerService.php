@@ -115,9 +115,12 @@ class NMIVaultedCustomerService
         }
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-        $this->logger->info('Vaulted Capture Response -> ' . json_encode($response));
+        $this->logger->info('Vaulted payment response received', [
+            'transaction_id' => ($response ?? [])['transactionid'] ?? null,
+            'response_code' => ($response ?? [])['response'] ?? null,
+        ]);
 
-        $processedResponse = $this->nmiPaymentDataRequestService->handleNMIResponse($response);
+        $processedResponse = $this->nmiPaymentDataRequestService->handleNMIResponse($response ?? []);
 
         $customerVaultId = null;
         if (!empty($processedResponse['customer_vault_id'])) {
@@ -167,7 +170,10 @@ class NMIVaultedCustomerService
 
         $this->nmiPaymentApiClient->initializeForSalesChannel($context->getSalesChannel()->getId());
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-        $this->logger->info('[VAULT] saveNewCardToVault response: ' . json_encode($response));
+        $this->logger->info('[VAULT] save-card response received', [
+            'response_code' => $response['response'] ?? null,
+            'customer_vault_id' => $response['customer_vault_id'] ?? null,
+        ]);
 
         if (($response['response'] ?? '') !== '1') {
             return [
@@ -222,7 +228,10 @@ class NMIVaultedCustomerService
         ];
 
         $response = $this->nmiPaymentApiClient->createTransaction($postUpdateData);
-        $this->logger->info('Billing method(addMultipleCards) response: ' . json_encode($response));
+        $this->logger->info('[VAULT] add-billing response received', [
+            'response_code' => $response['response'] ?? null,
+            'customer_vault_id' => $response['customer_vault_id'] ?? null,
+        ]);
 
         if ($response['response'] === '1') {
             return [
@@ -260,7 +269,11 @@ class NMIVaultedCustomerService
             $ccNumber = $customerData['lastDigits'];
             $billingId = $customerData['billingId'];
 
-            $this->logger->info("Extracted data - First Name: $firstName, Last Name: $lastName, CC Type: $ccType, CC Number: $ccNumber");
+            $this->logger->info('Vaulted billing data loaded', [
+                'customer_vault_id' => $vaultedCustomerId,
+                'billing_id' => $billingId,
+                'card_type' => $ccType,
+            ]);
 
             return [
             'first_name' => $firstName,
@@ -287,7 +300,9 @@ class NMIVaultedCustomerService
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
 
-        $this->logger->info('Delete response: ' . json_encode($response));
+        $this->logger->info('[VAULT] delete-customer response received', [
+            'response_code' => $response['response'] ?? null,
+        ]);
 
         if ($response['response'] === '1') {
             return [
@@ -314,7 +329,9 @@ class NMIVaultedCustomerService
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
 
-        $this->logger->info('Delete response: ' . json_encode($response));
+        $this->logger->info('[VAULT] delete-billing response received', [
+            'response_code' => $response['response'] ?? null,
+        ]);
 
         if ($response['response'] === '1') {
             $this->vaultedCustomerService->deleteBillingFromDB($context, $customerVaultId, $billingId);

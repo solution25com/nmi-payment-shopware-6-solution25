@@ -95,6 +95,11 @@ class CreditCard extends AbstractPaymentHandler
         $orderId = $order->getId();
         $paymentMethodName = $orderTransaction->getPaymentMethod()->getName();
 
+        if (trim((string) $nmiTransactionId) === '') {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException('NMI did not return a transaction ID.');
+        }
+
         $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
         $verified = $this->nmiPaymentApiClient->queryTransaction((string) $nmiTransactionId);
 
@@ -121,8 +126,18 @@ class CreditCard extends AbstractPaymentHandler
             throw new RuntimeException('NMI transaction order ID mismatch.');
         }
 
+        $this->nmiTransactionService->addTransaction(
+            $orderId,
+            $paymentMethodName,
+            $nmiTransactionId,
+            null,
+            false,
+            $status,
+            $selectedBillingId,
+            $context,
+            (float) $verified['amount']
+        );
         $this->transactionStateHandler->{$handlerMethod}($transaction->getOrderTransactionId(), $context);
-        $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName, $nmiTransactionId, null, false, $status, $selectedBillingId, $context);
     }
 
     private function orderFirstFlow(Request $request, PaymentTransactionStruct $transaction, OrderTransactionEntity $orderTransaction, $handlerMethod, $status, Context $context): void
@@ -252,7 +267,22 @@ class CreditCard extends AbstractPaymentHandler
         }
 
         $nmiTransactionId = $response['transactionid'] ?? null;
+        if (trim((string) $nmiTransactionId) === '') {
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException('NMI returned success without a transaction ID.');
+        }
+
+        $this->nmiTransactionService->addTransaction(
+            $order->getId(),
+            $orderTransaction->getPaymentMethod()->getName(),
+            $nmiTransactionId,
+            null,
+            false,
+            $status,
+            $billingId,
+            $context,
+            (float) $orderTransaction->getAmount()->getTotalPrice()
+        );
         $this->transactionStateHandler->{$handlerMethod}($transaction->getOrderTransactionId(), $context);
-        $this->nmiTransactionService->addTransaction($order->getId(), $orderTransaction->getPaymentMethod()->getName(), $nmiTransactionId, null, false, $status, $billingId, $context);
     }
 }

@@ -61,6 +61,11 @@ class AchEcheck extends AbstractPaymentHandler
         $paymentMethodName = $paymentMethod ? ($paymentMethod->getTranslation('name') ?? $paymentMethod->getName()) : 'ACH/Echeck';
         $nmiTransactionId = $request->get('nmi_transaction_id') ?? null;
 
+        if (trim((string) $nmiTransactionId) === '') {
+            $this->transactionStateHandler->fail($orderTransactionId, $context);
+            throw new RuntimeException('NMI did not return an ACH transaction ID.');
+        }
+
         $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
         $verified = $this->nmiPaymentApiClient->queryTransaction((string) $nmiTransactionId);
 
@@ -90,14 +95,28 @@ class AchEcheck extends AbstractPaymentHandler
         $authorizeOption = $this->configService->getConfig('authorizeAndCapture', $salesChannelId);
 
         if ($authorizeOption) {
-            $this->transactionStateHandler->authorize($orderTransactionId, $context);
             $status = TransactionStatuses::AUTHORIZED->value;
         } else {
-            $this->transactionStateHandler->paid($orderTransactionId, $context);
             $status = TransactionStatuses::PAID->value;
         }
 
-        $this->nmiTransactionService->addTransaction($orderId, $paymentMethodName, $nmiTransactionId, null, false, $status, null, $context);
+        $this->nmiTransactionService->addTransaction(
+            $orderId,
+            $paymentMethodName,
+            $nmiTransactionId,
+            null,
+            false,
+            $status,
+            null,
+            $context,
+            (float) $verified['amount']
+        );
+
+        if ($authorizeOption) {
+            $this->transactionStateHandler->authorize($orderTransactionId, $context);
+        } else {
+            $this->transactionStateHandler->paid($orderTransactionId, $context);
+        }
 
         return null;
     }

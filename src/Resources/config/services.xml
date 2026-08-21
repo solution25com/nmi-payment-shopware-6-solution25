@@ -41,6 +41,7 @@
             <argument type="service" id="NMIPayment\Service\NMIACHPaymentDataRequestService" />
             <argument type="service" id="NMIPayment.logger"/>
             <argument type="service" id="NMIPayment\Validations\VaultOwnershipGuard"/>
+            <argument type="service" id="NMIPayment\Service\CardVelocityService"/>
         </service>
 
         <service id="NMIPayment\Storefront\Controller\NMIWebhookController" public="true">
@@ -99,6 +100,10 @@
             <tag name="shopware.entity.definition" entity="nmi_vaulted_customer"/>
         </service>
 
+        <service id="NMIPayment\Core\Content\CardVelocity\CardVelocityDefinition">
+            <tag name="shopware.entity.definition" entity="nmi_card_velocity"/>
+        </service>
+
         <!--     End Entity Definitions -->
 
         <!--         Event Subscribers-->
@@ -118,6 +123,7 @@
             <argument type="service" id="partial_delivery.repository" on-invalid="null" />
             <argument type="service" id="order_delivery.repository" />
             <argument type="service" id="NMIPayment.logger"/>
+            <argument type="service" id="NMIPayment\Service\NmiCaptureService"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
@@ -313,6 +319,25 @@
             <tag name="messenger.message_handler"/>
         </service>
 
+        <service id="NMIPayment\ScheduledTask\NmiCaptureSweepTask">
+            <tag name="shopware.scheduled.task"/>
+        </service>
+
+        <service id="NMIPayment\ScheduledTask\NmiCaptureSweepTaskHandler">
+            <argument type="service" id="scheduled_task.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment\Service\NmiCaptureService"/>
+            <argument type="service" id="NMIPayment.logger"/>
+            <tag name="messenger.message_handler" handles="NMIPayment\ScheduledTask\NmiCaptureSweepTask"/>
+        </service>
+
+        <service id="NMIPayment\Command\CaptureNmiOrderCommand">
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="NMIPayment\Service\NmiCaptureService"/>
+            <tag name="console.command"/>
+        </service>
+
         <!-- Net30 Command -->
         <service id="NMIPayment\Command\GenerateDealerInvoicesCommand">
             <argument type="service" id="order.repository"/>
@@ -328,6 +353,16 @@
             <argument type="service" id="NMIPayment.logger"/>
         </service>
 
+        <service id="NMIPayment\Service\NmiCaptureService">
+            <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
+            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="order.repository"/>
+            <argument type="service" id="partial_delivery.repository" on-invalid="null"/>
+            <argument type="service" id="order_delivery.repository"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
         <service id="NMIPayment\Service\VaultedCustomerService">
             <argument type="service" id="nmi_vaulted_customer.repository"/>
             <argument type="service" id="NMIPayment.logger"/>
@@ -335,6 +370,12 @@
 
         <service id="NMIPayment\Service\NMIConfigService">
             <argument id="Shopware\Core\System\SystemConfig\SystemConfigService" type="service"/>
+        </service>
+
+        <service id="NMIPayment\Service\CardVelocityService">
+            <argument type="service" id="nmi_card_velocity.repository"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="NMIPayment.logger"/>
         </service>
 
         <service id="NMIPayment\Service\NMIPaymentDataRequestService">
@@ -382,6 +423,7 @@
 
         <service id="NMIPayment.rotatingHandler" class="Monolog\Handler\RotatingFileHandler">
             <argument type="string">%kernel.logs_dir%/NMIPayment-%kernel.environment%.log</argument>
+            <argument>7</argument>
         </service>
 
     </services>

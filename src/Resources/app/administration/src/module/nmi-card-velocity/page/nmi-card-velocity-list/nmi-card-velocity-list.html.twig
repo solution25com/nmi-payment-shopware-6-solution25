@@ -1,0 +1,89 @@
+<sw-page>
+    <template #smart-bar-header>
+        <h2>{{ $tc('nmi-card-velocity.list.title') }}</h2>
+    </template>
+
+    <template #smart-bar-actions>
+        <sw-button :disabled="isLoading" @click="onRefresh">
+            {{ $tc('nmi-card-velocity.list.refresh') }}
+        </sw-button>
+    </template>
+
+    <template #content>
+        <sw-empty-state
+            v-if="!isLoading && total === 0"
+            :title="$tc('nmi-card-velocity.list.empty')"
+            :subline="$tc('nmi-card-velocity.list.emptySubline')"
+        />
+
+        <sw-data-grid
+            v-else
+            identifier="nmi-card-velocity-list"
+            :dataSource="rows"
+            :columns="columns"
+            :isLoading="isLoading"
+            :showSelection="false"
+            :showActions="true"
+            :sortBy="sortBy"
+            :sortDirection="sortDirection"
+            @column-sort="onColumnSort"
+        >
+            <template #column-customerName="{ item }">
+                <router-link :to="{ name: 'sw.customer.detail', params: { id: item.customerId } }">
+                    {{ item.customerName }}
+                </router-link>
+            </template>
+            <template #column-lastBlockedAt="{ item }">{{ formatDate(item.lastBlockedAt) }}</template>
+            <template #column-customerType="{ item }">
+                {{ item.isGuest ? $tc('nmi-card-velocity.list.guest') : $tc('nmi-card-velocity.list.registered') }}
+            </template>
+            <template #column-active="{ item }">
+                {{ item.active ? $tc('nmi-card-velocity.list.active') : $tc('nmi-card-velocity.list.inactive') }}
+            </template>
+            <template #actions="{ item }">
+                <sw-context-menu-item
+                    icon="regular-undo"
+                    :disabled="!acl.can('nmi_card_velocity.deleter')"
+                    @click="openReset(item)"
+                >
+                    {{ $tc('nmi-card-velocity.list.reset') }}
+                </sw-context-menu-item>
+                <sw-context-menu-item
+                    icon="regular-lock"
+                    variant="danger"
+                    :disabled="!acl.can('nmi_card_velocity.editor') || !item.active"
+                    @click="openDeactivate(item)"
+                >
+                    {{ $tc('nmi-card-velocity.list.deactivate') }}
+                </sw-context-menu-item>
+            </template>
+            <template #pagination>
+                <sw-pagination :total="total" :limit="limit" :page="page" @page-change="onPageChange" />
+            </template>
+        </sw-data-grid>
+
+        <sw-modal
+            v-if="resetModalVisible"
+            :title="$tc('nmi-card-velocity.list.resetTitle')"
+            @modal-close="resetModalVisible = false"
+        >
+            <p>{{ $tc('nmi-card-velocity.list.resetText', 0, { name: selectedRow.customerName }) }}</p>
+            <template #modal-footer>
+                <sw-button @click="resetModalVisible = false">{{ $tc('global.default.cancel') }}</sw-button>
+                <sw-button variant="danger" @click="reset">{{ $tc('nmi-card-velocity.list.reset') }}</sw-button>
+            </template>
+        </sw-modal>
+
+        <sw-modal
+            v-if="deactivateModalVisible"
+            :title="$tc('nmi-card-velocity.list.deactivateTitle')"
+            @modal-close="deactivateModalVisible = false"
+        >
+            <p>{{ $tc('nmi-card-velocity.list.deactivateText', 0, { name: selectedRow.customerName }) }}</p>
+            <template #modal-footer>
+                <sw-button @click="deactivateModalVisible = false">{{ $tc('global.default.cancel') }}</sw-button>
+                <sw-button variant="danger" @click="deactivate">{{ $tc('nmi-card-velocity.list.deactivate') }}</sw-button>
+            </template>
+        </sw-modal>
+    </template>
+</sw-page>

@@ -8,6 +8,7 @@ use NMIPayment\Library\Constants\TransactionStatuses;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\NMIPaymentApiClient;
 use NMIPayment\Service\NmiTransactionService;
+use NMIPayment\Service\NmiCaptureService;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderDeliveryPosition\OrderDeliveryPositionEntity;
@@ -28,6 +29,7 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
     private ?EntityRepository $partialDeliveryRepository;
     private EntityRepository $orderDeliveryRepository;
     private LoggerInterface $logger;
+    private NmiCaptureService $captureService;
 
     public function __construct(
         NmiTransactionService $nmiTransactionService,
@@ -37,7 +39,8 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
         EntityRepository $orderTransactionRepository,
         ?EntityRepository $partialDeliveryRepository,
         EntityRepository $orderDeliveryRepository,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        NmiCaptureService $captureService
     ) {
         $this->nmiTransactionService = $nmiTransactionService;
         $this->nmiPaymentApiClient = $nmiPaymentApiClient;
@@ -47,6 +50,7 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
         $this->partialDeliveryRepository = $partialDeliveryRepository;
         $this->orderDeliveryRepository = $orderDeliveryRepository;
         $this->logger = $logger;
+        $this->captureService = $captureService;
     }
 
     public static function getSubscribedEvents()
@@ -110,6 +114,14 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
                             'transaction_id' => $response['transactionid'] ?? null,
                             'response_code'  => $response['response'] ?? null,
                         ]);
+                        if (($response['response'] ?? null) !== '1') {
+                            $this->logger->error('NMI void failed; local transaction status was not changed', [
+                                'orderId' => $orderId,
+                                'response_code' => $response['response'] ?? null,
+                                'response_text' => $response['responsetext'] ?? null,
+                            ]);
+                            return;
+                        }
                         try {
                             $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
                         } catch (\Exception $exception) {
@@ -122,97 +134,7 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
                 $orderCaptured = 0;
                 if ($nextState === 'paid') {
                     $orderId = $this->nmiTransactionService->getOrderByTransactionId($event->getEntityId(), $event->getContext())->getOrderId();
-                    $order = $this->nmiTransactionService->getOrderByTransactionId($event->getEntityId(), $event->getContext());
-                    $transaction = $this->nmiTransactionService->getTransactionByOrderId($orderId, $event->getContext());
-                    $canceledItems = $this->getShipmentsByOrderId($orderId, $event->getContext());
-
-
-                    if ($transaction) {
-                        $criteria = new Criteria([$orderId]);
-                        $criteria->addAssociation('lineItems');
-                        $criteria->addAssociation('salesChannel');
-                        $order = $this->orderRepository->search($criteria, $event->getContext())->first();
-
-                        if (!$order) {
-                            $this->logger->error('Order entity not found for ID: ' . $orderId);
-                            return;
-                        }
-
-                        $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
-                        $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
-                        $isLive = $mode === 'live';
-                        $securityKey = $this->nmiConfigService->getConfig(
-                            $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
-                            $order->getSalesChannelId()
-                        );
-
-                        $lineItems = $order->getLineItems();
-                        $addShippingCosts = $order->getShippingCosts()->getTotalPrice() ?? 0;
-
-                        if (empty($canceledItems)) {
-                            $orderAmount = $order->getAmountTotal();
-                        }
-
-                        if (!empty($canceledItems)) {
-                            foreach ($canceledItems as $canceledItem) {
-                                $lineItemId = $canceledItem['lineItemId'];
-                                $quantityCanceled = $canceledItem['quantityCanceled'];
-
-                                foreach ($lineItems as $lineItem) {
-                                    if ($lineItem->getId() === $lineItemId) {
-                                        $unitPrice = $lineItem->getPrice()->getUnitPrice();
-                                        $deduction = $unitPrice * $quantityCanceled;
-
-                                        $calculatedTaxes = $lineItem->getPrice()->getCalculatedTaxes();
-                                        $taxDeduction = 0;
-                                        $totalQuantity = $lineItem->getQuantity();
-
-                                        foreach ($calculatedTaxes->getElements() as $taxElement) {
-                                            $totalTax = $taxElement->getTax();
-                                            $taxPerUnit = $totalTax / $totalQuantity;
-                                            $taxDeduction += $taxPerUnit * $quantityCanceled;
-                                        }
-
-                                        $orderCaptured += ($deduction + $taxDeduction);
-                                    }
-                                }
-                            }
-                                $orderCaptured += $addShippingCosts;
-                        }
-
-                        if ($orderCaptured !== 0) {
-                            $orderAmount = max(0, round($orderCaptured, 2));
-                        } else {
-                            $orderAmount = max(0, round($orderAmount, 2));
-                        }
-
-                        $postData = [
-                        'security_key' => $securityKey,
-                        'type' => 'capture',
-                        'transactionid' => $transaction->getTransactionId(),
-                        'amount' => $orderAmount,
-                        'orderid' => $order->getOrderNumber()
-                        ];
-
-                        $customFields = $order->getCustomFields() ?? [];
-                        $customFields['NmiPaymentAmountCapture'] = $orderAmount;
-
-                        $this->orderRepository->update([
-                        [
-                        'id' => $orderId,
-                        'customFields' => $customFields,
-                        ],
-                        ], $event->getContext());
-
-
-                        $response = $this->nmiPaymentApiClient->createTransaction($postData);
-                        $this->logger->info('NMI capture response', [
-                            'transaction_id' => $response['transactionid'] ?? null,
-                            'response_code'  => $response['response'] ?? null,
-                        ]);
-
-                        $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
-                    }
+                    $this->captureService->captureForOrder($orderId, $event->getContext());
                 }
             } catch (\Exception $exception) {
                 $this->logger->error('Error during state machine transition: ' . $exception->getMessage(), [

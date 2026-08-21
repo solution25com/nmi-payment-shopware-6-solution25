@@ -102,9 +102,12 @@ class NMIACHPaymentDataRequestService
         ];
 
         $response = $this->nmiPaymentApiClient->createTransaction($postData);
-        $this->logger->info('ACH Payment Response -> ' . json_encode($response));
+        $this->logger->info('ACH payment response received', [
+            'transaction_id' => ($response ?? [])['transactionid'] ?? null,
+            'response_code' => ($response ?? [])['response'] ?? null,
+        ]);
 
-        $processedResponse = $this->handleNMIResponse($response);
+        $processedResponse = $this->handleNMIResponse($response ?? []);
 
         if (!$processedResponse['success']) {
             return $processedResponse;
@@ -119,7 +122,8 @@ class NMIACHPaymentDataRequestService
 
     public function handleNMIResponse(array $response): array
     {
-        if (isset($response['response']) && $response['response'] === '1') {
+        if (isset($response['response']) && $response['response'] === '1'
+            && trim((string) ($response['transactionid'] ?? '')) !== '') {
             return [
             'success' => true,
             'message' => 'Payment successful!',

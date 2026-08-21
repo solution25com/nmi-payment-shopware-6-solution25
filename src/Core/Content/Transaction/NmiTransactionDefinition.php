@@ -12,6 +12,7 @@ use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\PrimaryKey;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\Flag\Required;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\IdField;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\StringField;
+use Shopware\Core\Framework\DataAbstractionLayer\Field\FloatField;
 
 class NmiTransactionDefinition extends EntityDefinition
 {
@@ -43,6 +44,7 @@ class NmiTransactionDefinition extends EntityDefinition
         (new BoolField('isSubscription', 'isSubscription'))->addFlags(new ApiAware()),
         (new StringField('selectedBillingId', 'selectedBillingId'))->addFlags(new ApiAware()),
         (new StringField('status', 'status'))->addFlags(new ApiAware(), new Required()),
+        (new FloatField('auth_amount', 'authAmount'))->addFlags(new ApiAware()),
         ]);
     }
 }
