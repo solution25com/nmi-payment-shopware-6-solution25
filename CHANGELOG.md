@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.3] - 2026-08-21
+
+### Added
+- Added customer-level card velocity protection and a Blocked Payments administration view.
+- Added an idempotent capture service and scheduled retry task for deferred captures.
+- Added `nmi:capture-order` for manually retrying the same idempotent capture flow.
+- Added unit coverage for card velocity, gateway responses, legacy transaction rows, capture limits, and controller blocking.
+
+### Fixed
+- Rejected successful gateway responses that do not contain a transaction ID.
+- Persisted verified NMI transactions before Shopware payment state transitions.
+- Limited capture amounts to the gateway authorization and corrected partial-shipment calculations.
+- Prevented failed capture and void requests from being recorded as successful.
+- Added safe defaults for legacy transaction rows containing null values.
+- Backfilled payment method technical names and limited NMI log retention to seven days.
+- Fixed 3DS activation when disabled configuration is rendered as a string.
+- Prevented duplicate storefront authorization requests and blocked order submission without a transaction reference.
+- Fixed saved-card error handlers and guarded optional storefront elements.
+
+### Security
+- Removed full gateway response and card metadata from payment logs.
+
 ## [2.0.0] - 2026-08-19
 
 ### Fixed
