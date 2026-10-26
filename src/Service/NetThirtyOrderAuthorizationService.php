@@ -13,6 +13,7 @@ use Shopware\Core\System\SalesChannel\SalesChannelContext;
 class NetThirtyOrderAuthorizationService
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly VaultedCustomerService $vaultedCustomerService
     ) {

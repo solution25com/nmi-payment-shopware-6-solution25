@@ -11,6 +11,7 @@
   </div>
 
   <div data-nmi-payment-saved-cards-plugin>
+    <div id="nmi-saved-cards-error" class="alert alert-danger d-none" role="alert"></div>
     {% if savedCards is empty %}
       <p>{{ 'NMI.saved-cards.no-saved-cards' | trans }}</p>
     {% else %}

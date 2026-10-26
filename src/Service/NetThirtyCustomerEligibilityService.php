@@ -13,6 +13,7 @@ class NetThirtyCustomerEligibilityService
 {
     public function __construct(
         private readonly DealerConfigService $dealerConfigService,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Customer\CustomerCollection> */
         private readonly EntityRepository $customerRepository
     ) {
     }
@@ -38,7 +39,7 @@ class NetThirtyCustomerEligibilityService
 
     public function isCustomerIdEligible(string $customerId, ?string $salesChannelId, Context $context): bool
     {
-        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->first();
+        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->getEntities()->first();
 
         return $customer instanceof CustomerEntity
             && $this->isCustomerEligible($customer, $salesChannelId);

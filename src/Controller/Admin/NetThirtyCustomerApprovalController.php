@@ -22,6 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class NetThirtyCustomerApprovalController extends AbstractController
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Customer\CustomerCollection> */
         private readonly EntityRepository $customerRepository,
         private readonly LoggerInterface $logger
     ) {
@@ -34,7 +35,7 @@ class NetThirtyCustomerApprovalController extends AbstractController
     )]
     public function updateApproval(string $customerId, Request $request, Context $context): JsonResponse
     {
-        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->first();
+        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->getEntities()->first();
         if (!$customer instanceof CustomerEntity) {
             return new JsonResponse(['success' => false, 'message' => 'Customer not found'], Response::HTTP_NOT_FOUND);
         }

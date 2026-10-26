@@ -19,28 +19,35 @@ class VaultOwnershipGuard
     }
 
     /**
-     * Returns null when the provided vault ID is ownedd by the current customer.
-     * Returns a 403/400 JsonResponse when ownership cannot be confirmed.
+     * Returns null when the vault (and, when given, the card) belongs to the current customer.
+     * Returns a 403/400 JsonResponse when ownership cannot be confirmed. "Not yours" and "does not
+     * exist" get the same answer, so the route cannot be used to discover valid vault ids.
+     *
+     * The check matches the customer's row for exactly this vault. Comparing against "the
+     * customer's first vault row" let a vault id written onto the customer's account by a client
+     * pass as their own.
      */
-    public function assertVaultOwnership(string $customerVaultId, SalesChannelContext $context): ?JsonResponse
+    public function assertVaultOwnership(mixed $customerVaultId, SalesChannelContext $context, mixed $billingId = null): ?JsonResponse
     {
         $customer = $context->getCustomer();
         if ($customer === null) {
             return $this->deny('Authentication required.', Response::HTTP_FORBIDDEN);
         }
 
-        if ($customerVaultId === '') {
+        if (!\is_scalar($customerVaultId) || (string) $customerVaultId === '') {
             return $this->deny('Missing vault ID.', Response::HTTP_BAD_REQUEST);
         }
 
-        $ownedVaultId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId(
-            $context->getContext(),
-            $customer->getId()
-        );
+        $customerVaultId = (string) $customerVaultId;
+        $owned = $billingId === null
+            ? $this->vaultedCustomerService->customerOwnsVault($context->getContext(), $customer->getId(), $customerVaultId)
+            : \is_scalar($billingId)
+                && $this->vaultedCustomerService->customerOwnsCard($context->getContext(), $customer->getId(), $customerVaultId, (string) $billingId);
 
-        if ($ownedVaultId === null || !hash_equals($ownedVaultId, $customerVaultId)) {
+        if (!$owned) {
             $this->logger->warning('Vault ownership check failed', [
                 'customer_id' => $customer->getId(),
+                'sales_channel_id' => $context->getSalesChannelId(),
             ]);
 
             return $this->deny('Invalid vault profile.', Response::HTTP_FORBIDDEN);

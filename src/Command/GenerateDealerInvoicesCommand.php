@@ -10,6 +10,7 @@ use NMIPayment\Service\NetThirtyFields;
 use Shopware\Core\Checkout\Document\Service\DocumentGenerator;
 use Shopware\Core\Checkout\Document\Struct\DocumentGenerateOperation;
 use Shopware\Core\Checkout\Order\OrderCollection;
+use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -31,6 +32,7 @@ class GenerateDealerInvoicesCommand extends Command
     private const BATCH_SIZE = 50;
 
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly DocumentGenerator $documentGenerator,
         private readonly DealerConfigService $configService
@@ -47,7 +49,7 @@ class GenerateDealerInvoicesCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $dryRun = $input->getOption('dry-run');
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $context->addState(Context::SKIP_TRIGGER_FLOW);
 
         $dealerGroups = $this->configService->getDealerCustomerGroups();

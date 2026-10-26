@@ -19,6 +19,7 @@ class NetThirtyEmailService
 {
     public function __construct(
         private readonly AbstractMailService $mailService,
+        /** @var EntityRepository<\Shopware\Core\System\SalesChannel\SalesChannelCollection> */
         private readonly EntityRepository $salesChannelRepository,
         private readonly SystemConfigService $systemConfigService,
         private readonly UrlGeneratorInterface $router,
@@ -47,7 +48,7 @@ class NetThirtyEmailService
             }
 
             $customerEmail = $orderCustomer->getEmail();
-            $customerName = trim(($orderCustomer->getFirstName() ?? '') . ' ' . ($orderCustomer->getLastName() ?? ''));
+            $customerName = trim($orderCustomer->getFirstName() . ' ' . $orderCustomer->getLastName());
 
             if (empty($customerEmail)) {
                 $this->logger->warning('Cannot send Net 30 payment notification email: Customer email is empty', [
@@ -233,6 +234,6 @@ TEXT;
         }
 
         $criteria = new Criteria([$salesChannelId]);
-        return $this->salesChannelRepository->search($criteria, $context)->first();
+        return $this->salesChannelRepository->search($criteria, $context)->getEntities()->first();
     }
 }

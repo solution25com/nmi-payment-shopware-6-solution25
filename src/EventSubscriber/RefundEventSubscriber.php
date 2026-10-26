@@ -4,115 +4,118 @@ declare(strict_types=1);
 
 namespace NMIPayment\EventSubscriber;
 
-use NMIPayment\Core\Content\Transaction\NmiTransactionEntity;
-use NMIPayment\Library\Constants\TransactionStatuses;
-use NMIPayment\Service\NMIConfigService;
-use NMIPayment\Service\NMIPaymentApiClient;
-use NMIPayment\Service\NmiTransactionService;
+use NMIPayment\Gateways\AchEcheck;
+use NMIPayment\Service\NmiRefundService;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
-use Shopware\Core\Checkout\Order\Event\OrderStateMachineStateChangeEvent;
-use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\Entity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Sorting\FieldSorting;
+use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class RefundEventSubscriber implements EventSubscriberInterface
 {
     public function __construct(
-        private readonly NmiTransactionService $nmiTransactionService,
-        private readonly NMIPaymentApiClient $nmiPaymentApiClient,
         private readonly ?EntityRepository $orderReturnRepository,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
         private readonly EntityRepository $orderTransactionRepository,
         private readonly OrderTransactionStateHandler $transactionStateHandler,
-        private readonly NMIConfigService $nmiConfigService,
+        private readonly NmiRefundService $refundService,
         private readonly LoggerInterface $logger
     ) {
     }
 
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
-            'state_enter.order_return.state.in_progress' => 'onProgressRefund',
+            StateMachineTransitionEvent::class => 'onStateMachineTransition',
         ];
     }
 
-    public function onProgressRefund(OrderStateMachineStateChangeEvent $event): void
+    public function onStateMachineTransition(StateMachineTransitionEvent $event): void
     {
+        $isReturnInProgress = $event->getEntityName() === 'order_return'
+            && $event->getToPlace()->getTechnicalName() === 'in_progress';
+        if (!$isReturnInProgress || $this->orderReturnRepository === null) {
+            return;
+        }
+
+        $context = $event->getContext();
+        $returnId = $event->getEntityId();
+
         try {
-            $context = $event->getContext();
-            $order = $event->getOrder();
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsFilter('orderId', $order->getId()));
-            $orderReturn = $this->orderReturnRepository->search($criteria, $context)->first();
+            $criteria = new Criteria([$returnId]);
+            $criteria->addAssociation('order');
+            $orderReturn = $this->orderReturnRepository->search($criteria, $context)->getEntities()->first();
 
-            if (!$orderReturn) {
-                $this->logger->warning('No order return found for orderId: ' . $order->getId());
+            if (!$orderReturn instanceof Entity || $orderReturn->get('order') === null) {
+                $this->logger->warning('Order return not found for refund', ['returnId' => $returnId]);
+
                 return;
             }
 
-            $transaction = $this->nmiTransactionService->getTransactionByOrderId($order->getId(), $context);
-            $orderTransactionId = $this->getOrderTransactionIdByOrderId($order->getId(), $context);
+            $order = $orderReturn->get('order');
+            $orderTransaction = $this->latestOrderTransaction($order->getId(), $context);
+            if ($orderTransaction === null) {
+                $this->logger->warning('No order transaction found for refund', ['orderId' => $order->getId()]);
 
-            if (!$orderTransactionId) {
-                $this->logger->warning('No order transaction found for refund process on orderId: ' . $order->getId());
                 return;
             }
-            /** @var OrderEntity $order */
-            /** @var OrderEntity $orderReturn */
-            /** @var NmiTransactionEntity|null $transaction */
-            $orderTotalAmount = $order->getAmountTotal();
-            /** @var NmiTransactionEntity|null $transaction */
 
-            $salesChannelId = $order->getSalesChannelId();
+            $outcome = $this->refundService->refund(
+                $returnId,
+                $order->getId(),
+                $order->getSalesChannelId(),
+                (float) $orderReturn->get('amountTotal'),
+                $this->nmiPaymentType($orderTransaction),
+                $context
+            );
 
-            if ($transaction && strtolower($transaction->getStatus()) === strtolower(TransactionStatuses::PAID->value)) {
-                $mode = $this->nmiConfigService->getConfig('mode', $salesChannelId);
-                $isLive = $mode === 'live';
-                $securityKey = $this->nmiConfigService->getConfig(
-                    $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
-                    $salesChannelId
-                );
-
-                $this->nmiPaymentApiClient->initializeForSalesChannel($salesChannelId);
-                $postData = [
-                    'security_key' => $securityKey,
-                    'type' => 'refund',
-                    'transactionid' => $transaction->getTransactionId(),
-                    'payment' => 'creditcard',
-                    'amount' => $orderReturn->getAmountTotal(),
-                ];
-
-                $response = $this->nmiPaymentApiClient->createTransaction($postData);
-                if ($response['responsetext'] === 'SUCCESS') {
-                    if ($orderReturn->getAmountTotal() === $orderTotalAmount) {
-                        $this->transactionStateHandler->refund($orderTransactionId, $context);
-                    } else {
-                        $this->transactionStateHandler->refundPartially($orderTransactionId, $context);
-                    }
-                }
+            if ($outcome['result'] !== NmiRefundService::RESULT_REFUNDED) {
+                return;
             }
-        } catch (\Exception $e) {
+
+            try {
+                $outcome['fullyRefunded']
+                    ? $this->transactionStateHandler->refund($orderTransaction->getId(), $context)
+                    : $this->transactionStateHandler->refundPartially($orderTransaction->getId(), $context);
+            } catch (\Throwable $e) {
+                $this->logger->warning('Refunded at NMI but the order transaction state was not updated', [
+                    'orderId' => $order->getId(),
+                    'returnId' => $returnId,
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]);
+            }
+        } catch (\Throwable $e) {
             $this->logger->error('Refund processing failed', [
-                'message' => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'returnId' => $returnId,
+                'exception_class' => $e::class,
+                'exception_message' => $e->getMessage(),
             ]);
         }
     }
 
-    private function getOrderTransactionIdByOrderId(string $orderId, Context $context)
+    private function latestOrderTransaction(string $orderId, Context $context): ?OrderTransactionEntity
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
-        /** @var OrderTransactionEntity|null $orderTransaction */
-        if ($orderTransaction) {
-            return $orderTransaction->getId();
-        }
+        $criteria->addAssociation('paymentMethod');
+        $criteria->addSorting(new FieldSorting('createdAt', FieldSorting::DESCENDING));
+        $criteria->setLimit(1);
 
-        return null;
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->getEntities()->first();
+
+        return $orderTransaction instanceof OrderTransactionEntity ? $orderTransaction : null;
+    }
+
+    private function nmiPaymentType(OrderTransactionEntity $orderTransaction): string
+    {
+        return $orderTransaction->getPaymentMethod()?->getHandlerIdentifier() === AchEcheck::class ? 'check' : 'creditcard';
     }
 }

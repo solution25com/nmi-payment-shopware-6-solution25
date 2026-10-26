@@ -161,8 +161,10 @@ class NMIPaymentDataRequestService
 
     public function handleNMIResponse(array $response): array
     {
-        if (isset($response['response']) && $response['response'] === '1'
-            && trim((string) ($response['transactionid'] ?? '')) !== '') {
+        if (
+            isset($response['response']) && $response['response'] === '1'
+            && trim((string) ($response['transactionid'] ?? '')) !== ''
+        ) {
             return [
             'success' => true,
             'message' => 'Payment successful!',

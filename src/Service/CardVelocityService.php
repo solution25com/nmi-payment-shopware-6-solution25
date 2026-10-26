@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Service;
 
@@ -16,6 +18,7 @@ class CardVelocityService
     private const DEFAULT_MAX_DISTINCT_CARDS = 3;
 
     public function __construct(
+        /** @var EntityRepository<\NMIPayment\Core\Content\CardVelocity\CardVelocityCollection> */
         private readonly EntityRepository $cardVelocityRepository,
         private readonly NMIConfigService $configService,
         private readonly LoggerInterface $logger
@@ -126,7 +129,7 @@ class CardVelocityService
         $criteria = (new Criteria())
             ->addFilter(new EqualsFilter('customerId', $customerId))
             ->setLimit(1);
-        $row = $this->cardVelocityRepository->search($criteria, $context)->first();
+        $row = $this->cardVelocityRepository->search($criteria, $context)->getEntities()->first();
 
         return $row instanceof CardVelocityEntity ? $row : null;
     }

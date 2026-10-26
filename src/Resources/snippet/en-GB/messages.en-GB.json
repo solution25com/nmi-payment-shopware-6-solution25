@@ -37,5 +37,16 @@
       "zip-code": "Zip code",
       "pay": "Pay "
     }
+  },
+  "nmiPayment": {
+    "payment": {
+      "declined": "Your payment could not be completed. Please check your card details or use a different card.",
+      "contactCustomerService": "We're unable to process your payment right now. Please contact our customer service team for help completing your order."
+    },
+    "savedCards": {
+      "deleteFailed": "We couldn't remove this card. Please try again, or contact customer service if it keeps happening.",
+      "setDefaultFailed": "We couldn't make this card your default. Please try again.",
+      "deleteAllFailed": "We couldn't delete your saved cards. Please try again."
+    }
   }
 }

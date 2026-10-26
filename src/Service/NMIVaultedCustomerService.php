@@ -98,19 +98,14 @@ class NMIVaultedCustomerService
         'acu_enabled' => 'true',
         'line_items' => $allItems,
         ];
-        $billingIds = json_decode($getDefaultBilling, true);
-        $defaultBId = $billingIds[0] ;
+        $billingIds = \is_string($getDefaultBilling) ? json_decode($getDefaultBilling, true) : null;
+        $defaultBId = \is_array($billingIds) && \is_array($billingIds[0] ?? null) ? $billingIds[0] : null;
 
-        if ($data['customer_vault_id']) {
-            if ($data['billing_id'] !== null) {
-                $postData['billing_id'] = $data['billing_id'];
-
-                $expireDate = new \DateTime();
-                $expireDate->modify('+3 minutes');
-
-                setcookie('billingId', $postData['billing_id'], $expireDate->getTimestamp(), "/");
-            } else {
-                $postData['billing_id'] = $defaultBId['billingId'];
+        if (!empty($data['customer_vault_id'])) {
+            if (isset($data['billing_id']) && $data['billing_id'] !== '') {
+                $postData['billing_id'] = (string) $data['billing_id'];
+            } elseif (isset($defaultBId['billingId'])) {
+                $postData['billing_id'] = (string) $defaultBId['billingId'];
             }
         }
 
@@ -190,7 +185,8 @@ class NMIVaultedCustomerService
 
         $existingRecord = $this->vaultedCustomerService->getBillingIdByVaultedId(
             $context->getContext(),
-            $vaultedCustomerId
+            $vaultedCustomerId,
+            $customerId
         );
         $existingJson = $existingRecord ? $existingRecord->getBillingId() : null;
         $billingArray = !empty($existingJson) ? (json_decode($existingJson, true) ?? []) : [];
@@ -207,7 +203,7 @@ class NMIVaultedCustomerService
             'ccexp'      => $cardData['ccexp'] ?? null,
         ];
 
-        $this->vaultedCustomerService->store($context, $vaultedCustomerId, 'null', json_encode($billingArray));
+        $this->vaultedCustomerService->store($context, $vaultedCustomerId, 'null', json_encode($billingArray), $billingId);
 
         return [
             'success'           => true,
@@ -233,7 +229,7 @@ class NMIVaultedCustomerService
             'customer_vault_id' => $response['customer_vault_id'] ?? null,
         ]);
 
-        if ($response['response'] === '1') {
+        if (($response['response'] ?? null) === '1') {
             return [
             'success' => true,
             'message' => 'Customer billing added.',
@@ -304,7 +300,7 @@ class NMIVaultedCustomerService
             'response_code' => $response['response'] ?? null,
         ]);
 
-        if ($response['response'] === '1') {
+        if (($response['response'] ?? null) === '1') {
             return [
             'success' => true,
             'message' => 'Customer data successfully deleted from vault.'
@@ -333,7 +329,7 @@ class NMIVaultedCustomerService
             'response_code' => $response['response'] ?? null,
         ]);
 
-        if ($response['response'] === '1') {
+        if (($response['response'] ?? null) === '1') {
             $this->vaultedCustomerService->deleteBillingFromDB($context, $customerVaultId, $billingId);
 
             return [
@@ -348,6 +344,75 @@ class NMIVaultedCustomerService
         }
     }
 
+
+    /**
+     * Deletes one saved card. Whether that means the whole vault or one billing record is decided
+     * from what NMI holds, not the local vault JSON: NMI refuses delete_billing on a vault's last
+     * card, and a card or vault already gone at NMI is only removed locally.
+     *
+     * @return array{success: bool, message: string, wholeVault: bool, alreadyGone: bool}
+     */
+    public function deleteCard(string $customerVaultId, string $billingId, SalesChannelContext $context): array
+    {
+        $gateway = $this->vaultBillingIds($customerVaultId, $context);
+
+        if ($gateway['resolved'] && !$gateway['found']) {
+            $this->vaultedCustomerService->delete($context, $customerVaultId);
+
+            return ['success' => true, 'message' => 'Vault no longer exists at the gateway.', 'wholeVault' => true, 'alreadyGone' => true];
+        }
+
+        if ($gateway['resolved'] && !\in_array($billingId, $gateway['billingIds'], true)) {
+            $this->vaultedCustomerService->deleteBillingFromDB($context, $customerVaultId, $billingId);
+
+            return ['success' => true, 'message' => 'Card no longer exists at the gateway.', 'wholeVault' => false, 'alreadyGone' => true];
+        }
+
+        if ($gateway['resolved'] && $gateway['billingIds'] === [$billingId]) {
+            $result = $this->deleteVaultedCustomerData($customerVaultId, $context);
+            if ($result['success']) {
+                $this->vaultedCustomerService->delete($context, $customerVaultId);
+            }
+
+            return $result + ['wholeVault' => true, 'alreadyGone' => false];
+        }
+
+        return $this->deleteBillingRecord($customerVaultId, $billingId, $context) + ['wholeVault' => false, 'alreadyGone' => false];
+    }
+
+    /**
+     * Deletes a whole vault at NMI and locally. A vault NMI no longer has is only removed locally.
+     *
+     * @return array{success: bool, message: string, alreadyGone: bool}
+     */
+    public function deleteVault(string $customerVaultId, SalesChannelContext $context): array
+    {
+        $result = $this->deleteVaultedCustomerData($customerVaultId, $context);
+        if ($result['success']) {
+            $this->vaultedCustomerService->delete($context, $customerVaultId);
+
+            return $result + ['alreadyGone' => false];
+        }
+
+        $gateway = $this->vaultBillingIds($customerVaultId, $context);
+        if ($gateway['resolved'] && !$gateway['found']) {
+            $this->vaultedCustomerService->delete($context, $customerVaultId);
+
+            return ['success' => true, 'message' => 'Vault no longer exists at the gateway.', 'alreadyGone' => true];
+        }
+
+        return $result + ['alreadyGone' => false];
+    }
+
+    /**
+     * @return array{resolved: bool, found: bool, billingIds: list<string>}
+     */
+    private function vaultBillingIds(string $customerVaultId, SalesChannelContext $context): array
+    {
+        $this->nmiPaymentApiClient->initializeForSalesChannel($context->getSalesChannelId());
+
+        return $this->nmiPaymentApiClient->queryVaultBillingIds($customerVaultId);
+    }
 
     public function setDefaultBilling(string $customerVaultId, string $billingId, SalesChannelContext $context): array
     {

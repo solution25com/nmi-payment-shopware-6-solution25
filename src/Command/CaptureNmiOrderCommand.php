@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace NMIPayment\Command;
 
 use NMIPayment\Service\NmiCaptureService;
+use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -22,6 +23,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CaptureNmiOrderCommand extends Command
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly NmiCaptureService $captureService
     ) {
@@ -36,7 +38,7 @@ class CaptureNmiOrderCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $orderReference = trim((string) $input->getArgument('order'));
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $criteria = new Criteria();
 
         if (preg_match('/^[0-9a-f]{32}$/i', $orderReference) === 1) {
@@ -46,7 +48,7 @@ class CaptureNmiOrderCommand extends Command
         }
 
         $criteria->setLimit(1);
-        $order = $this->orderRepository->search($criteria, $context)->first();
+        $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
         if ($order === null) {
             $output->writeln(sprintf('<error>Order "%s" was not found.</error>', $orderReference));
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace NMIPayment\Storefront\Controller;
 
+use NMIPayment\Service\AuthorizedTransactionSession;
 use NMIPayment\Service\NMIPaymentDataRequestService;
 use NMIPayment\Service\NMIACHPaymentDataRequestService;
 use NMIPayment\Service\NMIVaultedCustomerService;
@@ -59,7 +60,10 @@ class NMIPaymentController extends StorefrontController
     )]
     public function creditCardPayment(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
+        }
         $validationErrors = $this->validator->validateCreditCardPaymentData($data);
 
         if (!empty($validationErrors)) {
@@ -74,12 +78,17 @@ class NMIPaymentController extends StorefrontController
         try {
             $paymentResponse = $this->nmiPaymentDataRequestService->sendPaymentRequestToNMI($data, $cart, $context);
 
+            if ($paymentResponse['success']) {
+                AuthorizedTransactionSession::remember($request, $paymentResponse['responses']['payment']['transaction_id'] ?? null);
+            }
+
             if ($paymentResponse['success'] && !empty($paymentResponse['customer_vault_id'])) {
-                $vaultedCustomerId = $paymentResponse['customer_vault_id'];
+                $vaultedCustomerId = (string) $paymentResponse['customer_vault_id'];
 
                 $existingBillingRecord = $this->vaultedCustomerService->getBillingIdByVaultedId(
                     $context->getContext(),
-                    $vaultedCustomerId
+                    $vaultedCustomerId,
+                    $context->getCustomer()?->getId()
                 );
 
                 $existingBillingData = $existingBillingRecord ? $existingBillingRecord->getBillingId() : null;
@@ -100,12 +109,12 @@ class NMIPaymentController extends StorefrontController
 
                 $billingArray[] = $newBillingData;
 
-                $this->vaultedCustomerService->store($context, $vaultedCustomerId, 'null', json_encode($billingArray), $paymentResponse['billing_id']);
+                $this->vaultedCustomerService->store($context, $vaultedCustomerId, 'null', json_encode($billingArray), (string) $paymentResponse['billing_id']);
             }
 
-            return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            $this->logger->error('Payment processing failed', ['exception' => $e]);
+            return new JsonResponse($this->withGenericDeclineMessage($paymentResponse), $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('Payment processing failed', $this->exceptionContext($e));
             return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -117,22 +126,34 @@ class NMIPaymentController extends StorefrontController
     )]
     public function vaultedCustomerPayment(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
+        }
         $validationErrors = $this->validator->validateVaultedCustomer($data);
         if (!empty($validationErrors)) {
             return $this->createErrorResponse('Invalid request data.', $validationErrors, Response::HTTP_BAD_REQUEST);
         }
 
-        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) ($data['customer_vault_id'] ?? ''), $context);
+        $billingId = isset($data['billing_id']) && $data['billing_id'] !== '' ? $data['billing_id'] : null;
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership($data['customer_vault_id'] ?? null, $context, $billingId);
         if ($ownershipError !== null) {
             return $ownershipError;
         }
 
+        $data['customer_vault_id'] = (string) $data['customer_vault_id'];
+        $data['billing_id'] = $billingId !== null ? (string) $billingId : null;
+
         try {
             $paymentResponse = $this->nmiVaultedCustomerService->vaultedCapture($data, $cart, $context);
-            return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            $this->logger->info('Payment processing failed', ['exception' => $e]);
+
+            if ($paymentResponse['success']) {
+                AuthorizedTransactionSession::remember($request, $paymentResponse['responses']['payment']['transaction_id'] ?? null);
+            }
+
+            return new JsonResponse($this->withGenericDeclineMessage($paymentResponse), $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('Payment processing failed', $this->exceptionContext($e));
             return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -144,17 +165,23 @@ class NMIPaymentController extends StorefrontController
     )]
     public function getVaultedCustomer(Request $request, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
+        }
+
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership($data['customer_vault_id'] ?? null, $context);
+        if ($ownershipError !== null) {
+            return $ownershipError;
+        }
+
+        $data['customer_vault_id'] = (string) $data['customer_vault_id'];
 
         try {
             $dataResponse = $this->nmiVaultedCustomerService->sendDataToGetVaultedCustomer($data, $context);
             return new JsonResponse($dataResponse, $dataResponse != null ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            $this->logger->error('Payment processing failed', [
-            'exception_message' => $e->getMessage(),
-            'exception_stack_trace' => $e->getTraceAsString(),
-            'exception_code' => $e->getCode()
-            ]);
+        } catch (\Throwable $e) {
+            $this->logger->error('Payment processing failed', $this->exceptionContext($e));
 
             return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -168,27 +195,28 @@ class NMIPaymentController extends StorefrontController
     )]
     public function deleteVaultedCustomer(Request $request, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-
-        if (empty($data['customer_vault_id'])) {
-            return $this->createErrorResponse('Missing customer vault ID', [], Response::HTTP_BAD_REQUEST);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
         }
 
-        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) $data['customer_vault_id'], $context);
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership($data['customer_vault_id'] ?? null, $context);
         if ($ownershipError !== null) {
             return $ownershipError;
         }
 
         try {
-            $response = $this->nmiVaultedCustomerService->deleteVaultedCustomerData($data['customer_vault_id'], $context);
+            $response = $this->nmiVaultedCustomerService->deleteVault((string) $data['customer_vault_id'], $context);
 
-            if ($response['success']) {
-                $this->vaultedCustomerService->delete($context, $data['customer_vault_id']);
+            if (!$response['success']) {
+                $this->logger->warning('Vault deletion refused by the gateway', ['gateway_message' => $response['message']]);
+
+                return $this->createErrorResponse($this->trans('nmiPayment.savedCards.deleteFailed'), [], Response::HTTP_BAD_GATEWAY);
             }
 
-            return new JsonResponse($response, $response['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to delete vaulted customer data', ['exception' => $e]);
+            return new JsonResponse(['success' => true, 'message' => $response['message']], Response::HTTP_OK);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to delete vaulted customer data', $this->exceptionContext($e));
             return $this->createErrorResponse('Failed to delete customer data due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -201,18 +229,27 @@ class NMIPaymentController extends StorefrontController
     )]
     public function addMultipleCards(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
+        }
 
-        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership((string) ($data['vaulted_customer_id'] ?? ''), $context);
+        $ownershipError = $this->vaultOwnershipGuard->assertVaultOwnership($data['vaulted_customer_id'] ?? null, $context);
         if ($ownershipError !== null) {
             return $ownershipError;
         }
+
+        $data['vaulted_customer_id'] = (string) $data['vaulted_customer_id'];
 
         try {
             $paymentResponse = $this->nmiVaultedCustomerService->addMultipleCards($data, $context);
 
             if ($paymentResponse['success']) {
-                $existingBillingData = $this->vaultedCustomerService->getBillingIdByVaultedId($context->getContext(), $data['vaulted_customer_id'])->getBillingId();
+                $existingBillingData = $this->vaultedCustomerService->getBillingIdByVaultedId(
+                    $context->getContext(),
+                    $data['vaulted_customer_id'],
+                    $context->getCustomer()?->getId()
+                )?->getBillingId();
 
                 $billingArray = !empty($existingBillingData) ? json_decode($existingBillingData, true) : [];
 
@@ -230,11 +267,12 @@ class NMIPaymentController extends StorefrontController
 
                 $billingArray[] = $newBillingData;
 
-                $this->vaultedCustomerService->store($context, $data['vaulted_customer_id'], 'null', json_encode($billingArray), $paymentResponse['billingId']);
+                $this->vaultedCustomerService->store($context, $data['vaulted_customer_id'], 'null', json_encode($billingArray), (string) $paymentResponse['billingId']);
             }
 
-            return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
+            return new JsonResponse($this->withGenericDeclineMessage($paymentResponse), $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('Failed to add vaulted card', $this->exceptionContext($e));
             return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
@@ -246,7 +284,10 @@ class NMIPaymentController extends StorefrontController
     )]
     public function achPayment(Request $request, Cart $cart, SalesChannelContext $context): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
+        $data = $this->decodeJsonObject($request);
+        if ($data === null) {
+            return $this->createErrorResponse('Invalid request data.', [], Response::HTTP_BAD_REQUEST);
+        }
         $validationErrors = $this->validator->validateACHPaymentData($data);
 
         if (!empty($validationErrors)) {
@@ -255,11 +296,61 @@ class NMIPaymentController extends StorefrontController
 
         try {
             $paymentResponse = $this->nmiACHPaymentDataRequestService->sendACHPaymentRequestToNMI($data, $cart, $context);
-            return new JsonResponse($paymentResponse, $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
-        } catch (\Exception $e) {
-            $this->logger->error('ACH Payment processing failed', ['exception' => $e]);
+
+            if ($paymentResponse['success']) {
+                AuthorizedTransactionSession::remember($request, $paymentResponse['transaction_id'] ?? null);
+            }
+
+            return new JsonResponse($this->withGenericDeclineMessage($paymentResponse), $paymentResponse['success'] ? Response::HTTP_OK : Response::HTTP_BAD_REQUEST);
+        } catch (\Throwable $e) {
+            $this->logger->error('ACH Payment processing failed', $this->exceptionContext($e));
             return $this->createErrorResponse('Payment processing failed due to an internal error.', [], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * The gateway's decline text (CVV mismatch, AVS, insufficient funds, ...) tells a card tester
+     * exactly what to change. The shopper gets one generic message; the gateway text stays in the log.
+     */
+    private function withGenericDeclineMessage(array $paymentResponse): array
+    {
+        if (($paymentResponse['success'] ?? false) === true || !isset($paymentResponse['message'])) {
+            return $paymentResponse;
+        }
+
+        $this->logger->info('[payment] declined', ['gatewayMessage' => $paymentResponse['message']]);
+        $paymentResponse['message'] = $this->trans('nmiPayment.payment.declined');
+
+        return $paymentResponse;
+    }
+
+    /**
+     * Request bodies must be a JSON object. Anything else (malformed JSON, a bare string or number)
+     * is refused here rather than reaching array-typed service methods and failing with a 500.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function decodeJsonObject(Request $request): ?array
+    {
+        $data = json_decode($request->getContent(), true);
+
+        return \is_array($data) ? $data : null;
+    }
+
+    /**
+     * Exception details for the log without the stack trace, whose argument values can carry
+     * request data.
+     *
+     * @return array<string, mixed>
+     */
+    private function exceptionContext(\Throwable $e): array
+    {
+        return [
+            'exception_class' => $e::class,
+            'exception_message' => $e->getMessage(),
+            'exception_file' => $e->getFile(),
+            'exception_line' => $e->getLine(),
+        ];
     }
 
     private function createErrorResponse(string $message, array $errors = [], int $statusCode = Response::HTTP_BAD_REQUEST): JsonResponse
@@ -313,7 +404,7 @@ class NMIPaymentController extends StorefrontController
         }
 
         return $this->createErrorResponse(
-            'We are unable to process your payment right now. Please contact customer service.',
+            $this->trans('nmiPayment.payment.contactCustomerService'),
             [],
             Response::HTTP_BAD_REQUEST
         );

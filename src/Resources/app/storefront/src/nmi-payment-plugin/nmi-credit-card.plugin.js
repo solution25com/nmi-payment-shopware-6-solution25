@@ -243,12 +243,14 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
   _submitConfirmOrderForm() {
     this.isFinalizingSubmit = true;
 
-    if (typeof this.confirmOrderForm.requestSubmit === 'function') {
-      this.confirmOrderForm.requestSubmit();
-      return;
-    }
+    setTimeout(() => {
+      if (typeof this.confirmOrderForm.requestSubmit === 'function') {
+        this.confirmOrderForm.requestSubmit();
+        return;
+      }
 
-    this.confirmOrderForm.submit();
+      this.confirmOrderForm.submit();
+    }, 0);
   }
 
   submitPayment(response) {
@@ -330,8 +332,14 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
 
     try {
       const data = await PaymentService.fetchCustomerData(paymentUrl, vaultedPaymentData);
-      this.fillDropdown(data);
-      this.displayVaultedCustomerData(data);
+      const defaultCard = (this.cards || []).find(card => card.isDefault);
+      this.fillDropdown(defaultCard ?? data);
+      this.displayVaultedCustomerData(defaultCard ? {
+        first_name: defaultCard.firstName,
+        last_name: defaultCard.lastName,
+        cc_number: defaultCard.lastDigits,
+        cc_type: defaultCard.cardType
+      } : data);
     } catch (error) {
       this.displayErrors([error.message || 'Failed to fetch vaulted customer data.']);
     } finally {
@@ -353,7 +361,7 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
         const option = document.createElement('option');
         option.value = card.billingId;
         option.textContent = `${card.firstName} ****${card.lastDigits.slice(-4)}`;
-        if (card.billingId === defaultCard.billingId) {
+        if (card.billingId === defaultCard?.billingId) {
           option.selected = true;
         }
         cardSelect.appendChild(option);
@@ -466,12 +474,16 @@ export default class NmiCreditCardPlugin extends window.PluginBaseClass {
     const vaultedLast = document.getElementById('vaulted-last-name').innerText
 
 
+    const billingId = cardSelect?.value ?? this.billingId ?? null;
+
+    const selectedCard = (this.cards || []).find(card => card.billingId === billingId);
+
     const vaultedPaymentData = {
       amount: this.amount,
-      customer_vault_id: this.vaultedId,
+      customer_vault_id: selectedCard?.vaultedCustomerId ?? this.vaultedId,
       first_name: vaultedName,
       last_name: vaultedLast,
-      billing_id: cardSelect?.value ?? this.billingId ?? null
+      billing_id: billingId
     };
 
     if (flow === 'order_payment') {

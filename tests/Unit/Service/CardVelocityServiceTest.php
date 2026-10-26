@@ -10,6 +10,7 @@ use NMIPayment\Service\NMIConfigService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use NMIPayment\Core\Content\CardVelocity\CardVelocityCollection;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -98,7 +99,7 @@ class CardVelocityServiceTest extends TestCase
     private function givenStoredRow(?CardVelocityEntity $row): void
     {
         $result = $this->createMock(EntitySearchResult::class);
-        $result->method('first')->willReturn($row);
+        $result->method('getEntities')->willReturn(new CardVelocityCollection($row !== null ? [$row] : []));
         $this->repository->method('search')->willReturn($result);
     }
 }

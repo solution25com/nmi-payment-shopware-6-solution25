@@ -12,6 +12,7 @@ use NMIPayment\Service\NmiCaptureService;
 use NMIPayment\Service\NmiTransactionService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Shopware\Core\Checkout\Order\OrderCollection;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
@@ -30,7 +31,7 @@ class NmiCaptureServiceTest extends TestCase
         $order = $this->order();
 
         $orderSearch = $this->createMock(EntitySearchResult::class);
-        $orderSearch->method('first')->willReturn($order);
+        $orderSearch->method('getEntities')->willReturn(new OrderCollection([$order]));
 
         $orderRepository = $this->createMock(EntityRepository::class);
         $orderRepository->method('search')->willReturn($orderSearch);

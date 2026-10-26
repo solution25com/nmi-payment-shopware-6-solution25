@@ -1,6 +1,4 @@
 import './page/nmi-card-velocity-list';
-import enGB from './snippet/en-GB.json';
-import enUS from './snippet/en-US.json';
 
 Shopware.Module.register('nmi-card-velocity', {
     type: 'plugin',
@@ -9,10 +7,6 @@ Shopware.Module.register('nmi-card-velocity', {
     description: 'nmi-card-velocity.general.description',
     color: '#de294c',
     icon: 'regular-credit-card',
-    snippets: {
-        'en-GB': enGB,
-        'en-US': enUS,
-    },
     routes: {
         index: {
             component: 'nmi-card-velocity-list',

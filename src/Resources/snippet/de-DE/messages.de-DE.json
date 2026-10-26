@@ -37,5 +37,16 @@
       "zip-code": "Postleitzahl",
       "pay": "Bezahlen "
     }
+  },
+  "nmiPayment": {
+    "payment": {
+      "declined": "Ihre Zahlung konnte nicht abgeschlossen werden. Bitte überprüfen Sie Ihre Kartendaten oder verwenden Sie eine andere Karte.",
+      "contactCustomerService": "Ihre Zahlung kann derzeit nicht verarbeitet werden. Bitte wenden Sie sich an unseren Kundenservice, um Ihre Bestellung abzuschließen."
+    },
+    "savedCards": {
+      "deleteFailed": "Die Karte konnte nicht entfernt werden. Bitte versuchen Sie es erneut oder wenden Sie sich an den Kundenservice.",
+      "setDefaultFailed": "Diese Karte konnte nicht als Standard festgelegt werden. Bitte versuchen Sie es erneut.",
+      "deleteAllFailed": "Ihre gespeicherten Karten konnten nicht gelöscht werden. Bitte versuchen Sie es erneut."
+    }
   }
 }

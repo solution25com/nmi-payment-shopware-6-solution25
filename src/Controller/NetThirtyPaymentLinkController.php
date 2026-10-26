@@ -19,6 +19,7 @@ use Psr\Log\LoggerInterface;
 class NetThirtyPaymentLinkController extends StorefrontController
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly LoggerInterface $logger
     ) {
@@ -32,7 +33,7 @@ class NetThirtyPaymentLinkController extends StorefrontController
     public function paymentLink(string $orderId, Request $request, Context $context): Response
     {
         $criteria = new Criteria([$orderId]);
-        $order = $this->orderRepository->search($criteria, $context)->first();
+        $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
 
         if (!$order) {
             return $this->renderStorefront('@NMIPayment/storefront/page/payment-link-error.html.twig', [

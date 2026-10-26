@@ -14,8 +14,6 @@ class NetThirtyPaymentLinkService
     private const PAYMENT_LINK_EXPIRATION_HOURS = 2;
 
     public function __construct(
-        private readonly NMIPaymentApiClient $nmiApiClient,
-        private readonly NMIConfigService $nmiConfigService,
         private readonly UrlGeneratorInterface $router,
         private readonly LoggerInterface $logger
     ) {

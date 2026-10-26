@@ -1,15 +1,16 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace NMIPayment\Service;
 
 use NMIPayment\Gateways\CreditCard;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
-use Shopware\Core\Checkout\Order\Aggregate\OrderDeliveryPosition\OrderDeliveryPositionEntity;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
+use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsAnyFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 
 class NmiCaptureService
@@ -23,14 +24,17 @@ class NmiCaptureService
     private const CAPTURE_FIELD = 'NmiPaymentAmountCapture';
     private const CAPTURE_SHORTFALL_FIELD = 'nmiCaptureShortfall';
     private const CAPTURE_BLOCKED_FIELD = 'nmiCaptureBlocked';
+    private const CAPTURE_BLOCKED_AT_FIELD = 'nmiCaptureBlockedAt';
     private const EXCEEDS_AUTH_TEXT = 'exceeds the authorization amount';
 
     public function __construct(
         private readonly NmiTransactionService $transactionService,
         private readonly NMIPaymentApiClient $apiClient,
         private readonly NMIConfigService $configService,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly ?EntityRepository $partialDeliveryRepository,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryCollection> */
         private readonly EntityRepository $orderDeliveryRepository,
         private readonly LoggerInterface $logger
     ) {
@@ -77,6 +81,12 @@ class NmiCaptureService
         if ($authorizedAmount !== null && $authorizedAmount > 0.0 && $captureAmount > $authorizedAmount) {
             $shortfall = round($captureAmount - $authorizedAmount, 2);
             $captureAmount = round($authorizedAmount, 2);
+            $this->logger->warning('[capture] capped at the authorized amount', [
+                'orderId' => $orderId,
+                'orderNumber' => $order->getOrderNumber(),
+                'authAmount' => $authorizedAmount,
+                'shortfall' => $shortfall,
+            ]);
         }
 
         $this->apiClient->initializeForSalesChannel($order->getSalesChannelId());
@@ -94,31 +104,45 @@ class NmiCaptureService
             }
 
             $this->markCaptured($order, 0.0, 0.0, $context);
+            $this->transactionService->updateTransactionStatus($orderId, 'voided', $context);
             return self::RESULT_VOIDED_ZERO;
         }
 
         $response = $this->capture($order, $nmiTransaction->getTransactionId(), $captureAmount);
 
-        if (!$this->isSuccessful($response)
+        if (
+            !$this->isSuccessful($response)
             && $authorizedAmount === null
-            && $this->isExceedsAuthorizationDecline($response)) {
-            $verified = $this->apiClient->queryTransaction($nmiTransaction->getTransactionId());
-            $gatewayAmount = is_numeric($verified['amount'] ?? null) ? (float) $verified['amount'] : null;
+            && $this->isExceedsAuthorizationDecline($response)
+        ) {
+            $amounts = $this->apiClient->queryTransactionAmounts($nmiTransaction->getTransactionId());
+            $gatewayAmount = $amounts['resolved'] && $amounts['found'] ? $amounts['authAmount'] : null;
 
             if ($gatewayAmount !== null && $gatewayAmount > 0.0 && $gatewayAmount < $captureAmount) {
                 $shortfall = round($captureAmount - $gatewayAmount, 2);
                 $captureAmount = round($gatewayAmount, 2);
                 $response = $this->capture($order, $nmiTransaction->getTransactionId(), $captureAmount);
+
+                if ($this->isSuccessful($response)) {
+                    $this->transactionService->updateAuthAmount($nmiTransaction->getId(), $gatewayAmount, $context);
+                }
             }
         }
 
         if (!$this->isSuccessful($response)) {
             if ($this->isExceedsAuthorizationDecline($response)) {
-                $customFields[self::CAPTURE_BLOCKED_FIELD] = $response['responsetext'] ?? 'authorization exceeded';
                 $this->orderRepository->update([[
                     'id' => $order->getId(),
-                    'customFields' => $customFields,
+                    'customFields' => [
+                        self::CAPTURE_BLOCKED_FIELD => $response['responsetext'] ?? 'authorization exceeded',
+                        self::CAPTURE_BLOCKED_AT_FIELD => (new \DateTimeImmutable())->format(\DATE_ATOM),
+                    ],
                 ]], $context);
+                $this->logger->error('[capture] blocked: capture exceeds the authorization, needs a manual decision', [
+                    'orderId' => $orderId,
+                    'orderNumber' => $order->getOrderNumber(),
+                    'captureAmount' => $captureAmount,
+                ]);
             }
 
             $this->logger->error('[capture] NMI capture failed', [
@@ -132,6 +156,15 @@ class NmiCaptureService
         $this->markCaptured($order, $captureAmount, $shortfall, $context);
         $this->transactionService->updateTransactionStatus($orderId, 'paid', $context);
 
+        $this->logger->info('[capture] captured', [
+            'orderId' => $orderId,
+            'orderNumber' => $order->getOrderNumber(),
+            'capturedAmount' => $captureAmount,
+            'orderTotal' => $order->getAmountTotal(),
+            'authAmount' => $authorizedAmount,
+            'shortfall' => $shortfall,
+        ]);
+
         return self::RESULT_CAPTURED;
     }
 
@@ -142,7 +175,7 @@ class NmiCaptureService
             ->addAssociation('transactions.paymentMethod')
             ->addAssociation('deliveries.positions');
 
-        $order = $this->orderRepository->search($criteria, $context)->first();
+        $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
 
         return $order instanceof OrderEntity ? $order : null;
     }
@@ -183,26 +216,29 @@ class NmiCaptureService
             ->addFilter(new EqualsFilter('orderId', $orderId))
             ->addAssociation('positions');
         $deliveries = $this->orderDeliveryRepository->search($criteria, $context)->getEntities();
-        $quantities = [];
-        $foundShipment = false;
 
-        /** @var OrderDeliveryEntity $delivery */
+        $lineItemIds = [];
         foreach ($deliveries as $delivery) {
-            /** @var OrderDeliveryPositionEntity $position */
             foreach ($delivery->getPositions() ?? [] as $position) {
-                $lineItemId = $position->getOrderLineItemId();
-                $shipmentCriteria = (new Criteria())
-                    ->addFilter(new EqualsFilter('orderLineItemId', $lineItemId));
-                $shipments = $this->partialDeliveryRepository->search($shipmentCriteria, $context)->getEntities();
-
-                foreach ($shipments as $shipment) {
-                    $foundShipment = true;
-                    $quantities[$lineItemId] = ($quantities[$lineItemId] ?? 0) + (int) $shipment->getQuantity();
-                }
+                $lineItemIds[] = $position->getOrderLineItemId();
             }
         }
 
-        return $foundShipment ? $quantities : null;
+        if ($lineItemIds === [] || $this->partialDeliveryRepository === null) {
+            return null;
+        }
+
+        $shipmentCriteria = (new Criteria())
+            ->addFilter(new EqualsAnyFilter('orderLineItemId', array_values(array_unique($lineItemIds))));
+        $shipments = $this->partialDeliveryRepository->search($shipmentCriteria, $context)->getEntities();
+
+        $quantities = [];
+        foreach ($shipments as $shipment) {
+            $lineItemId = (string) $shipment->get('orderLineItemId');
+            $quantities[$lineItemId] = ($quantities[$lineItemId] ?? 0) + (int) $shipment->get('quantity');
+        }
+
+        return $quantities !== [] ? $quantities : null;
     }
 
     private function capture(OrderEntity $order, string $transactionId, float $amount): ?array
@@ -218,8 +254,7 @@ class NmiCaptureService
 
     private function markCaptured(OrderEntity $order, float $amount, float $shortfall, Context $context): void
     {
-        $customFields = $order->getCustomFields() ?? [];
-        $customFields[self::CAPTURE_FIELD] = $amount;
+        $customFields = [self::CAPTURE_FIELD => $amount];
         if ($shortfall > 0.0) {
             $customFields[self::CAPTURE_SHORTFALL_FIELD] = $shortfall;
         }

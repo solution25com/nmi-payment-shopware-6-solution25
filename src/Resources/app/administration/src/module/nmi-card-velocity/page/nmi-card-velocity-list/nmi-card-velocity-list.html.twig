@@ -67,7 +67,7 @@
             :title="$tc('nmi-card-velocity.list.resetTitle')"
             @modal-close="resetModalVisible = false"
         >
-            <p>{{ $tc('nmi-card-velocity.list.resetText', 0, { name: selectedRow.customerName }) }}</p>
+            <p>{{ $t('nmi-card-velocity.list.resetText', { name: selectedRow.customerName }) }}</p>
             <template #modal-footer>
                 <sw-button @click="resetModalVisible = false">{{ $tc('global.default.cancel') }}</sw-button>
                 <sw-button variant="danger" @click="reset">{{ $tc('nmi-card-velocity.list.reset') }}</sw-button>
@@ -79,7 +79,7 @@
             :title="$tc('nmi-card-velocity.list.deactivateTitle')"
             @modal-close="deactivateModalVisible = false"
         >
-            <p>{{ $tc('nmi-card-velocity.list.deactivateText', 0, { name: selectedRow.customerName }) }}</p>
+            <p>{{ $t('nmi-card-velocity.list.deactivateText', { name: selectedRow.customerName }) }}</p>
             <template #modal-footer>
                 <sw-button @click="deactivateModalVisible = false">{{ $tc('global.default.cancel') }}</sw-button>
                 <sw-button variant="danger" @click="deactivate">{{ $tc('nmi-card-velocity.list.deactivate') }}</sw-button>

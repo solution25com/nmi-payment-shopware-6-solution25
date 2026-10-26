@@ -8,6 +8,7 @@ use NMIPayment\Gateways\CreditCard;
 use NMIPayment\Service\NmiCaptureService;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\OrderEntity;
+use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -28,6 +29,7 @@ class NmiCaptureSweepTaskHandler extends ScheduledTaskHandler
     public function __construct(
         EntityRepository $scheduledTaskRepository,
         LoggerInterface $exceptionLogger,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly NmiCaptureService $captureService,
         private readonly LoggerInterface $logger
@@ -42,7 +44,7 @@ class NmiCaptureSweepTaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $now = new \DateTimeImmutable();
         $since = $now->modify('-' . self::LOOKBACK_DAYS . ' days');
         $agedThreshold = $now->modify('-' . self::AGED_HOURS . ' hours');
@@ -68,9 +70,11 @@ class NmiCaptureSweepTaskHandler extends ScheduledTaskHandler
                 }
 
                 $agedFrom = $candidate['shippedAt'] ?? $candidate['createdAt'];
-                if (\in_array($result, [NmiCaptureService::RESULT_DEFERRED, NmiCaptureService::RESULT_FAILED], true)
+                if (
+                    \in_array($result, [NmiCaptureService::RESULT_DEFERRED, NmiCaptureService::RESULT_FAILED], true)
                     && $agedFrom instanceof \DateTimeInterface
-                    && $agedFrom < $agedThreshold) {
+                    && $agedFrom < $agedThreshold
+                ) {
                     $ageHours = round(($now->getTimestamp() - $agedFrom->getTimestamp()) / 3600, 1);
                     $this->logger->warning('[NMI capture sweep] order remains uncaptured after shipment', [
                         'orderId' => $candidate['id'],

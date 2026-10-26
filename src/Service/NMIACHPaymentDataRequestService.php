@@ -16,7 +16,7 @@ class NMIACHPaymentDataRequestService
 
     public function __construct(
         NMIConfigService $nmiConfigService,
-        NmiPaymentApiClient $nmiPaymentApiClient,
+        NMIPaymentApiClient $nmiPaymentApiClient,
         NumberRangeValueGeneratorInterface $numberRangeGenerator,
         LoggerInterface $logger
     ) {
@@ -45,7 +45,6 @@ class NMIACHPaymentDataRequestService
         $billingAddress = $customer->getActiveBillingAddress();
         $shippingAddress = $customer->getActiveShippingAddress();
 
-        $paymentMethodType = $this->nmiConfigService->getConfig('authorizeAndCapture');
         $allLineItemsCart = $cart->getLineItems();
         $nonSubscriptionItems = [];
 
@@ -72,7 +71,7 @@ class NMIACHPaymentDataRequestService
         'security_key' => $securityKey,
         'amount' => $data['amount'],
         'currency' => 'USD',
-        'type' => $paymentMethodType ? 'auth' : 'sale',
+        'type' => 'sale',
         'orderid' => $predictedOrderNumber,
         'payment' => 'check',
         'payment_token' => $data['token'] ?? null,
@@ -122,8 +121,10 @@ class NMIACHPaymentDataRequestService
 
     public function handleNMIResponse(array $response): array
     {
-        if (isset($response['response']) && $response['response'] === '1'
-            && trim((string) ($response['transactionid'] ?? '')) !== '') {
+        if (
+            isset($response['response']) && $response['response'] === '1'
+            && trim((string) ($response['transactionid'] ?? '')) !== ''
+        ) {
             return [
             'success' => true,
             'message' => 'Payment successful!',

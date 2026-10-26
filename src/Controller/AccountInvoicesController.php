@@ -15,7 +15,6 @@ use Shopware\Core\Checkout\Order\OrderCollection;
 use Shopware\Core\Checkout\Order\OrderEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\EntitySearchResult;
 use Shopware\Core\System\SalesChannel\SalesChannelContext;
 use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Shopware\Storefront\Controller\StorefrontController;
@@ -32,6 +31,7 @@ class AccountInvoicesController extends StorefrontController
 
     public function __construct(
         private readonly AccountOrderPageLoader $orderPageLoader,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly NetThirtyBulkPaymentService $bulkPaymentService,
         private readonly VaultedCustomerService $vaultedCustomerService,
@@ -77,10 +77,9 @@ class AccountInvoicesController extends StorefrontController
         }
 
         $filteredCollection = new OrderCollection($invoiceOrders);
-        /** @var class-string<EntitySearchResult<OrderCollection>> $resultClass */
         $resultClass = $originalOrders::class;
         $storefrontResult = new $resultClass(
-            OrderEntity::class,
+            'order',
             count($invoiceOrders),
             $filteredCollection,
             $originalOrders->getAggregations(),
@@ -127,10 +126,6 @@ class AccountInvoicesController extends StorefrontController
             return $this->redirectToRoute('frontend.account.invoices.page');
         }
 
-        if (!is_array($orderIds)) {
-            $orderIds = [$orderIds];
-        }
-
         $customerId = $context->getCustomer()?->getId();
         if ($customerId === null) {
             return $this->redirectToRoute('frontend.account.login.page');
@@ -175,7 +170,7 @@ class AccountInvoicesController extends StorefrontController
         $disableCreditCardPayment = $this->systemConfigService->getBool(
             self::CONFIG_KEY_DISABLE_CC_PAYMENT,
             $salesChannelId
-        ) ?? false;
+        );
         $enableCreditCardPayment = !$disableCreditCardPayment;
 
         return $this->renderStorefront('@NMIPayment/storefront/page/account/bulk-payment-form.html.twig', [

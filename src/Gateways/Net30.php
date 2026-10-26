@@ -32,7 +32,9 @@ class Net30 extends AbstractPaymentHandler
     public const ORDER_CUSTOM_FIELD_VALUE = NetThirtyFields::DEALER_PAYMENT_TYPE_NET30;
 
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
         private readonly EntityRepository $orderTransactionRepository,
         private readonly NetThirtyPaymentLinkService $paymentLinkService,
         private readonly NetThirtyOrderLifecycleService $orderLifecycleService,
@@ -71,7 +73,7 @@ class Net30 extends AbstractPaymentHandler
                 $criteria->addAssociation('currency');
                 $criteria->addAssociation('salesChannel');
                 $criteria->addAssociation('price');
-                $order = $this->orderRepository->search($criteria, $context)->first();
+                $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
                 $orderId = $order?->getId();
             }
         }
@@ -156,16 +158,24 @@ class Net30 extends AbstractPaymentHandler
             try {
                 $this->transitionToNetThirty($orderTransaction->getId(), $currentState, $context);
             } catch (IllegalTransitionException $exception) {
-                throw PaymentException::invalidTransition($transaction->getOrderTransactionId(), $exception->getMessage());
+                throw PaymentException::syncProcessInterrupted(
+                    $transaction->getOrderTransactionId(),
+                    'Could not move the transaction to NET 30: ' . $exception->getMessage(),
+                    $exception
+                );
             }
         }
 
         return null;
     }
 
+    /**
+     * NET 30 is a deferred credit decision: it supports neither recurring nor refund handling.
+     * (PaymentHandlerType has no SYNC case and no equals(); the previous check was a fatal error.)
+     */
     public function supports(PaymentHandlerType $type, string $paymentMethodId, Context $context): bool
     {
-        return $type->equals(PaymentHandlerType::SYNC);
+        return false;
     }
 
     private function getOrderTransaction(PaymentTransactionStruct $transaction, Context $context): OrderTransactionEntity
@@ -177,10 +187,10 @@ class Net30 extends AbstractPaymentHandler
             ->addAssociation('order.salesChannel')
             ->addAssociation('order.price');
 
-        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->getEntities()->first();
 
         if ($orderTransaction === null) {
-            throw PaymentException::orderTransactionNotFound($transaction->getOrderTransactionId());
+            throw PaymentException::invalidTransaction($transaction->getOrderTransactionId());
         }
 
         return $orderTransaction;
@@ -191,7 +201,7 @@ class Net30 extends AbstractPaymentHandler
         return $this->orderRepository->search(
             (new Criteria([$orderId]))->addAssociation('orderCustomer')->addAssociation('currency')->addAssociation('price'),
             $context
-        )->first();
+        )->getEntities()->first();
     }
 
     private function sendNet30Email(

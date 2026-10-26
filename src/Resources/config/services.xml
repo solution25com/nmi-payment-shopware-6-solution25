@@ -20,6 +20,8 @@
                 <argument type="service" id="service_container"/>
             </call>
              <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+             <argument type="service" id="NMIPayment\Service\VaultedCustomerService" />
+             <argument type="service" id="NMIPayment.logger" />
          </service>
 
         <service id="NMIPayment\Storefront\Controller\TestApiConnectionController" public="true">
@@ -57,7 +59,6 @@
         <service id="NMIPayment\Gateways\AchEcheck">
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
             <argument type="service" id="order_transaction.repository"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment.logger"/>
@@ -74,6 +75,7 @@
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment\Service\VaultedCustomerService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
+            <argument type="service" id="NMIPayment.logger"/>
             <tag name="shopware.payment.method"/>
         </service>
 
@@ -120,20 +122,29 @@
             <argument type="service" id="NMIPayment\Service\NMIConfigService" />
             <argument type="service" id="order.repository"/>
             <argument type="service" id="order_transaction.repository" />
-            <argument type="service" id="partial_delivery.repository" on-invalid="null" />
-            <argument type="service" id="order_delivery.repository" />
             <argument type="service" id="NMIPayment.logger"/>
             <argument type="service" id="NMIPayment\Service\NmiCaptureService"/>
+            <argument type="service" id="NMIPayment\Service\NmiRefundService"/>
             <tag name="kernel.event_subscriber"/>
         </service>
 
-        <service id="NMIPayment\EventSubscriber\RefundEventSubscriber">
+        <service id="NMIPayment\Service\RefundLedger">
+            <argument type="service" id="Doctrine\DBAL\Connection"/>
+        </service>
+
+        <service id="NMIPayment\Service\NmiRefundService">
             <argument type="service" id="NMIPayment\Service\NmiTransactionService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
+            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
+            <argument type="service" id="NMIPayment\Service\RefundLedger"/>
+            <argument type="service" id="NMIPayment.logger"/>
+        </service>
+
+        <service id="NMIPayment\EventSubscriber\RefundEventSubscriber">
             <argument type="service" id="order_return.repository" on-invalid="null"/>
             <argument type="service" id="order_transaction.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
-            <argument type="service" id="NMIPayment\Service\NMIConfigService" />
+            <argument type="service" id="NMIPayment\Service\NmiRefundService"/>
             <argument type="service" id="NMIPayment.logger"/>
             <tag name="kernel.event_subscriber"/>
         </service>
@@ -219,8 +230,6 @@
         </service>
 
         <service id="NMIPayment\Service\NetThirtyPaymentLinkService">
-            <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
-            <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
             <argument type="service" id="router"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
@@ -235,7 +244,6 @@
             <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
             <argument type="service" id="NMIPayment\Service\NMIPaymentDataRequestService"/>
             <argument type="service" id="order.repository"/>
-            <argument type="service" id="order_transaction.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
@@ -243,9 +251,7 @@
         <service id="NMIPayment\Service\NetThirtyACHBulkPaymentProcessor">
             <argument type="service" id="NMIPayment\Service\NMIPaymentApiClient"/>
             <argument type="service" id="NMIPayment\Service\NMIConfigService"/>
-            <argument type="service" id="NMIPayment\Service\NMIACHPaymentDataRequestService"/>
             <argument type="service" id="order.repository"/>
-            <argument type="service" id="order_transaction.repository"/>
             <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="NMIPayment.logger"/>
         </service>
@@ -312,11 +318,9 @@
             <argument type="service" id="scheduled_task.repository"/>
             <argument type="service" id="NMIPayment.logger"/>
             <argument type="service" id="order.repository"/>
-            <argument type="service" id="order_transaction.repository"/>
-            <argument type="service" id="Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler"/>
             <argument type="service" id="Shopware\Core\System\StateMachine\StateMachineRegistry"/>
             <argument type="service" id="NMIPayment.logger"/>
-            <tag name="messenger.message_handler"/>
+            <tag name="messenger.message_handler" handles="NMIPayment\ScheduledTask\CheckExpiredNetThirtyPaymentsTask"/>
         </service>
 
         <service id="NMIPayment\ScheduledTask\NmiCaptureSweepTask">

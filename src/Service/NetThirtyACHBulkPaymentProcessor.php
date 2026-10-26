@@ -19,9 +19,8 @@ class NetThirtyACHBulkPaymentProcessor
     public function __construct(
         private readonly NMIPaymentApiClient $nmiApiClient,
         private readonly NMIConfigService $nmiConfigService,
-        private readonly NMIACHPaymentDataRequestService $nmiACHPaymentDataRequestService,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
-        private readonly EntityRepository $orderTransactionRepository,
         private readonly OrderTransactionStateHandler $transactionStateHandler,
         private readonly LoggerInterface $logger
     ) {
@@ -102,7 +101,7 @@ class NetThirtyACHBulkPaymentProcessor
             ->addAssociation('deliveries.shippingOrderAddress.countryState')
             ->addAssociation('lineItems');
 
-        $order = $this->orderRepository->search($criteria, $context)->first();
+        $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
 
         if (!$order instanceof OrderEntity) {
             throw new \RuntimeException('Order not found: ' . $orderId);
@@ -131,12 +130,11 @@ class NetThirtyACHBulkPaymentProcessor
             throw new \RuntimeException('Order is not in an unpaid Net 30 status (current: ' . $currentState . ')');
         }
 
-        $salesChannelId = $order->getSalesChannelId() ?? '';
+        $salesChannelId = $order->getSalesChannelId();
         $this->nmiApiClient->initializeForSalesChannel($salesChannelId);
 
         $amount = $order->getPrice()->getTotalPrice();
         $securityKey = $this->getSecurityKey($salesChannelId);
-        $authorizeOnly = (bool) $this->nmiConfigService->getConfig('authorizeAndCapture', $salesChannelId);
 
         $billingAddress  = $order->getBillingAddress();
         $shippingAddress = $order->getDeliveries()?->first()?->getShippingOrderAddress();
@@ -159,7 +157,7 @@ class NetThirtyACHBulkPaymentProcessor
             'security_key'       => $securityKey,
             'amount'             => $amount,
             'currency'           => $order->getCurrency()?->getIsoCode() ?? 'USD',
-            'type'               => $authorizeOnly ? 'auth' : 'sale',
+            'type'               => 'sale',
             'orderid'            => $uniqueOrderId,
             'payment'            => 'check',
             'first_name'         => $paymentData['first_name'] ?? $orderCustomer->getFirstName(),
@@ -221,7 +219,7 @@ class NetThirtyACHBulkPaymentProcessor
             throw new \RuntimeException('Vault creation failed: customer_vault_id not returned from payment gateway');
         }
 
-        $this->markOrderPaidOrAuthorized($order, $transaction, $transactionId, $authorizeOnly, $context);
+        $this->markOrderPaid($order, $transaction, $transactionId, $context);
 
         $result = [
             'order_id' => $orderId,
@@ -230,7 +228,7 @@ class NetThirtyACHBulkPaymentProcessor
             'transaction_id' => $transactionId,
         ];
 
-        if ($isFirstOrder && $returnedCustomerVaultId) {
+        if ($isFirstOrder) {
             $result['customer_vault_id'] = $returnedCustomerVaultId;
             $result['billing_id'] = $billingId;
         }
@@ -255,18 +253,13 @@ class NetThirtyACHBulkPaymentProcessor
         return $key;
     }
 
-    private function markOrderPaidOrAuthorized(
+    private function markOrderPaid(
         OrderEntity $order,
         OrderTransactionEntity $transaction,
         ?string $transactionId,
-        bool $authorizeOnly,
         Context $context
     ): void {
-        if ($authorizeOnly) {
-            $this->transactionStateHandler->authorize($transaction->getId(), $context);
-        } else {
-            $this->transactionStateHandler->paid($transaction->getId(), $context);
-        }
+        $this->transactionStateHandler->paid($transaction->getId(), $context);
 
         $customFields = $order->getCustomFields() ?? [];
         $customFields[NetThirtyFields::PAYMENT_COMPLETED] = true;

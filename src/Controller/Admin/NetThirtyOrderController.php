@@ -24,7 +24,9 @@ use Psr\Log\LoggerInterface;
 class NetThirtyOrderController extends AbstractController
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
         private readonly EntityRepository $orderTransactionRepository,
         private readonly NetThirtyPaymentLinkService $paymentLinkService,
         private readonly NetThirtyEmailService $emailService,
@@ -248,7 +250,7 @@ class NetThirtyOrderController extends AbstractController
         $criteria->addAssociation('deliveries.shippingOrderAddress.country');
         $criteria->addAssociation('deliveries.shippingOrderAddress.countryState');
 
-        return $this->orderRepository->search($criteria, $context)->first();
+        return $this->orderRepository->search($criteria, $context)->getEntities()->first();
     }
 
     private function isNet30Order(array $customFields): bool
@@ -265,7 +267,7 @@ class NetThirtyOrderController extends AbstractController
             }
         }
 
-        return $order->getOrderDateTime() ?? new \DateTime();
+        return \DateTime::createFromInterface($order->getOrderDateTime());
     }
 
     private function updateOrderCustomFields(string $orderId, array $customFields, Context $context): void

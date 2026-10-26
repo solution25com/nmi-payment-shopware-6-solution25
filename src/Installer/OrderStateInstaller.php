@@ -21,8 +21,11 @@ class OrderStateInstaller
     public const OVERDUE_ACTION_NAME = 'net_30_overdue';
 
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\System\StateMachine\StateMachineCollection> */
         private readonly EntityRepository $stateMachineRepository,
+        /** @var EntityRepository<\Shopware\Core\System\StateMachine\Aggregation\StateMachineState\StateMachineStateCollection> */
         private readonly EntityRepository $stateMachineStateRepository,
+        /** @var EntityRepository<\Shopware\Core\System\StateMachine\Aggregation\StateMachineTransition\StateMachineTransitionCollection> */
         private readonly EntityRepository $stateMachineTransitionRepository
     ) {
     }
@@ -34,10 +37,12 @@ class OrderStateInstaller
             return;
         }
 
+        // Both states first: the transitions from NET 30 include the one to overdue, which was
+        // skipped when the overdue state did not exist yet, so invoices could never become overdue.
         $stateId = $this->ensureStateExists($stateMachineId, self::STATE_TECHNICAL_NAME, self::STATE_NAME, $context);
+        $this->ensureStateExists($stateMachineId, self::STATE_OVERDUE_TECHNICAL_NAME, self::STATE_OVERDUE_NAME, $context);
         $this->ensureTransitionsToNetThirty($stateMachineId, $stateId, $context);
         $this->ensureTransitionsFromNetThirty($stateMachineId, $context);
-        $this->ensureStateExists($stateMachineId, self::STATE_OVERDUE_TECHNICAL_NAME, self::STATE_OVERDUE_NAME, $context);
         $this->ensureTransitionsFromOverdue($stateMachineId, $context);
         $this->ensureTransitionsToOverdue($stateMachineId, $context);
     }
@@ -48,7 +53,7 @@ class OrderStateInstaller
             ->addFilter(new EqualsFilter('stateMachineId', $stateMachineId))
             ->addFilter(new EqualsFilter('technicalName', $technicalName));
 
-        $state = $this->stateMachineStateRepository->search($criteria, $context)->first();
+        $state = $this->stateMachineStateRepository->search($criteria, $context)->getEntities()->first();
         if ($state !== null) {
             return $state->getId();
         }
@@ -92,7 +97,7 @@ class OrderStateInstaller
             ->addFilter(new EqualsFilter('toStateId', $toStateId))
             ->addFilter(new EqualsFilter('actionName', $actionName));
 
-        $transition = $this->stateMachineTransitionRepository->search($criteria, $context)->first();
+        $transition = $this->stateMachineTransitionRepository->search($criteria, $context)->getEntities()->first();
         if ($transition) {
             return;
         }
@@ -197,7 +202,7 @@ class OrderStateInstaller
         $criteria = (new Criteria())
             ->addFilter(new EqualsFilter('technicalName', $technicalName));
 
-        $stateMachine = $this->stateMachineRepository->search($criteria, $context)->first();
+        $stateMachine = $this->stateMachineRepository->search($criteria, $context)->getEntities()->first();
 
         return $stateMachine ? $stateMachine->getId() : null;
     }
@@ -208,7 +213,7 @@ class OrderStateInstaller
             ->addFilter(new EqualsFilter('stateMachineId', $stateMachineId))
             ->addFilter(new EqualsFilter('technicalName', $technicalName));
 
-        $state = $this->stateMachineStateRepository->search($criteria, $context)->first();
+        $state = $this->stateMachineStateRepository->search($criteria, $context)->getEntities()->first();
 
         return $state?->getId();
     }

@@ -122,14 +122,13 @@ export default class NmiSavedCardsPlugin extends window.PluginBaseClass {
 
 
     initCardActions() {
-        const deleteButtons = document.querySelectorAll('.delete-card-btn');
+        const deleteButtons = document.querySelectorAll('.delete-card-btn:not(#delete-all)');
         const setDefaultButtons = document.querySelectorAll('.set-default-btn');
         const deleteAllButton = document.getElementById('delete-all');
 
         if (deleteAllButton) {
             deleteAllButton.addEventListener('click', () => {
-                const vaultId = deleteAllButton.getAttribute('data-vault-id');
-                this.deleteCustomerVault(vaultId);
+                this.deleteAllCards();
             });
         }
 
@@ -152,35 +151,50 @@ export default class NmiSavedCardsPlugin extends window.PluginBaseClass {
     }
 
     deleteVaultedCustomerData(vaultedId, billingId) {
-        fetch('/account/delete-billing-id', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vaulted_customer_id: vaultedId, billing_id: billingId }),
-        })
-            .then(r => r.json())
-            .then(() => window.location.reload())
-            .catch(e => this.displayErrors([e.message || 'Error deleting billing.']));
+        this._postAndReload(
+            '/account/delete-billing-id',
+            { vaulted_customer_id: vaultedId, billing_id: billingId },
+            'Error deleting billing.'
+        );
     }
 
     setCardAsDefault(vaultedId, billingId) {
-        fetch('/account/set-default-billing-id', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ vaulted_customer_id: vaultedId, billing_id: billingId }),
-        })
-            .then(r => r.json())
-            .then(() => window.location.reload())
-            .catch(e =>  this.displayErrors([e.message || 'Error setting billing as default.']));
+        this._postAndReload(
+            '/account/set-default-billing-id',
+            { vaulted_customer_id: vaultedId, billing_id: billingId },
+            'Error setting billing as default.'
+        );
     }
 
-    deleteCustomerVault(vaultId) {
-        fetch('/nmi-payment-delete-vaulted-customer', {
+    deleteAllCards() {
+        this._postAndReload('/account/nmi-saved-cards/delete-all', {}, 'Error deleting saved cards.');
+    }
+
+    displayErrors(errors) {
+        const messages = (Array.isArray(errors) ? errors : [errors]).filter(Boolean);
+        const errorDiv = document.getElementById('nmi-saved-cards-error');
+        if (!errorDiv) {
+            return;
+        }
+
+        errorDiv.textContent = messages.join(' ');
+        errorDiv.classList.toggle('d-none', messages.length === 0);
+    }
+
+    _postAndReload(url, body, fallbackMessage) {
+        fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ customer_vault_id: vaultId }),
+            body: JSON.stringify(body),
         })
-            .then(r => r.json())
-            .then(() => window.location.reload())
-            .catch(e => this.displayErrors([e.message || 'Error deleting customer vault.']));
+            .then(async (response) => {
+                const result = await response.json().catch(() => ({}));
+                if (!response.ok || result.success === false) {
+                    this.displayErrors([result.message || fallbackMessage]);
+                    return;
+                }
+                window.location.reload();
+            })
+            .catch(e => this.displayErrors([e.message || fallbackMessage]));
     }
 }

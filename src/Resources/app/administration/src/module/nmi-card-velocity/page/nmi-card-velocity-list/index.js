@@ -131,7 +131,7 @@ Component.register('nmi-card-velocity-list', {
                 await this.load();
                 this.createNotificationSuccess({
                     title: this.$tc('global.default.success'),
-                    message: this.$tc('nmi-card-velocity.list.resetSuccess', 0, { name: this.selectedRow.customerName }),
+                    message: this.$t('nmi-card-velocity.list.resetSuccess', { name: this.selectedRow.customerName }),
                 });
             } catch (error) {
                 this.createNotificationError({
@@ -150,7 +150,7 @@ Component.register('nmi-card-velocity-list', {
                 await this.load();
                 this.createNotificationSuccess({
                     title: this.$tc('global.default.success'),
-                    message: this.$tc('nmi-card-velocity.list.deactivateSuccess', 0, { name: this.selectedRow.customerName }),
+                    message: this.$t('nmi-card-velocity.list.deactivateSuccess', { name: this.selectedRow.customerName }),
                 });
             } catch (error) {
                 this.createNotificationError({

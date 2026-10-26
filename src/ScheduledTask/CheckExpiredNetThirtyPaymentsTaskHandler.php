@@ -8,7 +8,7 @@ use NMIPayment\Installer\OrderStateInstaller;
 use NMIPayment\Service\NetThirtyFields;
 use NMIPayment\Service\NetThirtyPaymentLinkService;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
+use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -24,9 +24,8 @@ class CheckExpiredNetThirtyPaymentsTaskHandler extends ScheduledTaskHandler
     public function __construct(
         EntityRepository $scheduledTaskRepository,
         LoggerInterface $exceptionLogger,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
-        private readonly EntityRepository $orderTransactionRepository,
-        private readonly OrderTransactionStateHandler $transactionStateHandler,
         private readonly StateMachineRegistry $stateMachineRegistry,
         private readonly LoggerInterface $logger
     ) {
@@ -40,7 +39,7 @@ class CheckExpiredNetThirtyPaymentsTaskHandler extends ScheduledTaskHandler
 
     public function run(): void
     {
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $now = new \DateTime();
         $fromDate = (clone $now)->modify('-40 days');
 
@@ -65,6 +64,7 @@ class CheckExpiredNetThirtyPaymentsTaskHandler extends ScheduledTaskHandler
 
         $expiredCount = 0;
         $overdueCount = 0;
+        $overdueUpdates = [];
 
         foreach ($orders as $order) {
             $customFields = $order->getCustomFields() ?? [];
@@ -110,13 +110,13 @@ class CheckExpiredNetThirtyPaymentsTaskHandler extends ScheduledTaskHandler
                                 $context
                             );
 
-                            $customFields[NetThirtyFields::PAYMENT_OVERDUE] = true;
-                            $customFields[NetThirtyFields::PAYMENT_OVERDUE_AT] = $now->format('Y-m-d H:i:s');
-
-                            $this->orderRepository->update([[
+                            $overdueUpdates[] = [
                                 'id' => $order->getId(),
-                                'customFields' => $customFields,
-                            ]], $context);
+                                'customFields' => [
+                                    NetThirtyFields::PAYMENT_OVERDUE => true,
+                                    NetThirtyFields::PAYMENT_OVERDUE_AT => $now->format('Y-m-d H:i:s'),
+                                ],
+                            ];
 
                             $overdueCount++;
 
@@ -141,6 +141,10 @@ class CheckExpiredNetThirtyPaymentsTaskHandler extends ScheduledTaskHandler
                     'error' => $e->getMessage(),
                 ]);
             }
+        }
+
+        if ($overdueUpdates !== []) {
+            $this->orderRepository->update($overdueUpdates, $context);
         }
 
         $this->logger->info('Completed expired Net 30 payment check', [

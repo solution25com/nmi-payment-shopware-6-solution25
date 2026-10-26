@@ -19,7 +19,7 @@ class PaymentValidation
             'token' => new Assert\NotBlank(),
             'amount' => [
                 new Assert\NotBlank(),
-                new Assert\Type(['type' => 'numeric']),
+                new Assert\Type('numeric'),
                 new Assert\GreaterThan(0),
             ],
             'currency' => new Assert\Optional(new Assert\Type('string')),
@@ -55,27 +55,27 @@ class PaymentValidation
                         'item_unit_of_measure_' => new Assert\Optional(new Assert\Type('string')),
                         'item_unit_cost_' => [
                             new Assert\Optional(),
-                            new Assert\Type(['type' => 'numeric']),
+                            new Assert\Type('numeric'),
                             new Assert\GreaterThan(0),
                         ],
                         'item_quantity_' => [
                             new Assert\Optional(),
-                            new Assert\Type(['type' => 'numeric']),
+                            new Assert\Type('numeric'),
                             new Assert\GreaterThan(0),
                         ],
                         'item_total_amount_' => [
                             new Assert\Optional(),
-                            new Assert\Type(['type' => 'numeric']),
+                            new Assert\Type('numeric'),
                             new Assert\GreaterThanOrEqual(0),
                         ],
                         'item_tax_amount_' => [
                             new Assert\Optional(),
-                            new Assert\Type(['type' => 'numeric']),
+                            new Assert\Type('numeric'),
                             new Assert\GreaterThanOrEqual(0),
                         ],
                         'item_tax_rate_' => [
                             new Assert\Optional(),
-                            new Assert\Type(['type' => 'numeric']),
+                            new Assert\Type('numeric'),
                             new Assert\GreaterThanOrEqual(0),
                         ],
                     ]),
@@ -97,7 +97,7 @@ class PaymentValidation
             'token' => new Assert\Optional(),
             'amount' => [
                 new Assert\NotBlank(),
-                new Assert\Type(['type' => 'numeric']),
+                new Assert\Type('numeric'),
                 new Assert\GreaterThan(0),
             ],
             'customer_vault' => new Assert\Optional([new Assert\Type('string')]),
@@ -121,7 +121,7 @@ class PaymentValidation
             'token' => new Assert\NotBlank(),
             'amount' => [
                 new Assert\NotBlank(),
-                new Assert\Type(['type' => 'numeric']),
+                new Assert\Type('numeric'),
                 new Assert\GreaterThan(0),
             ],
             'checkname' => new Assert\Optional(new Assert\Type('string')),

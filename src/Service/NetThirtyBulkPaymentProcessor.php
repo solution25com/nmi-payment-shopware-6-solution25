@@ -19,8 +19,8 @@ class NetThirtyBulkPaymentProcessor
         private readonly NMIPaymentApiClient $nmiApiClient,
         private readonly NMIConfigService $nmiConfigService,
         private readonly NMIPaymentDataRequestService $nmiDataRequestService,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
-        private readonly EntityRepository $orderTransactionRepository,
         private readonly OrderTransactionStateHandler $transactionStateHandler,
         private readonly LoggerInterface $logger
     ) {
@@ -72,7 +72,7 @@ class NetThirtyBulkPaymentProcessor
             ->addAssociation('deliveries.shippingOrderAddress.country')
             ->addAssociation('deliveries.shippingOrderAddress.countryState');
 
-        $order = $this->orderRepository->search($criteria, $context)->first();
+        $order = $this->orderRepository->search($criteria, $context)->getEntities()->first();
 
         if (!$order instanceof OrderEntity) {
             throw new \RuntimeException('Order not found: ' . $orderId);
@@ -101,7 +101,7 @@ class NetThirtyBulkPaymentProcessor
             throw new \RuntimeException('Order is not in an unpaid Net 30 status (current: ' . $currentState . ')');
         }
 
-        $salesChannelId = $order->getSalesChannelId() ?? '';
+        $salesChannelId = $order->getSalesChannelId();
         $securityKey = $this->getSecurityKey($salesChannelId);
         $this->nmiApiClient->initializeForSalesChannel($salesChannelId);
 

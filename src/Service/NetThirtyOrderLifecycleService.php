@@ -11,7 +11,9 @@ use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 class NetThirtyOrderLifecycleService
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
         private readonly EntityRepository $orderTransactionRepository
     ) {
     }

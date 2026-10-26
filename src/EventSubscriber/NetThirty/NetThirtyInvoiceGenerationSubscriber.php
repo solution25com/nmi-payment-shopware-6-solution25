@@ -20,6 +20,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class NetThirtyInvoiceGenerationSubscriber implements EventSubscriberInterface
 {
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
         private readonly EntityRepository $orderRepository,
         private readonly DocumentGenerator $documentGenerator,
         private readonly DealerConfigService $configService,
@@ -74,7 +75,7 @@ class NetThirtyInvoiceGenerationSubscriber implements EventSubscriberInterface
         $criteria->addAssociation('documents.documentType');
         $criteria->setLimit(1);
 
-        return $this->orderRepository->search($criteria, $context)->first();
+        return $this->orderRepository->search($criteria, $context)->getEntities()->first();
     }
 
     private function orderAlreadyHasInvoice(OrderEntity $order): bool

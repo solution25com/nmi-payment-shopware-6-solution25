@@ -2,20 +2,15 @@
 
 namespace NMIPayment\EventSubscriber;
 
-use PartialDelivery\Core\Content\PartialDelivery\PartialDeliveryEntity;
 use NMIPayment\Gateways\CreditCard;
-use NMIPayment\Library\Constants\TransactionStatuses;
 use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\NMIPaymentApiClient;
 use NMIPayment\Service\NmiTransactionService;
 use NMIPayment\Service\NmiCaptureService;
+use NMIPayment\Service\NmiRefundService;
 use Psr\Log\LoggerInterface;
-use Shopware\Core\Checkout\Order\Aggregate\OrderDelivery\OrderDeliveryEntity;
-use Shopware\Core\Checkout\Order\Aggregate\OrderDeliveryPosition\OrderDeliveryPositionEntity;
-use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
-use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Shopware\Core\System\StateMachine\Event\StateMachineTransitionEvent;
 
@@ -24,12 +19,13 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
     private NmiTransactionService $nmiTransactionService;
     private NMIPaymentApiClient $nmiPaymentApiClient;
     private NMIConfigService $nmiConfigService;
+    /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
     private EntityRepository $orderRepository;
+    /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
     private EntityRepository $orderTransactionRepository;
-    private ?EntityRepository $partialDeliveryRepository;
-    private EntityRepository $orderDeliveryRepository;
     private LoggerInterface $logger;
     private NmiCaptureService $captureService;
+    private NmiRefundService $refundService;
 
     public function __construct(
         NmiTransactionService $nmiTransactionService,
@@ -37,20 +33,18 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
         NMIConfigService $nmiConfigService,
         EntityRepository $orderRepository,
         EntityRepository $orderTransactionRepository,
-        ?EntityRepository $partialDeliveryRepository,
-        EntityRepository $orderDeliveryRepository,
         LoggerInterface $logger,
-        NmiCaptureService $captureService
+        NmiCaptureService $captureService,
+        NmiRefundService $refundService
     ) {
         $this->nmiTransactionService = $nmiTransactionService;
         $this->nmiPaymentApiClient = $nmiPaymentApiClient;
         $this->nmiConfigService = $nmiConfigService;
         $this->orderRepository = $orderRepository;
         $this->orderTransactionRepository = $orderTransactionRepository;
-        $this->partialDeliveryRepository = $partialDeliveryRepository;
-        $this->orderDeliveryRepository = $orderDeliveryRepository;
         $this->logger = $logger;
         $this->captureService = $captureService;
+        $this->refundService = $refundService;
     }
 
     public static function getSubscribedEvents()
@@ -74,7 +68,7 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
         ->addAssociation('paymentMethod')
         ->addAssociation('order');
 
-        $orderTransaction = $this->orderTransactionRepository->search($criteria, $event->getContext())->first();
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $event->getContext())->getEntities()->first();
         $handlerIdf = $orderTransaction->getPaymentMethod()->getHandlerIdentifier();
 
 
@@ -88,11 +82,16 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
                     $orderId = $this->nmiTransactionService->getOrderByTransactionId($event->getEntityId(), $event->getContext())->getOrderId();
                     $transaction = $this->nmiTransactionService->getTransactionByOrderId($orderId, $event->getContext());
 
+                    if ($transaction && \in_array(strtolower((string) $transaction->getStatus()), ['cancelled', 'voided'], true)) {
+                        $this->logger->info('NMI transaction already voided, skipping void', ['orderId' => $orderId]);
+                        $transaction = null;
+                    }
+
                     if ($transaction) {
                         $criteria = new Criteria([$orderId]);
                         $criteria->addAssociation('lineItems');
                         $criteria->addAssociation('salesChannel');
-                        $order = $this->orderRepository->search($criteria, $event->getContext())->first();
+                        $order = $this->orderRepository->search($criteria, $event->getContext())->getEntities()->first();
 
                         $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
                         $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
@@ -143,108 +142,31 @@ class OrderVoidNmiPayment implements EventSubscriberInterface
             }
         } elseif ($nextState === 'refunded') {
             try {
-                $orderId = $this->nmiTransactionService
-                ->getOrderByTransactionId($event->getEntityId(), $event->getContext())
-                ->getOrderId();
+                $order = $orderTransaction->getOrder();
+                if ($order === null) {
+                    return;
+                }
 
-                $criteria = new Criteria([$orderId]);
-                $criteria->addAssociation('lineItems');
-                $criteria->addAssociation('salesChannel');
-
-                $order = $this->orderRepository->search($criteria, $event->getContext())->first();
-
-                $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
-                $mode = $this->nmiConfigService->getConfig('mode', $order->getSalesChannelId());
-                $isLive = $mode === 'live';
-                $securityKey = $this->nmiConfigService->getConfig(
-                    $isLive ? 'privateKeyApiLive' : 'privateKeyApi',
-                    $order->getSalesChannelId()
+                $outcome = $this->refundService->refund(
+                    $orderTransaction->getId(),
+                    $order->getId(),
+                    $order->getSalesChannelId(),
+                    null,
+                    'creditcard',
+                    $event->getContext()
                 );
 
-                $transaction = $this->nmiTransactionService
-                ->getTransactionByOrderId($order->getId(), $event->getContext());
-
-                if ($transaction && strtolower($transaction->getStatus()) === strtolower(TransactionStatuses::PAID->value)) {
-                    $postData = [
-                    'security_key'   => $securityKey,
-                    'type'           => 'refund',
-                    'transactionid'  => $transaction->getTransactionId(),
-                    'payment'        => 'creditcard',
-                    'amount'         => $order->getAmountTotal(),
-                    ];
-
-                    $this->nmiPaymentApiClient->createTransaction($postData);
-                    $this->nmiTransactionService->updateTransactionStatus($orderId, $nextState, $event->getContext());
+                if ($outcome['result'] !== NmiRefundService::RESULT_REFUNDED && $outcome['result'] !== NmiRefundService::RESULT_SKIPPED) {
+                    $this->logger->error('Order transaction marked refunded but the NMI refund did not go through', [
+                        'orderId' => $order->getId(),
+                        'result' => $outcome['result'],
+                    ]);
                 }
             } catch (\Throwable $exception) {
                 $this->logger->error('Error during state machine transition: ' . $exception->getMessage(), [
-                'exception' => $exception,
+                    'exception_class' => $exception::class,
                 ]);
             }
         }
-    }
-
-
-
-
-    public function getShipmentsByOrderId(string $orderId, Context $context): ?array
-    {
-        if ($this->partialDeliveryRepository === null) {
-            $this->logger->info('Partial delivery repository not available. Skipping shipment check.');
-            return null;
-        }
-
-        $criteria = new Criteria();
-        $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-        $criteria->addAssociation('positions');
-        $orderDeliveries = $this->orderDeliveryRepository->search($criteria, $context)->getEntities();
-
-        $lineItems = [];
-      /** @var OrderDeliveryEntity $orderDelivery */
-        foreach ($orderDeliveries as $orderDelivery) {
-            foreach ($orderDelivery->getPositions()->getElements() as $position) {
-                /** @var OrderDeliveryPositionEntity $position */
-                $lineItems[$position->getOrderLineItemId()] = [
-                'lineItemId' => $position->getOrderLineItemId(),
-                'totalOrdered' => $position->getQuantity(),
-                'shippedQuantity' => 0,
-                'quantityCanceled' => 0
-                ];
-            }
-        }
-
-        if (empty($lineItems)) {
-            return null;
-        }
-
-        foreach ($lineItems as &$lineItem) {
-            $criteria = new Criteria();
-            $criteria->addFilter(new EqualsFilter('orderLineItemId', $lineItem['lineItemId']));
-
-            try {
-                $partialDeliveriesShipments = $this->partialDeliveryRepository->search($criteria, $context)->getElements() ?? null;
-            } catch (\Exception $exception) {
-                $this->logger->error('Error querying partial delivery repository: ' . $exception->getMessage());
-                continue;
-            }
-
-            if (empty($partialDeliveriesShipments)) {
-                continue;
-            }
-
-            // @phpstan-ignore-next-line
-            /** @var PartialDeliveryEntity $shipment */
-            foreach ($partialDeliveriesShipments as $shipment) {
-                $lineItem['shippedQuantity'] += $shipment->getQuantity();
-            }
-
-            $lineItem['quantityCanceled'] = max(0, $lineItem['totalOrdered'] - $lineItem['shippedQuantity']);
-        }
-
-        return array_map(fn($lineItem) => [
-        'lineItemId' => $lineItem['lineItemId'],
-        'totalOrdered' => $lineItem['totalOrdered'],
-        'quantityCanceled' => $lineItem['quantityCanceled']
-        ], array_values($lineItems));
     }
 }

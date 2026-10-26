@@ -13,6 +13,7 @@ use NMIPayment\Service\NMIConfigService;
 use NMIPayment\Service\VaultedCustomerService;
 use NMIPayment\Storefront\Struct\CheckoutTemplateCustomData;
 use Shopware\Core\Checkout\Cart\Address\Error\ShippingAddressBlockedError;
+use Shopware\Core\Checkout\Shipping\Cart\Error\ShippingMethodBlockedError;
 use Shopware\Core\Checkout\Payment\PaymentMethodEntity;
 use Shopware\Storefront\Page\Account\Order\AccountEditOrderPageLoadedEvent;
 use Shopware\Storefront\Page\Checkout\Confirm\CheckoutConfirmPageLoadedEvent;
@@ -64,7 +65,7 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         $shippingError = false;
 
         foreach ($errors as $error) {
-            if ($error instanceof ShippingAddressBlockedError) {
+            if ($error instanceof ShippingAddressBlockedError || $error instanceof ShippingMethodBlockedError) {
                 $shippingError = true;
                 break;
             }
@@ -96,7 +97,7 @@ class CheckoutConfirmEventSubscriber implements EventSubscriberInterface
         $templateVariables = new CheckoutTemplateCustomData();
         $flow = (string)$this->configService->getConfig('flow', $salesChannelContext->getSalesChannelId());
         $threeDS = $this->configService->getConfig('threeDS', $salesChannelContext->getSalesChannelId());
-        $amount = $pageObject->getOrder()->getPrice()?->getTotalPrice() ?? $pageObject->getOrder()->getAmountTotal();
+        $amount = $pageObject->getOrder()->getPrice()->getTotalPrice();
         $isGuest = $customer->getGuest();
 
         if ($selectedPaymentGateway->getHandlerIdentifier() === CreditCard::class) {

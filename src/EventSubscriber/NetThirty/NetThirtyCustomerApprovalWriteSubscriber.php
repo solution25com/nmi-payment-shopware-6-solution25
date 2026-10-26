@@ -19,6 +19,7 @@ class NetThirtyCustomerApprovalWriteSubscriber implements EventSubscriberInterfa
     public const PRIVILEGE_UPDATE = 'nmi_net30_approval:update';
 
     public function __construct(
+        /** @var EntityRepository<\Shopware\Core\Checkout\Customer\CustomerCollection> */
         private readonly EntityRepository $customerRepository
     ) {
     }
@@ -66,7 +67,7 @@ class NetThirtyCustomerApprovalWriteSubscriber implements EventSubscriberInterfa
             return $newValue;
         }
 
-        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->first();
+        $customer = $this->customerRepository->search(new Criteria([$customerId]), $context)->getEntities()->first();
         if (!$customer instanceof CustomerEntity) {
             return $newValue;
         }

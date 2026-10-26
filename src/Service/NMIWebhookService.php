@@ -8,6 +8,7 @@ use NMIPayment\Library\Constants\TransactionEvents;
 use NMIPayment\Service\NmiTransactionService;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionStateHandler;
+use Shopware\Core\Framework\Api\Context\SystemSource;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -17,7 +18,9 @@ class NMIWebhookService
 {
     private NMIConfigService $configService;
     private NmiTransactionService $transactionService;
+    /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
     private EntityRepository $orderTransactionRepository;
+    /** @var EntityRepository<\Shopware\Core\Checkout\Order\OrderCollection> */
     private EntityRepository $orderRepository;
     private OrderTransactionStateHandler $transactionStateHandler;
     private LoggerInterface $logger;
@@ -94,7 +97,7 @@ class NMIWebhookService
         }
 
         // get context from the order
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $transaction = $this->transactionService->getTransactionByTransactionId($transactionId, $context);
 
         if (!$transaction) {
@@ -136,7 +139,7 @@ class NMIWebhookService
             return;
         }
 
-        $context = Context::createDefaultContext();
+        $context = new Context(new SystemSource());
         $transaction = $this->transactionService->getTransactionByTransactionId($transactionId, $context);
 
         if (!$transaction) {
@@ -189,14 +192,14 @@ class NMIWebhookService
     private function getOrderById(string $orderId, Context $context)
     {
         $criteria = new Criteria([$orderId]);
-        return $this->orderRepository->search($criteria, $context)->first();
+        return $this->orderRepository->search($criteria, $context)->getEntities()->first();
     }
 
     private function getOrderTransactionIdByOrderId(string $orderId, Context $context): ?string
     {
         $criteria = new Criteria();
         $criteria->addFilter(new EqualsFilter('orderId', $orderId));
-        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->getEntities()->first();
 
         return $orderTransaction ? $orderTransaction->getId() : null;
     }

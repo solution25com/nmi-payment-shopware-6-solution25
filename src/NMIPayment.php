@@ -41,6 +41,7 @@ class NMIPayment extends Plugin
             $connection->executeStatement('DROP TABLE IF EXISTS nmi_transaction');
             $connection->executeStatement('DROP TABLE IF EXISTS nmi_vaulted_customer');
             $connection->executeStatement('DROP TABLE IF EXISTS nmi_card_velocity');
+            $connection->executeStatement('DROP TABLE IF EXISTS nmi_refund');
 
             $connection->executeStatement(
                 'DELETE FROM `migration` WHERE `class` LIKE :migrationPattern;',

@@ -2,8 +2,11 @@
 
 namespace NMIPayment\Gateways;
 
+use NMIPayment\Service\AuthorizedTransactionSession;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionEntity;
+use Shopware\Core\Checkout\Payment\PaymentException;
 use Shopware\Core\Framework\Uuid\Uuid;
 use NMIPayment\Library\Constants\TransactionStatuses;
 use NMIPayment\Service\NMIConfigService;
@@ -27,11 +30,12 @@ class CreditCard extends AbstractPaymentHandler
     private OrderTransactionStateHandler $transactionStateHandler;
     private NmiTransactionService $nmiTransactionService;
     private NMIConfigService $configService;
+    /** @var EntityRepository<\Shopware\Core\Checkout\Order\Aggregate\OrderTransaction\OrderTransactionCollection> */
     private EntityRepository $orderTransactionRepository;
     private NMIPaymentApiClient $nmiPaymentApiClient;
     private VaultedCustomerService $vaultedCustomerService;
     private NMIPaymentDataRequestService $nmiPaymentDataRequestService;
-
+    private LoggerInterface $logger;
 
     public function __construct(
         OrderTransactionStateHandler $transactionStateHandler,
@@ -40,7 +44,8 @@ class CreditCard extends AbstractPaymentHandler
         EntityRepository $orderTransactionRepository,
         NMIPaymentApiClient $nmiPaymentApiClient,
         VaultedCustomerService $vaultedCustomerService,
-        NMIPaymentDataRequestService $nmiPaymentDataRequestService
+        NMIPaymentDataRequestService $nmiPaymentDataRequestService,
+        LoggerInterface $logger
     ) {
         $this->transactionStateHandler = $transactionStateHandler;
         $this->nmiTransactionService = $nmiTransactionService;
@@ -49,6 +54,7 @@ class CreditCard extends AbstractPaymentHandler
         $this->nmiPaymentApiClient = $nmiPaymentApiClient;
         $this->vaultedCustomerService = $vaultedCustomerService;
         $this->nmiPaymentDataRequestService = $nmiPaymentDataRequestService;
+        $this->logger = $logger;
     }
 
     public function supports(PaymentHandlerType $type, string $paymentMethodId, Context $context): bool
@@ -76,7 +82,7 @@ class CreditCard extends AbstractPaymentHandler
         $criteria->addAssociation('paymentMethod');
         $criteria->addAssociation('order.deliveries.shippingOrderAddress');
 
-        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->first();
+        $orderTransaction = $this->orderTransactionRepository->search($criteria, $context)->getEntities()->first();
 
         if ($flow == 'payment_order') {
             $this->paymentFirstFlow($request, $transaction, $orderTransaction, $handlerMethod, $status, $context);
@@ -100,30 +106,41 @@ class CreditCard extends AbstractPaymentHandler
             throw new RuntimeException('NMI did not return a transaction ID.');
         }
 
+        if (!AuthorizedTransactionSession::consumeMatches($request, (string) $nmiTransactionId)) {
+            $this->logger->warning('[pay] refused a transaction id this session did not authorize', [
+                'orderId' => $orderId,
+                'orderNumber' => $order->getOrderNumber(),
+            ]);
+            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            throw new RuntimeException('NMI transaction was not authorized in this session.');
+        }
+
         $this->nmiPaymentApiClient->initializeForSalesChannel($order->getSalesChannelId());
         $verified = $this->nmiPaymentApiClient->queryTransaction((string) $nmiTransactionId);
 
         if ($verified === null) {
-            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            $this->refuseOwnTransaction($transaction, $order->getSalesChannelId(), (string) $nmiTransactionId, $context);
             throw new RuntimeException('NMI transaction verification failed: could not query transaction.');
         }
 
-        $allowedConditions = ['complete', 'pendingsettlement'];
+        $allowedConditions = $handlerMethod === 'authorize' ? ['pending'] : ['complete', 'pendingsettlement'];
         if (!in_array($verified['condition'], $allowedConditions, true)) {
-            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            $this->refuseOwnTransaction($transaction, $order->getSalesChannelId(), (string) $nmiTransactionId, $context);
             throw new RuntimeException(sprintf('NMI transaction not in a successful state: %s', $verified['condition']));
         }
 
         $expectedAmount = $orderTransaction->getAmount()->getTotalPrice();
         $actualAmount = (float) $verified['amount'];
         if (abs($actualAmount - $expectedAmount) > 0.01) {
-            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+            $this->refuseOwnTransaction($transaction, $order->getSalesChannelId(), (string) $nmiTransactionId, $context);
             throw new RuntimeException(sprintf('NMI transaction amount mismatch: expected %.2f, got %.2f', $expectedAmount, $actualAmount));
         }
 
         if ($verified['order_id'] !== '' && $verified['order_id'] !== $order->getOrderNumber()) {
-            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
-            throw new RuntimeException('NMI transaction order ID mismatch.');
+            $this->logger->info('[pay] NMI order id differs from the order number', [
+                'orderNumber' => $order->getOrderNumber(),
+                'nmiOrderId' => $verified['order_id'],
+            ]);
         }
 
         $this->nmiTransactionService->addTransaction(
@@ -175,7 +192,11 @@ class CreditCard extends AbstractPaymentHandler
             ];
         }
 
-        $securityKey = $this->configService->getConfig('privateKeyApi', $order->getSalesChannelId());
+        $orderMode = $this->configService->getConfig('mode', $order->getSalesChannelId());
+        $securityKey = $this->configService->getConfig(
+            $orderMode === 'live' ? 'privateKeyApiLive' : 'privateKeyApi',
+            $order->getSalesChannelId()
+        );
         $authorizeOnly = $this->configService->getConfig('authorizeAndCapture', $order->getSalesChannelId());
         $postData = [
         'security_key'     => $securityKey,
@@ -204,13 +225,30 @@ class CreditCard extends AbstractPaymentHandler
         'line_items'         => $nonSubscriptionItems,
         ];
 
-        $customerVaultId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $order->getOrderCustomer()->getCustomerId());
+        $orderCustomerId = (string) $order->getOrderCustomer()->getCustomerId();
+        $customerVaultId = $this->vaultedCustomerService->getVaultedCustomerIdByCustomerId($context, $orderCustomerId);
         $billingId = null;
         $shouldVault = ($paymentData['saveCard'] ?? false) || $isSubscriptionCart;
 
         if (!empty($paymentData['customer_vault_id']) && !empty($paymentData['billing_id'])) {
-            $postData['customer_vault_id'] = $paymentData['customer_vault_id'];
-            $postData['billing_id'] = $paymentData['billing_id'];
+            $ownsCard = \is_scalar($paymentData['customer_vault_id'])
+                && \is_scalar($paymentData['billing_id'])
+                && $this->vaultedCustomerService->customerOwnsCard(
+                    $context,
+                    $orderCustomerId,
+                    (string) $paymentData['customer_vault_id'],
+                    (string) $paymentData['billing_id']
+                );
+            if (!$ownsCard) {
+                $this->logger->warning('[pay] refused a saved card the order customer does not own', [
+                    'orderId' => $order->getId(),
+                    'customerId' => $orderCustomerId,
+                ]);
+                throw PaymentException::syncProcessInterrupted($transaction->getOrderTransactionId(), 'The selected saved card could not be used.');
+            }
+
+            $postData['customer_vault_id'] = (string) $paymentData['customer_vault_id'];
+            $postData['billing_id'] = (string) $paymentData['billing_id'];
         } else {
             if (empty($paymentData['token'])) {
                 $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
@@ -239,7 +277,7 @@ class CreditCard extends AbstractPaymentHandler
             $processedResponse['billing_id'] = $billingId;
             $processedResponse['isSubscriptionCart'] = $isSubscriptionCart;
 
-            $existingBillingRecord = $this->vaultedCustomerService->getBillingIdByVaultedId($context, $customerVaultId);
+            $existingBillingRecord = $this->vaultedCustomerService->getBillingIdByVaultedId($context, $customerVaultId, $orderCustomerId);
             $existingBillingData = $existingBillingRecord ? $existingBillingRecord->getBillingId() : null;
             $billingArray = !empty($existingBillingData) ? json_decode($existingBillingData, true) : [];
 
@@ -262,8 +300,11 @@ class CreditCard extends AbstractPaymentHandler
         }
 
         if (empty($processedResponse['success'])) {
-            $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
-            return;
+            $this->logger->info('[pay] order-first charge declined', [
+                'orderId' => $order->getId(),
+                'gatewayMessage' => $processedResponse['message'] ?? null,
+            ]);
+            throw PaymentException::syncProcessInterrupted($transaction->getOrderTransactionId(), 'The payment was declined.');
         }
 
         $nmiTransactionId = $response['transactionid'] ?? null;
@@ -284,5 +325,23 @@ class CreditCard extends AbstractPaymentHandler
             (float) $orderTransaction->getAmount()->getTotalPrice()
         );
         $this->transactionStateHandler->{$handlerMethod}($transaction->getOrderTransactionId(), $context);
+    }
+
+    /**
+     * Refuses a transaction this session's own auth route created: fails the Shopware transaction
+     * and voids it at NMI, so a refused auth does not stay on hold on the shopper's card.
+     */
+    private function refuseOwnTransaction(PaymentTransactionStruct $transaction, string $salesChannelId, string $nmiTransactionId, Context $context): void
+    {
+        $this->transactionStateHandler->fail($transaction->getOrderTransactionId(), $context);
+
+        try {
+            $this->nmiPaymentApiClient->voidTransaction($salesChannelId, $nmiTransactionId);
+        } catch (\Throwable $e) {
+            $this->logger->error('[pay] void of refused transaction threw', [
+                'transactionId' => $nmiTransactionId,
+                'exception_class' => $e::class,
+            ]);
+        }
     }
 }
